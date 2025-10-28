@@ -12,16 +12,28 @@ function createEntityApi(entityName) {
   return {
     async list() {
       console.log(`DEBUG ${entityName}.list(): Fetching from ${API_URL}/${entityName}`);
-      const response = await fetch(`${API_URL}/${entityName}`);
-      console.log(`DEBUG ${entityName}.list(): Response status:`, response.status, response.statusText);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log(`DEBUG ${entityName}.list(): Error response:`, errorText);
-        throw new Error(`Failed to fetch ${entityName}: ${response.status} ${response.statusText}`);
+      try {
+        const response = await fetch(`${API_URL}/${entityName}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors',
+          credentials: 'include'
+        });
+        console.log(`DEBUG ${entityName}.list(): Response status:`, response.status, response.statusText);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log(`DEBUG ${entityName}.list(): Error response:`, errorText);
+          throw new Error(`Failed to fetch ${entityName}: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log(`DEBUG ${entityName}.list(): Success, got ${data.length} items`);
+        return data;
+      } catch (error) {
+        console.error(`DEBUG ${entityName}.list(): Network error:`, error);
+        throw new Error(`Network error fetching ${entityName}: ${error.message}`);
       }
-      const data = await response.json();
-      console.log(`DEBUG ${entityName}.list(): Success, got ${data.length} items`);
-      return data;
     },
     async get(id) {
       const response = await fetch(`${API_URL}/${entityName}/${id}`);
