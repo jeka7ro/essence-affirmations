@@ -126,10 +126,10 @@ export default function AutentificarePage() {
       console.log('DEBUG Login: Success, redirecting to Home');
       console.log('DEBUG About to navigate to:', createPageUrl("Home"));
 
-      // Redirect to home
-      navigate(createPageUrl("Home"));
-      console.log('DEBUG After navigate, about to reload');
-      window.location.reload(); // Force reload to apply layout
+      // Redirect to home WITHOUT reload to prevent redirect loop
+      setTimeout(() => {
+        navigate(createPageUrl("Home"));
+      }, 100);
       
     } catch (error) {
       addDebugLog('❌ ERROR: ' + error.message);

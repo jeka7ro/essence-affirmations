@@ -118,6 +118,18 @@ export default function HomePage() {
             // Only call checkNewDay if no repetitions were made today
             if (todayReps === 0) {
               await checkNewDay(userData);
+              
+              // Reload user data after checkNewDay update
+              const updatedUsers = await base44.entities.User.list();
+              const updatedUserData = updatedUsers.find(u => u.email === currentUser.email);
+              if (updatedUserData) {
+                setTodayRepetitions(updatedUserData.today_repetitions || 0);
+                setCurrentDay(updatedUserData.current_day || 0);
+                setCompletedDays(JSON.parse(updatedUserData.completed_days || "[]"));
+              }
+            } else {
+              // If repetitions exist today, set them directly
+              setTodayRepetitions(todayReps);
             }
           }
         }
