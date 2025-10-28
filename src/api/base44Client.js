@@ -77,24 +77,35 @@ export const base44 = {
 
       // If we don't have a username but we do have a userId, resolve it
       if (!username && storedUserId) {
-        const resp = await fetch(`${API_URL}/users`);
-        if (!resp.ok) throw new Error('Not authenticated');
-        const allUsers = await resp.json();
-        const byId = allUsers.find(u => String(u.id) === String(storedUserId));
-        if (byId) {
-          username = byId.username;
-          localStorage.setItem('essence_username', byId.username || '');
+        try {
+          const resp = await fetch(`${API_URL}/users`);
+          if (!resp.ok) throw new Error('Failed to fetch users');
+          const allUsers = await resp.json();
+          const byId = allUsers.find(u => String(u.id) === String(storedUserId));
+          if (byId) {
+            username = byId.username;
+            localStorage.setItem('essence_username', byId.username || '');
+          }
+        } catch (error) {
+          console.error('Error resolving user by ID:', error);
+          throw new Error('Not authenticated');
         }
       }
 
       if (!username) throw new Error('Not authenticated');
 
-      const response = await fetch(`${API_URL}/users`);
-      if (!response.ok) throw new Error('Not authenticated');
-      const users = await response.json();
-      const user = users.find(u => u.username === username);
-      if (!user) throw new Error('Not authenticated');
-      return { email: user.email, username: user.username };
+      // Get user data
+      try {
+        const response = await fetch(`${API_URL}/users`);
+        if (!response.ok) throw new Error('Failed to fetch users');
+        const users = await response.json();
+        const user = users.find(u => u.username === username);
+        if (!user) throw new Error('Not authenticated');
+        return { email: user.email, username: user.username };
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        throw new Error('Not authenticated');
+      }
     }
   }
 };
