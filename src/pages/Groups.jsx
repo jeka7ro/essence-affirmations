@@ -48,7 +48,17 @@ export default function GroupsPage() {
       setUser(userData);
 
       const allGroups = await base44.entities.Group.list();
-      setGroups(allGroups);
+      
+      // Calculate actual member count for each group
+      const groupsWithCount = allGroups.map(group => {
+        const members = users.filter(u => u.group_id === group.id);
+        return {
+          ...group,
+          member_count: members.length
+        };
+      });
+      
+      setGroups(groupsWithCount);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -122,8 +132,14 @@ export default function GroupsPage() {
 
       const createdGroup = await base44.entities.Group.create(groupData);
 
+      // Add creator as group member
       await base44.entities.User.update(user.id, {
         group_id: createdGroup.id
+      });
+
+      // Refresh group data after user update to ensure member_count is accurate
+      await base44.entities.Group.update(createdGroup.id, {
+        member_count: 1
       });
 
       await base44.entities.Activity.create({
