@@ -1,4 +1,4 @@
-// Force redeploy - CORS fix v2
+// Force redeploy - CORS fix v3
 import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
@@ -176,6 +176,20 @@ app.get('/api/health', (req, res) => {
 // Simple test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!', port: port });
+});
+
+// Get user by ID
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Users
