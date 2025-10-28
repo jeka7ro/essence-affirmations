@@ -470,10 +470,30 @@ export default function RegisterPage() {
             </Button>
           </form>
 
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400">SAU</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-14 border-2 border-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-2xl"
+            onClick={() => window.open('https://accounts.google.com', '_blank')}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-2xl">🔴</span>
+              <span className="font-semibold text-lg">Continuă cu Google</span>
+            </div>
+          </Button>
 
           <Button
             variant="link"
-            className="w-full text-blue-600"
+            className="w-full text-blue-600 dark:text-blue-400"
             onClick={() => navigate(createPageUrl("Autentificare"))}
           >
             Ai deja cont? Conectează-te
