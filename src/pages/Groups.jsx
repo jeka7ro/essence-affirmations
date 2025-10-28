@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Users, Lock, Calendar, Check } from "lucide-react";
 
 export default function GroupsPage() {
@@ -25,6 +27,13 @@ export default function GroupsPage() {
     end_date: "",
     cities: []
   });
+  const [citiesOpen, setCitiesOpen] = useState(false);
+
+  const romanianCities = [
+    "București", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Craiova",
+    "Galați", "Ploiești", "Brașov", "Brăila", "Oradea", "Arad", "Pitești",
+    "Sibiu", "Bacău", "Târgu Mureș", "Baia Mare", "Buzău", "Satu Mare", "Piatra Neamț"
+  ];
 
   useEffect(() => {
     loadData();
@@ -411,27 +420,78 @@ export default function GroupsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Orașe din România *</Label>
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-2xl p-3">
-                  {[
-                    "București", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Craiova",
-                    "Galați", "Ploiești", "Brașov", "Brăila", "Oradea", "Arad", "Pitești",
-                    "Sibiu", "Bacău", "Târgu Mureș", "Baia Mare", "Buzău", "Satu Mare", "Piatra Neamț"
-                  ].map(city => (
-                    <label key={city} className="flex items-center space-x-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={newGroup.cities.includes(city)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setNewGroup({ ...newGroup, cities: [...newGroup.cities, city] });
-                          } else {
-                            setNewGroup({ ...newGroup, cities: newGroup.cities.filter(c => c !== city) });
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span>{city}</span>
-                    </label>
+                <Popover open={citiesOpen} onOpenChange={setCitiesOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={citiesOpen}
+                      className="w-full justify-between rounded-2xl h-auto min-h-[2.5rem]"
+                    >
+                      <span className="text-sm">
+                        {newGroup.cities.length > 0 
+                          ? `${newGroup.cities.length} oraș${newGroup.cities.length > 1 ? 'e' : ''} selectat${newGroup.cities.length > 1 ? 'e' : ''}`
+                          : "Selectează orașele..."}
+                      </span>
+                      <svg
+                        className="ml-2 h-4 w-4 shrink-0 opacity-50"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m7 15 5 5 5-5" />
+                        <path d="m7 9 5-5 5 5" />
+                      </svg>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 rounded-2xl">
+                    <Command className="rounded-lg">
+                      <CommandInput placeholder="Caută oraș..." className="h-9" />
+                      <CommandList>
+                        <CommandEmpty>Niciun oraș găsit.</CommandEmpty>
+                        <CommandGroup>
+                          {romanianCities.map((city) => (
+                            <CommandItem
+                              key={city}
+                              value={city}
+                              onSelect={() => {
+                                if (newGroup.cities.includes(city)) {
+                                  setNewGroup({ ...newGroup, cities: newGroup.cities.filter(c => c !== city) });
+                                } else {
+                                  setNewGroup({ ...newGroup, cities: [...newGroup.cities, city] });
+                                }
+                              }}
+                              className="flex items-center space-x-2"
+                            >
+                              <div className={`flex h-4 w-4 items-center justify-center rounded border ${newGroup.cities.includes(city) ? 'bg-green-600 border-green-600' : 'border-gray-300'}`}>
+                                {newGroup.cities.includes(city) && (
+                                  <Check className="h-3 w-3 text-white" />
+                                )}
+                              </div>
+                              <span>{city}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {newGroup.cities.map(city => (
+                    <span key={city} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
+                      {city}
+                      <button
+                        type="button"
+                        onClick={() => setNewGroup({ ...newGroup, cities: newGroup.cities.filter(c => c !== city) })}
+                        className="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
                   ))}
                 </div>
                 {newGroup.cities.length === 0 && (
