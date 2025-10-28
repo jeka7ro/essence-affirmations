@@ -1,9 +1,8 @@
 // PostgreSQL backend API client - data stored online on Render + PostgreSQL
 
-const API_URL = import.meta.env.VITE_FORCE_API_URL || import.meta.env.VITE_API_URL || 
-  (window.location.hostname.includes('vercel.app') 
-    ? 'https://essence-affirmations-backend.onrender.com/api'
-    : 'http://localhost:3001/api');
+const API_URL = window.location.hostname.includes('vercel.app') 
+  ? 'https://essence-affirmations-backend.onrender.com/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
 
 console.log('DEBUG: hostname =', window.location.hostname);
 console.log('DEBUG: API_URL =', API_URL);
