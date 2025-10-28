@@ -5,6 +5,8 @@ const API_URL = import.meta.env.VITE_API_URL ||
     ? 'https://essence-affirmations-backend.onrender.com/api'
     : 'http://localhost:3001/api');
 
+console.log('DEBUG: API_URL =', API_URL);
+
 function createEntityApi(entityName) {
   return {
     async list() {
