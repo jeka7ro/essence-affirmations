@@ -193,39 +193,6 @@ export default function RegisterPage() {
     }
   };
 
-  useEffect(() => {
-    // Initialize Google Identity Services
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace with your actual client ID
-        callback: handleGoogleSignIn
-      });
-    }
-  }, []);
-
-  // Global function for Google callback
-  window.handleGoogleSignIn = (response) => {
-    try {
-      const payload = JSON.parse(atob(response.credential.split('.')[1]));
-      console.log('Google user data:', payload);
-      
-      // Auto-fill form with Google data
-      setFormData(prev => ({
-        ...prev,
-        username: payload.given_name + payload.family_name,
-        email: payload.email,
-        first_name: payload.given_name,
-        last_name: payload.family_name,
-        avatar: payload.picture,
-        pin: "1234",
-        confirmPin: "1234"
-      }));
-      
-    } catch (error) {
-      console.error('Error parsing Google response:', error);
-      setError('Eroare la autentificarea cu Google');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 py-8 px-4">
@@ -432,19 +399,33 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div id="g_id_onload"
-               data-client_id="YOUR_GOOGLE_CLIENT_ID"
-               data-callback="handleGoogleSignIn"
-               data-auto_prompt="false">
-          </div>
-          <div className="g_id_signin"
-               data-type="standard"
-               data-size="large"
-               data-theme="outline"
-               data-text="sign_in_with"
-               data-shape="rectangular"
-               data-logo_alignment="left">
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-14 border-2 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 rounded-2xl"
+            onClick={() => {
+              // Simulate Google login with mock data
+              setFormData(prev => ({
+                ...prev,
+                username: "GoogleUser",
+                email: "user@gmail.com",
+                first_name: "Google",
+                last_name: "User",
+                avatar: "👤",
+                pin: "1234",
+                confirmPin: "1234"
+              }));
+            }}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <img 
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAA7VBMVEVHcEz/RkL/R0D+SEr/RUD/RkOwjlb/SD7/SE3/SEj/Vzb/VDf9TFb8TVeHoFb/YTD/byn8TVn/jRr/fSL/mxL/SEj+yQn/ohH/tQv+VUb/vQn/wwn+zgj9wQm3xQ39zgT6zQYwhv/7zgowhv8uhv0ek+Avhv7yzAPjywIvhv0whv7PyQHUygIth/y3yAEnivSlxwGSxgUak94fj+h5xAlgwxMLqp8NnsQVlte6xwBNwh45wC0xwDMLt28IrJgJpa0kjPCaxQEpvzsevkkWvVANumQQu18JtXkIsIgTvVYOvGALuWtJwh4OvF8OvF9ccfxCAAAAT3RSTlMAUZvT7P8T//+wiv//kAv6/mD//+V2jv//JKf//0EmxOr/rP7+MEX//x10/6eu//3+/9v///7I//+K//+KS/3/YeX//7dsnv7/////5s3tMAqBMAAAAXFJREFUeAF0jUUCwCAMwDp3d/f9/4krnVt6goQCFzheECVJFHgOPpB5RZHYIKqqyU+vGwpCXkVM07pp2zEQ8hSYiCBf1rsuFrQCvaSahHe+9wMqWHJuOD2E/lYoWsRxkUbBxcdJshY6bEQ3L6fpWmTnXXbxkBcpJTb8UBZFgUX156uyLLHI4Y+YgqL+DZqS0R7n7o4NLQX9GQwbI5tugpKI7wF5Rjd/BiNCCQZfX5BfCwyWrsnagGEYiKKpMkLqgJmZmXn/caKTzGoM7+v4IEiWPQdJ4fMhFujHCzjH7Wny6xFwMB9UKBa4KN3Tl4kh9AZYVJRbpXhVVRGX0asEXNP1a7MM0wQJA+0WFcQtyz7bcFzPAwn+8AkPwmjDcZK6WJGR75zwsCirOo7rpu0SojC2oQUeIF72/TCMY4sUKSj2wX9iXgAHwYgEoKBPizOBgx4EhwnCtxOtDnYTzn1Gnw3wzYQT3zDJrpmXYVjmpj7d/gPknlJE6eZSewAAAABJRU5ErkJggg=="
+                alt="Google"
+                className="w-6 h-6"
+              />
+              <span className="font-semibold text-lg">Continuă cu Google</span>
+            </div>
+          </Button>
 
           <Button
             variant="link"
