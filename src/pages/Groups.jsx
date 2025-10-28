@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Users, Lock, Calendar, Check } from "lucide-react";
+import { Users, Lock, Calendar, Check, Pencil } from "lucide-react";
 
 export default function GroupsPage() {
   const [user, setUser] = useState(null);
@@ -28,6 +28,15 @@ export default function GroupsPage() {
     cities: []
   });
   const [citiesOpen, setCitiesOpen] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [editGroup, setEditGroup] = useState({
+    name: "",
+    description: "",
+    start_date: "",
+    end_date: "",
+    cities: []
+  });
 
   const romanianCities = [
     "București", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Craiova",
@@ -217,6 +226,68 @@ export default function GroupsPage() {
     }
   };
 
+  const handleEditGroup = (group) => {
+    setEditingGroup(group);
+    setEditGroup({
+      name: group.name,
+      description: group.description || "",
+      start_date: group.start_date || "",
+      end_date: group.end_date || "",
+      cities: group.cities ? JSON.parse(group.cities) : []
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateGroup = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!editingGroup) return;
+
+    if (!editGroup.name.trim()) {
+      setError("Numele grupului este obligatoriu");
+      return;
+    }
+
+    if (!editGroup.start_date || !editGroup.end_date) {
+      setError("Data de început și sfârșit sunt obligatorii");
+      return;
+    }
+
+    if (new Date(editGroup.start_date) > new Date(editGroup.end_date)) {
+      setError("Data de început trebuie să fie înainte de data de sfârșit");
+      return;
+    }
+
+    if (editGroup.cities.length === 0) {
+      setError("Selectează cel puțin un oraș");
+      return;
+    }
+
+    try {
+      await base44.entities.Group.update(editingGroup.id, {
+        name: editGroup.name,
+        description: editGroup.description,
+        start_date: editGroup.start_date,
+        end_date: editGroup.end_date,
+        cities: JSON.stringify(editGroup.cities)
+      });
+
+      await base44.entities.Activity.create({
+        username: user.username,
+        activity_type: "milestone",
+        description: `${user.username} a editat grupul "${editGroup.name}"`
+      });
+
+      setShowEditDialog(false);
+      setEditingGroup(null);
+      loadData();
+    } catch (error) {
+      console.error("Error updating group:", error);
+      setError(`Eroare: ${error.message}`);
+    }
+  };
+
   const currentGroup = groups.find(g => g.id === user?.group_id);
   const availableGroups = groups.filter(g => g.is_active);
 
@@ -288,13 +359,25 @@ export default function GroupsPage() {
                     Grupul Tău
                   </CardTitle>
                 </div>
-                <Button
-                  onClick={handleLeaveGroup}
-                  variant="outline"
-                  className="border-red-600 text-red-600 hover:bg-red-50 rounded-2xl"
-                >
-                  Părăsește
-                </Button>
+                <div className="flex gap-2">
+                  {user?.username === currentGroup.creator_username && (
+                    <Button
+                      onClick={() => handleEditGroup(currentGroup)}
+                      variant="outline"
+                      size="icon"
+                      className="border-gray-300 hover:bg-gray-50 rounded-2xl"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleLeaveGroup}
+                    variant="outline"
+                    className="border-red-600 text-red-600 hover:bg-red-50 rounded-2xl"
+                  >
+                    Părăsește
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -571,6 +654,151 @@ export default function GroupsPage() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Editează Grup</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateGroup} className="space-y-4">
+              {error && (
+                <Alert variant="destructive" className="rounded-2xl">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="edit_name">Nume Grup *</Label>
+                <Input
+                  id="edit_name"
+                  value={editGroup.name}
+                  onChange={(e) => setEditGroup({ ...editGroup, name: e.target.value })}
+                  className="rounded-2xl"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_description">Descriere</Label>
+                <Textarea
+                  id="edit_description"
+                  value={editGroup.description}
+                  onChange={(e) => setEditGroup({ ...editGroup, description: e.target.value })}
+                  rows={3}
+                  className="rounded-2xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_start_date">Data Început *</Label>
+                <Input
+                  id="edit_start_date"
+                  type="date"
+                  value={editGroup.start_date}
+                  onChange={(e) => setEditGroup({ ...editGroup, start_date: e.target.value })}
+                  className="rounded-2xl"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_end_date">Data Sfârșit *</Label>
+                <Input
+                  id="edit_end_date"
+                  type="date"
+                  value={editGroup.end_date}
+                  onChange={(e) => setEditGroup({ ...editGroup, end_date: e.target.value })}
+                  className="rounded-2xl"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Orașe din România *</Label>
+                <Popover open={citiesOpen} onOpenChange={setCitiesOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={citiesOpen}
+                      className="w-full justify-between rounded-2xl h-auto min-h-[2.5rem]"
+                    >
+                      <span className="text-sm">
+                        {editGroup.cities.length > 0 
+                          ? `${editGroup.cities.length} oraș${editGroup.cities.length > 1 ? 'e' : ''} selectat${editGroup.cities.length > 1 ? 'e' : ''}`
+                          : "Selectează orașele..."}
+                      </span>
+                      <svg
+                        className="ml-2 h-4 w-4 shrink-0 opacity-50"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m7 15 5 5 5-5" />
+                        <path d="m7 9 5-5 5 5" />
+                      </svg>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 rounded-2xl">
+                    <Command className="rounded-lg">
+                      <CommandInput placeholder="Caută oraș..." className="h-9" />
+                      <CommandList>
+                        <CommandEmpty>Niciun oraș găsit.</CommandEmpty>
+                        <CommandGroup>
+                          {romanianCities.map((city) => (
+                            <CommandItem
+                              key={city}
+                              value={city}
+                              onSelect={() => {
+                                if (editGroup.cities.includes(city)) {
+                                  setEditGroup({ ...editGroup, cities: editGroup.cities.filter(c => c !== city) });
+                                } else {
+                                  setEditGroup({ ...editGroup, cities: [...editGroup.cities, city] });
+                                }
+                              }}
+                              className="flex items-center space-x-2"
+                            >
+                              <div className={`flex h-4 w-4 items-center justify-center rounded border ${editGroup.cities.includes(city) ? 'bg-green-600 border-green-600' : 'border-gray-300'}`}>
+                                {editGroup.cities.includes(city) && (
+                                  <Check className="h-3 w-3 text-white" />
+                                )}
+                              </div>
+                              <span>{city}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {editGroup.cities.map(city => (
+                    <span key={city} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
+                      {city}
+                      <button
+                        type="button"
+                        onClick={() => setEditGroup({ ...editGroup, cities: editGroup.cities.filter(c => c !== city) })}
+                        className="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {editGroup.cities.length === 0 && (
+                  <p className="text-sm text-red-500">Selectează cel puțin un oraș</p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)} className="flex-1 rounded-2xl">
+                  Anulează
+                </Button>
+                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-2xl">
+                  Actualizează
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
