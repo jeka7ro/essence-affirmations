@@ -194,13 +194,13 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    // Initialize Google Identity Services
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace with your actual client ID
-        callback: handleGoogleSignIn
-      });
-    }
+    // Initialize Google Identity Services - DISABLED until proper client ID is configured
+    // if (window.google) {
+    //   window.google.accounts.id.initialize({
+    //     client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace with your actual client ID
+    //     callback: handleGoogleSignIn
+    //   });
+    // }
   }, []);
 
   // Global function for Google callback
@@ -432,18 +432,13 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div id="g_id_onload"
-               data-client_id="YOUR_GOOGLE_CLIENT_ID"
-               data-callback="handleGoogleSignIn"
-               data-auto_prompt="false">
-          </div>
-          <div className="g_id_signin"
-               data-type="standard"
-               data-size="large"
-               data-theme="outline"
-               data-text="sign_in_with"
-               data-shape="rectangular"
-               data-logo_alignment="left">
+          <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Google Login în dezvoltare
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Pentru moment, folosește formularul de mai sus pentru înregistrare
+            </p>
           </div>
 
           <Button
