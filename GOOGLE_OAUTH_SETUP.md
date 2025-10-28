@@ -1,6 +1,8 @@
 # Configurare Google OAuth pentru aplicația Essence Affirmations
 
-## Pași pentru configurarea Google OAuth:
+## IMPORTANT: Pentru a funcționa, trebuie să obții Client ID-ul real de la Google!
+
+### Pași pentru configurarea Google OAuth:
 
 ### 1. Creează un proiect Google Cloud Console
 1. Mergi la [Google Cloud Console](https://console.cloud.google.com/)
@@ -21,6 +23,8 @@
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Selectează "Web application"
 4. Adaugă URI-uri autorizate:
+   - `https://www.myessence.ro`
+   - `https://myessence.ro`
    - `https://essence-affirmations.vercel.app`
    - `http://localhost:5173` (pentru development)
 5. Copiază Client ID-ul generat
@@ -33,10 +37,11 @@
 1. Rulează aplicația local: `npm run dev`
 2. Mergi la pagina de înregistrare
 3. Click pe butonul Google
-4. Autentifică-te cu contul tău Google
-5. Formularul se va completa automat cu datele tale Google
+4. Autentifică-te cu contul tău Google REAL
+5. Formularul se va completa automat cu datele tale Google REALE
 
 ## Notă importantă:
 - Client ID-ul trebuie să fie același în ambele fișiere
 - Asigură-te că URI-urile autorizate includ domeniile tale de producție și development
 - Testează întotdeauna înainte de deploy în producție
+- Acum va folosi datele REALE de la Google, nu date fake!

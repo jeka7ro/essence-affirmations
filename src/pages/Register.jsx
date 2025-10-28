@@ -193,6 +193,39 @@ export default function RegisterPage() {
     }
   };
 
+  useEffect(() => {
+    // Initialize Google Identity Services
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace with your actual client ID
+        callback: handleGoogleSignIn
+      });
+    }
+  }, []);
+
+  // Global function for Google callback
+  window.handleGoogleSignIn = (response) => {
+    try {
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      console.log('Google user data:', payload);
+      
+      // Auto-fill form with REAL Google data
+      setFormData(prev => ({
+        ...prev,
+        username: payload.given_name + payload.family_name,
+        email: payload.email,
+        first_name: payload.given_name,
+        last_name: payload.family_name,
+        avatar: payload.picture,
+        pin: "1234", // Default PIN for Google users
+        confirmPin: "1234"
+      }));
+      
+    } catch (error) {
+      console.error('Error parsing Google response:', error);
+      setError('Eroare la autentificarea cu Google');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 py-8 px-4">
@@ -399,38 +432,19 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full h-14 border-2 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 rounded-2xl"
-            onClick={() => {
-              // Simulate Google login with mock data
-              setFormData(prev => ({
-                ...prev,
-                username: "GoogleUser",
-                email: "user@gmail.com",
-                first_name: "Google",
-                last_name: "User",
-                avatar: "👤",
-                pin: "1234",
-                confirmPin: "1234"
-              }));
-            }}
-          >
-            <div className="flex items-center justify-center gap-3">
-              <img 
-                src="https://developers.google.com/identity/images/g-logo.png"
-                alt="Google"
-                className="w-6 h-6"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'inline';
-                }}
-              />
-              <span style={{display: 'none'}} className="text-blue-600 font-bold">G</span>
-              <span className="font-semibold text-lg">Continuă cu Google</span>
-            </div>
-          </Button>
+          <div id="g_id_onload"
+               data-client_id="YOUR_GOOGLE_CLIENT_ID"
+               data-callback="handleGoogleSignIn"
+               data-auto_prompt="false">
+          </div>
+          <div className="g_id_signin"
+               data-type="standard"
+               data-size="large"
+               data-theme="outline"
+               data-text="sign_in_with"
+               data-shape="rectangular"
+               data-logo_alignment="left">
+          </div>
 
           <Button
             variant="link"
