@@ -251,13 +251,27 @@ app.put('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    
+    console.log('DEBUG PUT /api/users/:id:', { id, updates });
+    
+    // Validate that user exists
+    const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
     const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+    console.log('DEBUG SQL:', `UPDATE users SET ${setClause} WHERE id = $1`);
+    
     const result = await pool.query(
       `UPDATE users SET ${setClause} WHERE id = $1 RETURNING *`,
       [id, ...Object.values(updates)]
     );
+    
+    console.log('DEBUG Update result:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('DEBUG PUT /api/users/:id error:', err);
     res.status(500).json({ error: err.message });
   }
 });

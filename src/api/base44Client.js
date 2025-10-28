@@ -6,28 +6,13 @@ const API_URL = (window.location.hostname.includes('vercel.app') ||
   ? 'https://essence-affirmations-backend.onrender.com/api'
   : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
 
-console.log('DEBUG: hostname =', window.location.hostname);
-console.log('DEBUG: userAgent =', navigator.userAgent);
-console.log('DEBUG: isMobile =', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-console.log('DEBUG: includes vercel.app =', window.location.hostname.includes('vercel.app'));
-console.log('DEBUG: includes myessence.ro =', window.location.hostname.includes('myessence.ro'));
-console.log('DEBUG: includes essence-affirmations =', window.location.hostname.includes('essence-affirmations'));
+// Reduced debugging to prevent console spam
 console.log('DEBUG: API_URL =', API_URL);
-console.log('DEBUG: localStorage available =', typeof(Storage) !== "undefined");
-console.log('DEBUG: localStorage essence_user_id =', localStorage.getItem('essence_user_id'));
-console.log('DEBUG: localStorage essence_username =', localStorage.getItem('essence_username'));
 
 function createEntityApi(entityName) {
   return {
     async list() {
-      console.log(`DEBUG ${entityName}.list(): Fetching from ${API_URL}/${entityName}`);
-      console.log(`DEBUG ${entityName}.list(): Mobile device:`, /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-      
       try {
-        // Add timeout for mobile devices
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
         const response = await fetch(`${API_URL}/${entityName}`, {
           method: 'GET',
           headers: {
@@ -35,27 +20,17 @@ function createEntityApi(entityName) {
             'Accept': 'application/json',
           },
           mode: 'cors',
-          credentials: 'include',
-          signal: controller.signal
+          credentials: 'include'
         });
-        
-        clearTimeout(timeoutId);
-        console.log(`DEBUG ${entityName}.list(): Response status:`, response.status, response.statusText);
-        console.log(`DEBUG ${entityName}.list(): Response headers:`, Object.fromEntries(response.headers.entries()));
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.log(`DEBUG ${entityName}.list(): Error response:`, errorText);
           throw new Error(`Failed to fetch ${entityName}: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
-        console.log(`DEBUG ${entityName}.list(): Success, got ${data.length} items`);
         return data;
       } catch (error) {
-        console.error(`DEBUG ${entityName}.list(): Network error:`, error);
-        if (error.name === 'AbortError') {
-          throw new Error(`Request timeout for ${entityName}. Check your internet connection.`);
-        }
+        console.error(`Network error fetching ${entityName}:`, error);
         throw new Error(`Network error fetching ${entityName}: ${error.message}`);
       }
     },
@@ -120,23 +95,16 @@ export const base44 = {
       const storedUserId = localStorage.getItem('essence_user_id');
       let username = localStorage.getItem('essence_username');
 
-      console.log('DEBUG auth.me():', { storedUserId, username });
-
       // If we don't have a username but we do have a userId, resolve it
       if (!username && storedUserId) {
         try {
-          console.log('DEBUG auth.me(): Resolving user by ID:', storedUserId);
           const resp = await fetch(`${API_URL}/users`);
-          console.log('DEBUG auth.me(): Response status:', resp.status);
           if (!resp.ok) throw new Error('Failed to fetch users');
           const allUsers = await resp.json();
-          console.log('DEBUG auth.me(): All users:', allUsers);
           const byId = allUsers.find(u => String(u.id) === String(storedUserId));
-          console.log('DEBUG auth.me(): Found user by ID:', byId);
           if (byId) {
             username = byId.username;
             localStorage.setItem('essence_username', byId.username || '');
-            console.log('DEBUG auth.me(): Set username from ID:', byId.username);
           }
         } catch (error) {
           console.error('Error resolving user by ID:', error);
@@ -145,25 +113,18 @@ export const base44 = {
       }
 
       if (!username) {
-        console.log('DEBUG: No username found, throwing Not authenticated');
         throw new Error('Not authenticated');
       }
 
       // Get user data
       try {
-        console.log('DEBUG auth.me(): Fetching user data for username:', username);
         const response = await fetch(`${API_URL}/users`);
-        console.log('DEBUG auth.me(): Response status for user data:', response.status);
         if (!response.ok) throw new Error('Failed to fetch users');
         const users = await response.json();
-        console.log('DEBUG auth.me(): All users for lookup:', users);
         const user = users.find(u => u.username === username);
-        console.log('DEBUG auth.me(): Found user:', user);
         if (!user) {
-          console.log('DEBUG: User not found in database:', username);
           throw new Error('Not authenticated');
         }
-        console.log('DEBUG: User found:', user.username);
         return { email: user.email, username: user.username };
       } catch (error) {
         console.error('Error fetching user data:', error);
