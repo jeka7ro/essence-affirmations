@@ -6,7 +6,8 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://essence-affirmations-backend.onrender.com/api"
+    "VITE_API_URL": "https://essence-affirmations-backend.onrender.com/api",
+    "VITE_FORCE_API_URL": "https://essence-affirmations-backend.onrender.com/api"
   }
 }
 
