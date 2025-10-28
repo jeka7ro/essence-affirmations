@@ -7,17 +7,21 @@ import fetch from 'node-fetch';
 const app = express();
 const port = process.env.PORT || 3001;
 
-// CORS configuration
+// CORS configuration - Allow all origins for development and production
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://essence-affirmations.vercel.app',
-    'https://essence-affirmations-backend.onrender.com',
-    'https://www.myessence.ro',
-    'https://myessence.ro'
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow any origin that contains 'myessence.ro', 'vercel.app', or 'localhost'
+    if (origin.includes('myessence.ro') || origin.includes('vercel.app') || origin.includes('localhost')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for now
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
