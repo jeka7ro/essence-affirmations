@@ -37,10 +37,37 @@ export default function HomePage() {
   const [saving, setSaving] = useState(false);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [timeUntilMidnight, setTimeUntilMidnight] = useState('');
+  const [repsNeededPerHour, setRepsNeededPerHour] = useState(0);
 
   useEffect(() => {
     loadData();
-  }, []);
+    
+    // Timer for midnight countdown
+    const updateTimer = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      
+      const diff = midnight - now;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeUntilMidnight(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+      
+      // Calculate reps needed per hour
+      const hoursRemaining = hours + (minutes / 60) + (seconds / 3600);
+      const repsNeeded = 100 - todayRepetitions;
+      const repsPerHour = hoursRemaining > 0 ? Math.ceil(repsNeeded / hoursRemaining) : 0;
+      setRepsNeededPerHour(repsPerHour);
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(interval);
+  }, [todayRepetitions]);
 
   const loadData = async () => {
     try {
@@ -379,7 +406,6 @@ export default function HomePage() {
 
   const daysRemaining = Math.max(0, 30 - completedDays.length);
   const progressPercentage = (todayRepetitions / 100) * 100;
-  const repsNeededPerHour = Math.ceil((100 - todayRepetitions) / (24 - new Date().getHours()));
 
   if (loading) {
     return (
@@ -498,12 +524,20 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {todayRepetitions >= 100 
-                      ? "🎉 Felicitări! Ai completat provocarea de astăzi!" 
-                      : `Mai ai nevoie de ${100 - todayRepetitions} repetări (≈${repsNeededPerHour}/oră)`
-                    }
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {todayRepetitions >= 100 
+                        ? "🎉 Felicitări! Ai completat provocarea de astăzi!" 
+                        : `Mai ai nevoie de ${100 - todayRepetitions} repetări (≈${repsNeededPerHour}/oră)`
+                      }
+                    </p>
+                    {todayRepetitions < 100 && (
+                      <div className="flex items-center justify-center gap-2 text-xs font-semibold text-orange-600 dark:text-orange-400">
+                        <span>⏰ Mai sunt:</span>
+                        <span className="text-lg font-bold">{timeUntilMidnight}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col items-center gap-3">

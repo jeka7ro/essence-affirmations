@@ -6,7 +6,18 @@ import fetch from 'node-fetch';
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://essence-affirmations.vercel.app',
+    'https://essence-affirmations-backend.onrender.com'
+  ],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // PostgreSQL connection - use DATABASE_URL from environment for production
@@ -67,10 +78,25 @@ async function initializeTables() {
         secret_code VARCHAR(50),
         creator_username VARCHAR(255),
         start_date DATE,
+        end_date DATE,
+        cities TEXT,
         member_count INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+    
+    // Add missing columns if they don't exist
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='groups' AND column_name='end_date') THEN
+          ALTER TABLE groups ADD COLUMN end_date DATE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='groups' AND column_name='cities') THEN
+          ALTER TABLE groups ADD COLUMN cities TEXT;
+        END IF;
+      END $$;
     `);
 
     // Activities table
