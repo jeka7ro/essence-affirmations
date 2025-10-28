@@ -68,6 +68,11 @@ export default function AutentificarePage() {
       // Save user to localStorage
       localStorage.setItem('essence_user_id', user.id);
       localStorage.setItem('essence_username', user.username);
+      
+      console.log('DEBUG Login: Saved to localStorage:', { 
+        userId: user.id, 
+        username: user.username 
+      });
 
       // Save or remove credentials based on "Remember Me"
       if (rememberMe) {

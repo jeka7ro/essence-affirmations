@@ -75,6 +75,8 @@ export const base44 = {
       const storedUserId = localStorage.getItem('essence_user_id');
       let username = localStorage.getItem('essence_username');
 
+      console.log('DEBUG auth.me():', { storedUserId, username });
+
       // If we don't have a username but we do have a userId, resolve it
       if (!username && storedUserId) {
         try {
@@ -92,7 +94,10 @@ export const base44 = {
         }
       }
 
-      if (!username) throw new Error('Not authenticated');
+      if (!username) {
+        console.log('DEBUG: No username found, throwing Not authenticated');
+        throw new Error('Not authenticated');
+      }
 
       // Get user data
       try {
@@ -100,7 +105,11 @@ export const base44 = {
         if (!response.ok) throw new Error('Failed to fetch users');
         const users = await response.json();
         const user = users.find(u => u.username === username);
-        if (!user) throw new Error('Not authenticated');
+        if (!user) {
+          console.log('DEBUG: User not found in database:', username);
+          throw new Error('Not authenticated');
+        }
+        console.log('DEBUG: User found:', user.username);
         return { email: user.email, username: user.username };
       } catch (error) {
         console.error('Error fetching user data:', error);
