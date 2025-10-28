@@ -130,7 +130,7 @@ export default function ChatPage() {
 
   if (!user?.group_id) {
     return (
-      <div className="min-h-screen bg-white p-4 md:p-8">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <h1 className="text-3xl font-bold text-gray-900">Chat</h1>
           
@@ -159,7 +159,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Chat</h1>
 

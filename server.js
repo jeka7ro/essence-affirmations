@@ -224,6 +224,75 @@ app.get('/api/courses', async (req, res) => {
   }
 });
 
+// Groups endpoint
+app.get('/api/groups', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM groups ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/groups', async (req, res) => {
+  try {
+    const { name, secret_code, created_by, start_date, end_date, cities } = req.body;
+    const { rows } = await pool.query(
+      'INSERT INTO groups (name, secret_code, creator_username, start_date, end_date, cities) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name, secret_code, created_by, start_date, end_date, cities]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Activities endpoint
+app.get('/api/activities', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM activities ORDER BY created_date DESC');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/activities', async (req, res) => {
+  try {
+    const { username, activity_type, description } = req.body;
+    const { rows } = await pool.query(
+      'INSERT INTO activities (username, activity_type, description) VALUES ($1, $2, $3) RETURNING *',
+      [username, activity_type, description]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Messages endpoint
+app.get('/api/messages', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM messages ORDER BY created_date DESC');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/messages', async (req, res) => {
+  try {
+    const { username, group_id, message } = req.body;
+    const { rows } = await pool.query(
+      'INSERT INTO messages (sender, group_id, message) VALUES ($1, $2, $3) RETURNING *',
+      [username, group_id, message]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

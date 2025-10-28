@@ -79,7 +79,20 @@ export default function HomePage() {
             await autoCompletePastDays(userData, startDate, daysPassed);
           }
           
-          await checkNewDay(userData);
+          // Check for new day - only if last_date is different from today
+          const todayStr = format(new Date(), 'yyyy-MM-dd');
+          const lastDate = userData.last_date;
+          
+          if (lastDate && lastDate !== todayStr) {
+            // Calculate repetitions for today from history
+            const hist = JSON.parse(userData.repetition_history || "[]");
+            const todayReps = hist.filter(r => r.date === todayStr).length;
+            
+            // Only call checkNewDay if no repetitions were made today
+            if (todayReps === 0) {
+              await checkNewDay(userData);
+            }
+          }
         }
       }
       
@@ -192,12 +205,15 @@ export default function HomePage() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const lastDate = userData.last_date;
     
+    // Only reset if last_date is different from today
     if (lastDate && lastDate !== today) {
       const yesterday = format(new Date(Date.now() - 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
-      const yesterdayReps = repetitionHistory.filter(r => r.date === yesterday).length;
+      const hist = JSON.parse(userData.repetition_history || "[]");
+      const yesterdayReps = hist.filter(r => r.date === yesterday).length;
+      const todayReps = hist.filter(r => r.date === today).length;
       
       let newCurrentDay = userData.current_day;
-      const newCompletedDays = [...completedDays];
+      const newCompletedDays = JSON.parse(userData.completed_days || "[]");
       
       if (yesterdayReps >= 100) {
         newCurrentDay++;
@@ -206,14 +222,17 @@ export default function HomePage() {
         }
       }
       
+      // Calculate today_repetitions from history
+      const newTodayReps = todayReps;
+      
       await base44.entities.User.update(userData.id, {
-        today_repetitions: 0,
+        today_repetitions: newTodayReps,
         last_date: today,
         current_day: newCurrentDay,
         completed_days: JSON.stringify(newCompletedDays)
       });
       
-      setTodayRepetitions(0);
+      setTodayRepetitions(newTodayReps);
       setCurrentDay(newCurrentDay);
       setCompletedDays(newCompletedDays);
     }
@@ -261,8 +280,18 @@ export default function HomePage() {
         });
       }
 
-      // Refresh stats after update
-      await loadData();
+      // Update completed days if reached 100 today
+      if (newTodayReps === 100) {
+        const newCompletedDays = [...completedDays];
+        if (!newCompletedDays.includes(today)) {
+          newCompletedDays.push(today);
+          setCompletedDays(newCompletedDays);
+          
+          await base44.entities.User.update(user.id, {
+            completed_days: JSON.stringify(newCompletedDays)
+          });
+        }
+      }
     } catch (error) {
       console.error("Error updating repetitions:", error);
     }
@@ -348,7 +377,7 @@ export default function HomePage() {
     }
   };
 
-  const daysRemaining = Math.max(0, 30 - currentDay);
+  const daysRemaining = Math.max(0, 30 - completedDays.length);
   const progressPercentage = (todayRepetitions / 100) * 100;
   const repsNeededPerHour = Math.ceil((100 - todayRepetitions) / (24 - new Date().getHours()));
 
@@ -361,7 +390,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4 md:p-8 text-gray-100">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         
         <Dialog open={showStartDialog} onOpenChange={(open) => {
@@ -451,25 +480,25 @@ export default function HomePage() {
         />
 
         {challengeStartDate && (
-          <Card className="border-2 border-gray-800 bg-gray-950 shadow-lg rounded-3xl">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg rounded-3xl">
             <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-100">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     Repetări Astăzi: {todayRepetitions}/100
                   </h3>
-                  <div className="relative h-5 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="relative h-5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div 
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 ease-out"
                       style={{ width: `${progressPercentage}%` }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-bold text-gray-100">
+                      <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
                         {Math.round(progressPercentage)}%
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {todayRepetitions >= 100 
                       ? "🎉 Felicitări! Ai completat provocarea de astăzi!" 
                       : `Mai ai nevoie de ${100 - todayRepetitions} repetări (≈${repsNeededPerHour}/oră)`
@@ -502,19 +531,19 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-800 space-y-2">
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-2">
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <p className="text-xs text-gray-300">Zile Complete</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">Zile Complete</p>
                       <p className="text-2xl font-bold text-blue-600">{completedDays.length}/30</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-300">Zile Rămase</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">Zile Rămase</p>
                       <p className="text-2xl font-bold text-green-600">{daysRemaining}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-300">Total Repetări</p>
-                      <p className="text-2xl font-bold text-gray-100">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">Total Repetări</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
                     </div>
                   </div>
 

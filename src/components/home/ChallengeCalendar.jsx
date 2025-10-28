@@ -115,9 +115,9 @@ export default function ChallengeCalendar({
   };
 
   return (
-    <Card className="border-2 border-blue-100 rounded-3xl shadow-lg">
+    <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-gray-900">
+        <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Calendar Provocare - 30 Zile
         </CardTitle>
         <div className="flex flex-wrap gap-4 text-sm mt-4">

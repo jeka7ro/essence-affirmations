@@ -21,7 +21,9 @@ export default function GroupsPage() {
   const [newGroup, setNewGroup] = useState({
     name: "",
     description: "",
-    start_date: ""
+    start_date: "",
+    end_date: "",
+    cities: []
   });
 
   useEffect(() => {
@@ -73,6 +75,27 @@ export default function GroupsPage() {
       return;
     }
 
+    // Validare câmpuri obligatorii
+    if (!newGroup.name.trim()) {
+      setError("Numele grupului este obligatoriu");
+      return;
+    }
+
+    if (!newGroup.start_date || !newGroup.end_date) {
+      setError("Data de început și sfârșit sunt obligatorii");
+      return;
+    }
+
+    if (new Date(newGroup.start_date) > new Date(newGroup.end_date)) {
+      setError("Data de început trebuie să fie înainte de data de sfârșit");
+      return;
+    }
+
+    if (newGroup.cities.length === 0) {
+      setError("Selectează cel puțin un oraș");
+      return;
+    }
+
     try {
       const secretCode = generateSecretCode();
       
@@ -81,7 +104,9 @@ export default function GroupsPage() {
         description: newGroup.description,
         secret_code: secretCode,
         creator_username: user.username,
-        start_date: newGroup.start_date || new Date().toISOString().split('T')[0],
+        start_date: newGroup.start_date,
+        end_date: newGroup.end_date,
+        cities: JSON.stringify(newGroup.cities),
         member_count: 1,
         is_active: true
       };
@@ -99,7 +124,7 @@ export default function GroupsPage() {
       });
 
       setShowCreateDialog(false);
-      setNewGroup({ name: "", description: "", start_date: "" });
+      setNewGroup({ name: "", description: "", start_date: "", end_date: "", cities: [] });
       loadData();
     } catch (error) {
       console.error("Error creating group:", error);
@@ -180,7 +205,7 @@ export default function GroupsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-white p-4 md:p-8">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           <Alert variant="destructive">
             <AlertDescription>
@@ -193,7 +218,7 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
           <div>
@@ -363,14 +388,55 @@ export default function GroupsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="start_date">Data Început</Label>
+                <Label htmlFor="start_date">Data Început *</Label>
                 <Input
                   id="start_date"
                   type="date"
                   value={newGroup.start_date}
                   onChange={(e) => setNewGroup({ ...newGroup, start_date: e.target.value })}
                   className="rounded-2xl"
+                  required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">Data Sfârșit *</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={newGroup.end_date}
+                  onChange={(e) => setNewGroup({ ...newGroup, end_date: e.target.value })}
+                  className="rounded-2xl"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Orașe din România *</Label>
+                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-2xl p-3">
+                  {[
+                    "București", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Craiova",
+                    "Galați", "Ploiești", "Brașov", "Brăila", "Oradea", "Arad", "Pitești",
+                    "Sibiu", "Bacău", "Târgu Mureș", "Baia Mare", "Buzău", "Satu Mare", "Piatra Neamț"
+                  ].map(city => (
+                    <label key={city} className="flex items-center space-x-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={newGroup.cities.includes(city)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewGroup({ ...newGroup, cities: [...newGroup.cities, city] });
+                          } else {
+                            setNewGroup({ ...newGroup, cities: newGroup.cities.filter(c => c !== city) });
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span>{city}</span>
+                    </label>
+                  ))}
+                </div>
+                {newGroup.cities.length === 0 && (
+                  <p className="text-sm text-red-500">Selectează cel puțin un oraș</p>
+                )}
               </div>
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="flex-1 rounded-2xl">

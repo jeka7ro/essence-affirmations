@@ -157,19 +157,16 @@ button:focus-visible {
   }
 }
 
-/* Force full dark mode: eliminate any white surfaces when .dark is active - Navy Blue theme */
-.dark .bg-white { background-color: #0f1729 !important; }
-.dark .text-white { color: #e5e7eb !important; }
-.dark .text-gray-900 { color: #e5e7eb !important; }
-.dark .text-gray-800 { color: #cbd5e1 !important; }
-.dark .text-gray-700 { color: #cbd5e1 !important; }
-.dark .text-gray-600 { color: #94a3b8 !important; }
-.dark .text-gray-500 { color: #94a3b8 !important; }
-.dark .border-gray-200 { border-color: #1e3a5f !important; }
-.dark .border-gray-300 { border-color: #25476f !important; }
-.dark .bg-blue-50 { background-color: rgba(29, 78, 216, 0.15) !important; }
-.dark .bg-gray-50 { background-color: #0f1729 !important; }
+/* Dark mode navy theme only - no overrides for light mode */
 .dark .bg-gray-900 { background-color: #0f1729 !important; }
-.dark .bg-gray-800 { background-color: #1e293b !important; }
 .dark .bg-gray-950 { background-color: #0a0f1f !important; }
-.dark .shadow-lg, .dark .shadow, .dark .shadow-md { box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important; }
+.dark .bg-gray-800 { background-color: #1e293b !important; }
+
+/* Ensure text visibility in dark mode */
+.dark .text-gray-900 { color: #e5e7eb !important; }
+.dark .text-gray-800 { color: #e5e7eb !important; }
+.dark .text-gray-700 { color: #d1d5db !important; }
+.dark .text-gray-600 { color: #9ca3af !important; }
+.dark .text-gray-500 { color: #9ca3af !important; }
+.dark .text-gray-400 { color: #9ca3af !important; }
+.dark .text-gray-300 { color: #d1d5db !important; }

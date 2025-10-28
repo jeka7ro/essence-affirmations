@@ -64,97 +64,97 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Panou Administrare</h1>
-          <p className="text-gray-600 mt-2">Statistici și gestionare utilizatori</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Panou Administrare</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Statistici și gestionare utilizatori</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <Card className="border-none shadow-lg">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Total Utilizatori</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Utilizatori</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalUsers}</p>
                 </div>
-                <div className="p-2 rounded-xl bg-blue-500 bg-opacity-10">
+                <div className="p-2 rounded-xl bg-blue-500 bg-opacity-10 dark:bg-opacity-20">
                   <Users className="w-5 h-5 text-blue-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Activi (24h)</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Activi (24h)</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.activeUsers}</p>
                 </div>
-                <div className="p-2 rounded-xl bg-green-500 bg-opacity-10">
+                <div className="p-2 rounded-xl bg-green-500 bg-opacity-10 dark:bg-opacity-20">
                   <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-1">În Grupuri</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.usersInGroups || 0}</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">În Grupuri</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.usersInGroups || 0}</p>
                 </div>
-                <div className="p-2 rounded-xl bg-purple-500 bg-opacity-10">
+                <div className="p-2 rounded-xl bg-purple-500 bg-opacity-10 dark:bg-opacity-20">
                   <Users className="w-5 h-5 text-purple-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Individuali</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.individualUsers || 0}</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Individuali</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.individualUsers || 0}</p>
                 </div>
-                <div className="p-2 rounded-xl bg-orange-500 bg-opacity-10">
+                <div className="p-2 rounded-xl bg-orange-500 bg-opacity-10 dark:bg-opacity-20">
                   <Users className="w-5 h-5 text-orange-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Total Repetări</p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Repetări</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                     {stats.totalRepetitions > 9999 
                       ? `${Math.round(stats.totalRepetitions / 1000)}k` 
                       : stats.totalRepetitions
                     }
                   </p>
                 </div>
-                <div className="p-2 rounded-xl bg-blue-500 bg-opacity-10">
+                <div className="p-2 rounded-xl bg-blue-500 bg-opacity-10 dark:bg-opacity-20">
                   <Target className="w-5 h-5 text-blue-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-lg">
+          <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Medie/User</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.avgRepetitionsPerUser}</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Medie/User</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.avgRepetitionsPerUser}</p>
                 </div>
-                <div className="p-2 rounded-xl bg-green-500 bg-opacity-10">
+                <div className="p-2 rounded-xl bg-green-500 bg-opacity-10 dark:bg-opacity-20">
                   <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
               </div>
@@ -163,9 +163,9 @@ export default function AdminPage() {
         </div>
 
         {/* Users Table */}
-        <Card>
+        <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <CardHeader>
-            <CardTitle>Toți Utilizatorii</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-gray-100">Toți Utilizatorii</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -218,9 +218,9 @@ export default function AdminPage() {
         </Card>
 
         {/* Groups Table */}
-        <Card>
+        <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <CardHeader>
-            <CardTitle>Toate Grupurile</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-gray-100">Toate Grupurile</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
