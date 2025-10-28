@@ -236,13 +236,20 @@ app.get('/api/users', async (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role } = req.body;
+    const { username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role, 
+            total_repetitions, current_day, today_repetitions, last_date, repetition_history, completed_days, challenge_start_date } = req.body;
     
     console.log('DEBUG POST /api/users:', { username, email, first_name, last_name, phone, birth_date, pin, role });
     
     const result = await pool.query(
-      'INSERT INTO users (username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-      [username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role || 'user']
+      `INSERT INTO users (
+        username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role,
+        total_repetitions, current_day, today_repetitions, last_date, repetition_history, completed_days, challenge_start_date
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
+      [
+        username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role || 'user',
+        total_repetitions || 0, current_day || 0, today_repetitions || 0, last_date, repetition_history, completed_days, challenge_start_date
+      ]
     );
     
     console.log('DEBUG POST /api/users success:', result.rows[0]);
