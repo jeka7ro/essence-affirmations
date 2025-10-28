@@ -188,8 +188,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 py-8 px-4">
-      <Card className="w-full max-w-2xl mx-auto shadow-2xl border-none">
+    <div className="min-h-screen bg-white dark:bg-gray-900 py-8 px-4">
+      <Card className="w-full max-w-2xl mx-auto shadow-2xl border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
             <img 
@@ -198,7 +198,7 @@ export default function RegisterPage() {
               className="w-40 h-auto"
             />
           </div>
-          <CardTitle className="text-3xl font-bold text-center text-gray-900">
+          <CardTitle className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100">
             Înregistrare Nouă
           </CardTitle>
         </CardHeader>
@@ -430,14 +430,14 @@ export default function RegisterPage() {
               </div>
 
               {uploadingImage && (
-                <p className="text-center text-sm text-blue-600 font-medium">
+                <p className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium">
                   Se încarcă imaginea...
                 </p>
               )}
 
               {/* Emoji Options */}
               <div>
-                <p className="text-sm text-gray-600 mb-2">Sau alege un emoji:</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Sau alege un emoji:</p>
                 <div className="grid grid-cols-6 md:grid-cols-12 gap-2">
                   {AVATAR_OPTIONS.map((avatar) => (
                     <button
