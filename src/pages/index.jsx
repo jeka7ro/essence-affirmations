@@ -55,11 +55,10 @@ function _getCurrentPage(url) {
         urlLastPart = urlLastPart.split('?')[0];
     }
 
-    const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
-    const result = pageName || "Autentificare"; // Default to Autentificare instead of first page
-    
-    console.log('DEBUG _getCurrentPage:', { url, urlLastPart, pageName, result });
-    return result;
+          const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
+          const result = pageName || "Autentificare"; // Default to Autentificare instead of first page
+          
+          return result;
 }
 
 // Create a wrapper component that uses useLocation inside the Router context

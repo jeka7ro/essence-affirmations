@@ -63,23 +63,13 @@ export default function AutentificarePage() {
 
     addDebugLog('🔄 Login attempt: ' + username);
     addDebugLog('📱 Mobile: ' + /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-    
-    console.log('DEBUG Login attempt:', { username, pin });
-    console.log('DEBUG Mobile device:', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-    console.log('DEBUG localStorage before login:', {
-      essence_user_id: localStorage.getItem('essence_user_id'),
-      essence_username: localStorage.getItem('essence_username')
-    });
 
     try {
       addDebugLog('📡 Calling API...');
-      console.log('DEBUG About to call base44.entities.User.list()');
       const users = await base44.entities.User.list();
       addDebugLog('✅ API response: ' + users.length + ' users');
-      console.log('DEBUG Users from API:', users);
       
       const user = users.find(u => u.username === username && u.pin === pin);
-      console.log('DEBUG Found user:', user);
       
       if (!user) {
         addDebugLog('❌ User not found');
@@ -98,17 +88,6 @@ export default function AutentificarePage() {
       localStorage.setItem('essence_user_id', user.id);
       localStorage.setItem('essence_username', user.username);
       addDebugLog('✅ localStorage saved!');
-      
-      console.log('DEBUG Login: Saved to localStorage:', { 
-        userId: user.id, 
-        username: user.username 
-      });
-      
-      // Verify localStorage was saved correctly
-      console.log('DEBUG localStorage after save:', {
-        essence_user_id: localStorage.getItem('essence_user_id'),
-        essence_username: localStorage.getItem('essence_username')
-      });
 
       // Save or remove credentials based on "Remember Me"
       if (rememberMe) {
@@ -123,9 +102,7 @@ export default function AutentificarePage() {
       });
 
       addDebugLog('🔄 Redirecting to Home...');
-      console.log('DEBUG Login: Success, redirecting to Home');
-      console.log('DEBUG About to navigate to:', createPageUrl("Home"));
-
+      
       // Redirect to home WITHOUT reload to prevent redirect loop
       setTimeout(() => {
         navigate(createPageUrl("Home"));
