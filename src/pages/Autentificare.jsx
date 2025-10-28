@@ -18,6 +18,12 @@ export default function AutentificarePage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState('auto');
+  const [debugInfo, setDebugInfo] = useState([]);
+  
+  const addDebugLog = (message) => {
+    console.log(message);
+    setDebugInfo(prev => [...prev.slice(-9), message]); // Keep last 10 logs
+  };
 
   // Load saved credentials if "Remember Me" was checked
   useEffect(() => {
@@ -55,6 +61,9 @@ export default function AutentificarePage() {
     setError("");
     setLoading(true);
 
+    addDebugLog('🔄 Login attempt: ' + username);
+    addDebugLog('📱 Mobile: ' + /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    
     console.log('DEBUG Login attempt:', { username, pin });
     console.log('DEBUG Mobile device:', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
     console.log('DEBUG localStorage before login:', {
@@ -63,12 +72,20 @@ export default function AutentificarePage() {
     });
 
     try {
+      addDebugLog('📡 Calling API...');
       console.log('DEBUG About to call base44.entities.User.list()');
       const users = await base44.entities.User.list();
+      addDebugLog('✅ API response: ' + users.length + ' users');
       console.log('DEBUG Users from API:', users);
       
       const user = users.find(u => u.username === username && u.pin === pin);
       console.log('DEBUG Found user:', user);
+      
+      if (!user) {
+        addDebugLog('❌ User not found');
+      } else {
+        addDebugLog('✅ User found!');
+      }
 
       if (!user) {
         setError("Username sau PIN incorect");
@@ -77,8 +94,10 @@ export default function AutentificarePage() {
       }
 
       // Save user to localStorage
+      addDebugLog('💾 Saving to localStorage...');
       localStorage.setItem('essence_user_id', user.id);
       localStorage.setItem('essence_username', user.username);
+      addDebugLog('✅ localStorage saved!');
       
       console.log('DEBUG Login: Saved to localStorage:', { 
         userId: user.id, 
@@ -103,6 +122,7 @@ export default function AutentificarePage() {
         last_login: new Date().toISOString()
       });
 
+      addDebugLog('🔄 Redirecting to Home...');
       console.log('DEBUG Login: Success, redirecting to Home');
       console.log('DEBUG About to navigate to:', createPageUrl("Home"));
 
@@ -112,6 +132,7 @@ export default function AutentificarePage() {
       window.location.reload(); // Force reload to apply layout
       
     } catch (error) {
+      addDebugLog('❌ ERROR: ' + error.message);
       console.error("Login error:", error);
       setError("Eroare la conectare. Verifică internetul și încearcă din nou.");
     } finally {
@@ -151,6 +172,18 @@ export default function AutentificarePage() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
+          
+          {/* Debug Panel */}
+          {debugInfo.length > 0 && (
+            <div className="bg-gray-800 rounded-lg p-3 max-h-40 overflow-y-auto">
+              <p className="text-xs text-gray-400 mb-2">Debug Info:</p>
+              {debugInfo.map((log, idx) => (
+                <div key={idx} className="text-xs text-gray-300 mb-1">
+                  {log}
+                </div>
+              ))}
+            </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-5">
