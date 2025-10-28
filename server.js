@@ -1,4 +1,4 @@
-// Force redeploy - CORS fix v4 - add myessence.ro domains
+// Force redeploy - CORS fix v5 - fix missing headers
 import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
@@ -21,6 +21,16 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Debug CORS middleware
+app.use((req, res, next) => {
+  console.log('CORS Debug:', {
+    origin: req.headers.origin,
+    method: req.method,
+    url: req.url
+  });
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
