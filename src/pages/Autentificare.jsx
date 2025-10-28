@@ -55,9 +55,14 @@ export default function AutentificarePage() {
     setError("");
     setLoading(true);
 
+    console.log('DEBUG Login attempt:', { username, pin });
+
     try {
       const users = await base44.entities.User.list();
+      console.log('DEBUG Users from API:', users);
+      
       const user = users.find(u => u.username === username && u.pin === pin);
+      console.log('DEBUG Found user:', user);
 
       if (!user) {
         setError("Username sau PIN incorect");
@@ -85,6 +90,8 @@ export default function AutentificarePage() {
       await base44.entities.User.update(user.id, {
         last_login: new Date().toISOString()
       });
+
+      console.log('DEBUG Login: Success, redirecting to Home');
 
       // Redirect to home
       navigate(createPageUrl("Home"));

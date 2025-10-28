@@ -11,9 +11,17 @@ console.log('DEBUG: API_URL =', API_URL);
 function createEntityApi(entityName) {
   return {
     async list() {
+      console.log(`DEBUG ${entityName}.list(): Fetching from ${API_URL}/${entityName}`);
       const response = await fetch(`${API_URL}/${entityName}`);
-      if (!response.ok) throw new Error('Failed to fetch');
-      return await response.json();
+      console.log(`DEBUG ${entityName}.list(): Response status:`, response.status, response.statusText);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log(`DEBUG ${entityName}.list(): Error response:`, errorText);
+        throw new Error(`Failed to fetch ${entityName}: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log(`DEBUG ${entityName}.list(): Success, got ${data.length} items`);
+      return data;
     },
     async get(id) {
       const response = await fetch(`${API_URL}/${entityName}/${id}`);
@@ -81,13 +89,18 @@ export const base44 = {
       // If we don't have a username but we do have a userId, resolve it
       if (!username && storedUserId) {
         try {
+          console.log('DEBUG auth.me(): Resolving user by ID:', storedUserId);
           const resp = await fetch(`${API_URL}/users`);
+          console.log('DEBUG auth.me(): Response status:', resp.status);
           if (!resp.ok) throw new Error('Failed to fetch users');
           const allUsers = await resp.json();
+          console.log('DEBUG auth.me(): All users:', allUsers);
           const byId = allUsers.find(u => String(u.id) === String(storedUserId));
+          console.log('DEBUG auth.me(): Found user by ID:', byId);
           if (byId) {
             username = byId.username;
             localStorage.setItem('essence_username', byId.username || '');
+            console.log('DEBUG auth.me(): Set username from ID:', byId.username);
           }
         } catch (error) {
           console.error('Error resolving user by ID:', error);
@@ -102,10 +115,14 @@ export const base44 = {
 
       // Get user data
       try {
+        console.log('DEBUG auth.me(): Fetching user data for username:', username);
         const response = await fetch(`${API_URL}/users`);
+        console.log('DEBUG auth.me(): Response status for user data:', response.status);
         if (!response.ok) throw new Error('Failed to fetch users');
         const users = await response.json();
+        console.log('DEBUG auth.me(): All users for lookup:', users);
         const user = users.find(u => u.username === username);
+        console.log('DEBUG auth.me(): Found user:', user);
         if (!user) {
           console.log('DEBUG: User not found in database:', username);
           throw new Error('Not authenticated');
