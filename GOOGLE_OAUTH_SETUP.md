@@ -1,47 +1,42 @@
-# Configurare Google OAuth pentru Autentificare Reală
+# Configurare Google OAuth pentru aplicația Essence Affirmations
 
-## Pași pentru a obține Google Client ID:
+## Pași pentru configurarea Google OAuth:
 
-1. **Accesează Google Cloud Console:**
-   - Mergi la: https://console.cloud.google.com/
-   - Fă login cu contul tău Google
+### 1. Creează un proiect Google Cloud Console
+1. Mergi la [Google Cloud Console](https://console.cloud.google.com/)
+2. Creează un proiect nou sau selectează unul existent
+3. Activează Google+ API
 
-2. **Creează sau selectează proiectul:**
-   - Click pe dropdown-ul de proiecte din partea de sus
-   - Creează un proiect nou sau selectează unul existent
+### 2. Configurează OAuth consent screen
+1. Mergi la "APIs & Services" > "OAuth consent screen"
+2. Selectează "External" pentru tipul de utilizator
+3. Completează informațiile:
+   - App name: "Essence Affirmations"
+   - User support email: email-ul tău
+   - Developer contact: email-ul tău
+4. Adaugă scope-uri: `email`, `profile`, `openid`
 
-3. **Activează Google Identity API:**
-   - Mergi la "APIs & Services" -> "Library"
-   - Caută "Google Identity" și activează API-ul
+### 3. Creează credentiale OAuth 2.0
+1. Mergi la "APIs & Services" > "Credentials"
+2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
+3. Selectează "Web application"
+4. Adaugă URI-uri autorizate:
+   - `https://essence-affirmations.vercel.app`
+   - `http://localhost:5173` (pentru development)
+5. Copiază Client ID-ul generat
 
-4. **Creează OAuth Client ID:**
-   - Mergi la "APIs & Services" -> "Credentials"
-   - Click "Create Credentials" -> "OAuth client ID"
-   - Selectează "Web application"
+### 4. Actualizează aplicația
+1. Înlocuiește `YOUR_GOOGLE_CLIENT_ID` din `src/pages/Register.jsx` cu Client ID-ul real
+2. Înlocuiește `YOUR_GOOGLE_CLIENT_ID` din `index.html` cu Client ID-ul real
 
-5. **Configurează autorizările:**
-   - **Authorized JavaScript origins:**
-     - `http://localhost:3000`
-     - `https://essence-affirmations.vercel.app`
-   - **Authorized redirect URIs:**
-     - `http://localhost:3000`
-     - `https://essence-affirmations.vercel.app`
+### 5. Testează autentificarea
+1. Rulează aplicația local: `npm run dev`
+2. Mergi la pagina de înregistrare
+3. Click pe butonul Google
+4. Autentifică-te cu contul tău Google
+5. Formularul se va completa automat cu datele tale Google
 
-6. **Copiază Client ID-ul:**
-   - După creare, copiază Client ID-ul (format: `xxxxx.apps.googleusercontent.com`)
-
-## Configurare în aplicație:
-
-1. **Pentru dezvoltare locală:**
-   - Creează fișierul `.env.local` în root-ul proiectului
-   - Adaugă: `VITE_GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com`
-
-2. **Pentru producție pe Vercel:**
-   - Mergi la dashboard-ul Vercel
-   - Selectează proiectul
-   - Mergi la "Settings" -> "Environment Variables"
-   - Adaugă: `VITE_GOOGLE_CLIENT_ID` cu valoarea Client ID-ului
-
-## Testare:
-
-După configurare, butonul Google va deschide popup-ul real de autentificare Google și va pre-completa formularul cu datele reale din contul tău Google.
+## Notă importantă:
+- Client ID-ul trebuie să fie același în ambele fișiere
+- Asigură-te că URI-urile autorizate includ domeniile tale de producție și development
+- Testează întotdeauna înainte de deploy în producție
