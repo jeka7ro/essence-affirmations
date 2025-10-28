@@ -111,38 +111,38 @@ button:focus-visible {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 220 40% 8%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 220 35% 10%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 220 35% 10%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --primary: 210 80% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 30% 15%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --muted: 220 30% 15%;
+    --muted-foreground: 220 20% 65%;
+    --accent: 220 40% 18%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 220 35% 20%;
+    --input: 220 35% 20%;
+    --ring: 210 80% 50%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 220 50% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 210 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 40% 18%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 35% 20%;
+    --sidebar-ring: 210 100% 55%;
   }
 }
 
@@ -156,3 +156,20 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* Force full dark mode: eliminate any white surfaces when .dark is active - Navy Blue theme */
+.dark .bg-white { background-color: #0f1729 !important; }
+.dark .text-white { color: #e5e7eb !important; }
+.dark .text-gray-900 { color: #e5e7eb !important; }
+.dark .text-gray-800 { color: #cbd5e1 !important; }
+.dark .text-gray-700 { color: #cbd5e1 !important; }
+.dark .text-gray-600 { color: #94a3b8 !important; }
+.dark .text-gray-500 { color: #94a3b8 !important; }
+.dark .border-gray-200 { border-color: #1e3a5f !important; }
+.dark .border-gray-300 { border-color: #25476f !important; }
+.dark .bg-blue-50 { background-color: rgba(29, 78, 216, 0.15) !important; }
+.dark .bg-gray-50 { background-color: #0f1729 !important; }
+.dark .bg-gray-900 { background-color: #0f1729 !important; }
+.dark .bg-gray-800 { background-color: #1e293b !important; }
+.dark .bg-gray-950 { background-color: #0a0f1f !important; }
+.dark .shadow-lg, .dark .shadow, .dark .shadow-md { box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important; }

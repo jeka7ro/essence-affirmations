@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +18,7 @@ import ChallengeCalendar from "../components/home/ChallengeCalendar";
 import AffirmationBox from "../components/home/AffirmationBox";
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -98,6 +101,11 @@ export default function HomePage() {
       
     } catch (error) {
       console.error("Error loading data:", error);
+      // Redirect to login if unauthenticated
+      if (String(error?.message || "").toLowerCase().includes("not authenticated")) {
+        navigate(createPageUrl("Autentificare"), { replace: true });
+        return;
+      }
     } finally {
       setLoading(false);
     }
@@ -114,11 +122,20 @@ export default function HomePage() {
       
       const newCompletedDays = [];
       let newCurrentDay = 0;
+      const newRepetitionHistory = [];
       
-      if (daysPassed > 0 && daysPassed < 30) {
+      // If start date is in the past, automatically complete those days with 100 repetitions each
+      if (daysPassed > 0 && daysPassed <= 30) {
         for (let i = 0; i < daysPassed; i++) {
           const dayDate = format(addDays(startDate, i), 'yyyy-MM-dd');
           newCompletedDays.push(dayDate);
+          // Add 100 repetitions for each completed day
+          for (let j = 0; j < 100; j++) {
+            newRepetitionHistory.push({
+              date: dayDate,
+              timestamp: new Date(addDays(startDate, i)).toISOString()
+            });
+          }
         }
         newCurrentDay = daysPassed;
       }
@@ -127,12 +144,17 @@ export default function HomePage() {
         challenge_start_date: selectedStartDate,
         current_day: newCurrentDay,
         completed_days: JSON.stringify(newCompletedDays),
+        repetition_history: JSON.stringify(newRepetitionHistory),
+        total_repetitions: newRepetitionHistory.length,
+        today_repetitions: 0,
         last_date: format(today, 'yyyy-MM-dd')
       });
       
       setChallengeStartDate(selectedStartDate);
       setCurrentDay(newCurrentDay);
       setCompletedDays(newCompletedDays);
+      setRepetitionHistory(newRepetitionHistory);
+      setTotalRepetitions(newRepetitionHistory.length);
       setShowStartDialog(false);
       
       await base44.entities.Activity.create({
@@ -339,7 +361,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
+    <div className="min-h-screen bg-gray-900 p-4 md:p-8 text-gray-100">
       <div className="max-w-6xl mx-auto space-y-8">
         
         <Dialog open={showStartDialog} onOpenChange={(open) => {
@@ -429,25 +451,25 @@ export default function HomePage() {
         />
 
         {challengeStartDate && (
-          <Card className="border-2 border-blue-100 shadow-lg rounded-3xl">
+          <Card className="border-2 border-gray-800 bg-gray-950 shadow-lg rounded-3xl">
             <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-100">
                     Repetări Astăzi: {todayRepetitions}/100
                   </h3>
-                  <div className="relative h-5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="relative h-5 bg-gray-800 rounded-full overflow-hidden">
                     <div 
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 ease-out"
                       style={{ width: `${progressPercentage}%` }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-bold text-gray-700">
+                      <span className="text-xs font-bold text-gray-100">
                         {Math.round(progressPercentage)}%
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-300">
                     {todayRepetitions >= 100 
                       ? "🎉 Felicitări! Ai completat provocarea de astăzi!" 
                       : `Mai ai nevoie de ${100 - todayRepetitions} repetări (≈${repsNeededPerHour}/oră)`
@@ -480,19 +502,19 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-200 space-y-2">
+                <div className="pt-4 border-t border-gray-800 space-y-2">
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <p className="text-xs text-gray-600">Ziua Curentă</p>
-                      <p className="text-2xl font-bold text-blue-600">{currentDay}/30</p>
+                      <p className="text-xs text-gray-300">Zile Complete</p>
+                      <p className="text-2xl font-bold text-blue-600">{completedDays.length}/30</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600">Zile Rămase</p>
+                      <p className="text-xs text-gray-300">Zile Rămase</p>
                       <p className="text-2xl font-bold text-green-600">{daysRemaining}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600">Total Repetări</p>
-                      <p className="text-2xl font-bold text-gray-900">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
+                      <p className="text-xs text-gray-300">Total Repetări</p>
+                      <p className="text-2xl font-bold text-gray-100">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
                     </div>
                   </div>
 
@@ -500,7 +522,7 @@ export default function HomePage() {
                     <Button
                       onClick={handleResetToday}
                       variant="outline"
-                      className="flex-1 h-10 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 rounded-2xl text-sm font-semibold"
+                      className="flex-1 h-10 border-2 border-orange-500 text-orange-400 hover:bg-orange-900/10 rounded-2xl text-sm font-semibold"
                     >
                       <RotateCcw className="w-4 h-4 mr-1" />
                       Reset Zi Curentă
@@ -508,7 +530,7 @@ export default function HomePage() {
                     <Button
                       onClick={handleResetChallenge}
                       variant="outline"
-                      className="flex-1 h-10 border-2 border-red-500 text-red-600 hover:bg-red-50 rounded-2xl text-sm font-semibold"
+                      className="flex-1 h-10 border-2 border-red-500 text-red-400 hover:bg-red-900/10 rounded-2xl text-sm font-semibold"
                     >
                       <RotateCcw className="w-4 h-4 mr-1" />
                       Reset Provocare

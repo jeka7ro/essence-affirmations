@@ -67,8 +67,23 @@ export const base44 = {
   },
   auth: {
     async me() {
-      const username = localStorage.getItem('essence_username');
+      const storedUserId = localStorage.getItem('essence_user_id');
+      let username = localStorage.getItem('essence_username');
+
+      // If we don't have a username but we do have a userId, resolve it
+      if (!username && storedUserId) {
+        const resp = await fetch(`${API_URL}/users`);
+        if (!resp.ok) throw new Error('Not authenticated');
+        const allUsers = await resp.json();
+        const byId = allUsers.find(u => String(u.id) === String(storedUserId));
+        if (byId) {
+          username = byId.username;
+          localStorage.setItem('essence_username', byId.username || '');
+        }
+      }
+
       if (!username) throw new Error('Not authenticated');
+
       const response = await fetch(`${API_URL}/users`);
       if (!response.ok) throw new Error('Not authenticated');
       const users = await response.json();

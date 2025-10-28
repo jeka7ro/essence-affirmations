@@ -18,6 +18,8 @@ import ForgotPin from "./ForgotPin";
 
 import Autentificare from "./Autentificare";
 
+import Courses from "./Courses";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -39,6 +41,8 @@ const PAGES = {
     ForgotPin: ForgotPin,
     
     Autentificare: Autentificare,
+    
+    Courses: Courses,
     
 }
 
@@ -84,6 +88,8 @@ function PagesContent() {
                 <Route path="/ForgotPin" element={<ForgotPin />} />
                 
                 <Route path="/Autentificare" element={<Autentificare />} />
+                
+                <Route path="/Courses" element={<Courses />} />
                 
             </Routes>
         </Layout>

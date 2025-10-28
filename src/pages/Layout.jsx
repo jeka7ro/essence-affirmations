@@ -22,6 +22,7 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState('auto');
 
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
   const shouldShowLayout = !noLayoutPages.includes(currentPageName);
@@ -34,6 +35,32 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [shouldShowLayout, currentPageName]);
 
+  // Theme init
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') || 'auto';
+    setTheme(saved);
+    applyTheme(saved);
+  }, []);
+
+  const applyTheme = (newTheme) => {
+    let dark = false;
+    if (newTheme === 'dark') dark = true;
+    else if (newTheme === 'light') dark = false;
+    else dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    document.documentElement.classList.toggle('dark', dark);
+  };
+
+  const cycleTheme = () => {
+    let next = 'light';
+    if (theme === 'light') next = 'dark';
+    else if (theme === 'dark') next = 'auto';
+    
+    setTheme(next);
+    applyTheme(next);
+    localStorage.setItem('theme', next);
+  };
+
   const loadUser = async () => {
     try {
       const userId = localStorage.getItem('essence_user_id');
@@ -44,7 +71,7 @@ export default function Layout({ children, currentPageName }) {
       }
 
       const users = await base44.entities.User.list();
-      const userData = users.find(u => u.id === userId);
+      const userData = users.find(u => String(u.id) === String(userId));
       
       if (!userData) {
         localStorage.removeItem('essence_user_id');
@@ -73,6 +100,7 @@ export default function Layout({ children, currentPageName }) {
 
   const navigationItems = [
     { title: "Acasă", url: createPageUrl("Home"), icon: Home },
+    { title: "Cursuri", url: createPageUrl("Courses"), icon: Activity },
     { title: "Grupuri", url: createPageUrl("Groups"), icon: Users },
     { title: "Chat", url: createPageUrl("Chat"), icon: MessageSquare },
     { title: "Feed", url: createPageUrl("Feed"), icon: Activity },
@@ -100,10 +128,10 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row w-full bg-white">
+    <div className="min-h-screen flex flex-col md:flex-row w-full bg-white dark:bg-gray-900">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-gray-200 fixed left-0 top-0 bottom-0 z-50">
-        <div className="border-b border-gray-200 p-6">
+      <aside className="hidden md:flex md:flex-col w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 fixed left-0 top-0 bottom-0 z-50">
+        <div className="border-b border-gray-200 dark:border-gray-800 p-6">
           <div className="flex flex-col items-center gap-4">
             <img 
               src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
@@ -111,11 +139,11 @@ export default function Layout({ children, currentPageName }) {
               className="w-32 h-auto"
             />
             <div className="text-center">
-              <h2 className="font-bold text-lg text-gray-900">Afirmatii Essence</h2>
-              <p className="text-sm text-gray-500">Advanced</p>
+              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Afirmatii Essence</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Advanced</p>
             </div>
             {user && (
-              <div className="text-center mt-2 pt-2 border-t border-gray-200 w-full">
+              <div className="text-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-800 w-full">
                 <div className="flex items-center justify-center gap-3 mb-2">
                   {user.avatar && (
                     <>
@@ -126,14 +154,14 @@ export default function Layout({ children, currentPageName }) {
                           className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-2xl">
+                        <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
                           {user.avatar}
                         </div>
                       )}
                     </>
                   )}
                 </div>
-                <p className="text-sm font-medium text-gray-900">Utilizator:</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">Utilizator:</p>
                 <p className="text-lg font-bold text-blue-600">{user.username || user.email}</p>
                 {user.role === "admin" && (
                   <p className="text-xs text-green-600 font-semibold mt-1">ADMIN</p>
@@ -151,14 +179,21 @@ export default function Layout({ children, currentPageName }) {
                 to={item.url}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
                   location.pathname === item.url 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'hover:bg-blue-50 hover:text-blue-700'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
+                    : 'hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-gray-800 dark:hover:text-blue-300'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-semibold text-base">{item.title}</span>
               </Link>
             ))}
+            <button
+              onClick={cycleTheme}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+            >
+              <span className="w-5 h-5 inline-block">{theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'}</span>
+              <span className="font-semibold text-base">{theme === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}</span>
+            </button>
             
             <button
               onClick={handleLogout}
@@ -174,7 +209,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Main content with margin for sidebar */}
       <div className="flex-1 flex flex-col md:ml-64">
         {/* Mobile Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 md:hidden sticky top-0 z-50">
+        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 md:hidden sticky top-0 z-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -193,6 +228,9 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-blue-600">{user.username || user.email}</span>
+                <button onClick={cycleTheme} className="text-xl" aria-label="Cycle theme">
+                  {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'}
+                </button>
                 {user.role === "admin" && (
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">ADMIN</span>
                 )}
@@ -202,7 +240,7 @@ export default function Layout({ children, currentPageName }) {
           
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50">
+            <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 shadow-lg z-50">
               <nav className="flex flex-col p-2">
                 {navigationItems.map((item) => (
                   <Link
@@ -211,8 +249,8 @@ export default function Layout({ children, currentPageName }) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
                       location.pathname === item.url 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-50'
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     <item.icon className="w-5 h-5" />
@@ -235,7 +273,7 @@ export default function Layout({ children, currentPageName }) {
         </header>
 
         {/* Main content area */}
-        <main className="flex-1 overflow-auto bg-white">
+        <main className="flex-1 overflow-auto bg-white dark:bg-gray-900">
           {children}
         </main>
       </div>

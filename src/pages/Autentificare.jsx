@@ -17,6 +17,7 @@ export default function AutentificarePage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState('auto');
 
   // Load saved credentials if "Remember Me" was checked
   useEffect(() => {
@@ -25,7 +26,29 @@ export default function AutentificarePage() {
       setUsername(savedUsername);
       setRememberMe(true);
     }
+    const saved = localStorage.getItem('theme') || 'auto';
+    setTheme(saved);
+    applyTheme(saved);
   }, []);
+
+  const applyTheme = (newTheme) => {
+    let dark = false;
+    if (newTheme === 'dark') dark = true;
+    else if (newTheme === 'light') dark = false;
+    else dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    document.documentElement.classList.toggle('dark', dark);
+  };
+
+  const cycleTheme = () => {
+    let next = 'light';
+    if (theme === 'light') next = 'dark';
+    else if (theme === 'dark') next = 'auto';
+    
+    setTheme(next);
+    applyTheme(next);
+    localStorage.setItem('theme', next);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -71,20 +94,27 @@ export default function AutentificarePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl border-none rounded-3xl">
-        <CardHeader className="space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-2xl border-none rounded-3xl bg-neutral-900 text-gray-100">
+        <CardHeader className="space-y-4 relative">
+          <button
+            aria-label="Cycle theme"
+            onClick={cycleTheme}
+            className="absolute right-2 top-2 text-xl"
+          >
+            {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'}
+          </button>
           <div className="flex justify-center">
             <img 
               src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
               alt="Essence Logo" 
-              className="w-40 h-auto"
+              className="w-40 h-auto brightness-200 contrast-125"
             />
           </div>
-          <CardTitle className="text-3xl font-bold text-center text-gray-900">
+          <CardTitle className="text-3xl font-bold text-center text-gray-100">
             Bine ai venit!
           </CardTitle>
-          <p className="text-center text-gray-600">
+          <p className="text-center text-gray-300">
             Conectează-te pentru a continua
           </p>
         </CardHeader>
@@ -99,7 +129,7 @@ export default function AutentificarePage() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-base font-semibold">
+              <Label htmlFor="username" className="text-base font-semibold text-gray-100">
                 Username
               </Label>
               <Input
@@ -108,13 +138,13 @@ export default function AutentificarePage() {
                 placeholder="Introdu username-ul"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="h-12 text-lg rounded-2xl"
+                className="h-12 text-lg rounded-2xl bg-neutral-800 border-neutral-700 text-gray-100 placeholder:text-gray-400"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pin" className="text-base font-semibold">
+              <Label htmlFor="pin" className="text-base font-semibold text-gray-100">
                 PIN (4 cifre)
               </Label>
               <Input
@@ -126,7 +156,7 @@ export default function AutentificarePage() {
                 placeholder="••••"
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                className="h-12 text-2xl tracking-widest text-center rounded-2xl"
+                className="h-12 text-2xl tracking-widest text-center rounded-2xl bg-neutral-800 border-neutral-700 text-gray-100 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -139,7 +169,7 @@ export default function AutentificarePage() {
               />
               <Label 
                 htmlFor="remember" 
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-200"
               >
                 Ține-mă logat
               </Label>
@@ -147,7 +177,7 @@ export default function AutentificarePage() {
 
             <Button
               type="submit"
-              className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 rounded-2xl"
+              className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 rounded-2xl text-white"
               disabled={loading}
             >
               {loading ? "Se conectează..." : "Conectare"}
@@ -157,14 +187,14 @@ export default function AutentificarePage() {
           <div className="flex justify-between text-sm">
             <Button
               variant="link"
-              className="text-blue-600 p-0"
+              className="text-blue-400 p-0"
               onClick={() => navigate(createPageUrl("ForgotPin"))}
             >
               Am uitat PIN-ul
             </Button>
             <Button
               variant="link"
-              className="text-blue-600 p-0"
+              className="text-blue-400 p-0"
               onClick={() => navigate(createPageUrl("Register"))}
             >
               Înregistrare

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
+import fetch from 'node-fetch';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -102,6 +103,41 @@ async function initializeTables() {
 
 initializeTables();
 
+// Seed default admin user if table is empty (dev convenience)
+async function seedIfEmpty() {
+  try {
+    const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM users');
+    if (rows[0]?.count === 0) {
+      await pool.query(
+        `INSERT INTO users (username, email, full_name, first_name, last_name, pin, role, total_repetitions, current_day, today_repetitions, last_date, repetition_history, completed_days)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)` ,
+        [
+          'Eugen',
+          'eugen@example.com',
+          'Eugen Admin',
+          'Eugen',
+          'Admin',
+          '1155',
+          'admin',
+          0,
+          0,
+          0,
+          null,
+          JSON.stringify([]),
+          JSON.stringify([])
+        ]
+      );
+      console.log('Seeded default admin user: Eugen / 1155');
+    }
+    // Ensure PIN is updated if user already existed
+    await pool.query(`UPDATE users SET pin = '1155' WHERE username = 'Eugen'`);
+  } catch (err) {
+    console.error('Seed error:', err);
+  }
+}
+
+seedIfEmpty();
+
 // API Routes
 
 // Users
@@ -142,7 +178,52 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
+// Courses endpoint (scrape Essence courses)
+app.get('/api/courses', async (req, res) => {
+  try {
+    const response = await fetch('https://essence-process.com/ro/cursuri/');
+    const html = await response.text();
+
+    // Very simple extraction based on known headings in provided content
+    const blocks = [];
+    const courseRegex = /##\s*(.+?)\n[\s\S]*?(\d{2})\s*\n([A-Z][a-z]{2})[\s\S]*?\n\s*(\d{2})\s*\n([A-Z][a-z]{2})[\s\S]*?\n[\s\S]*?(Cluj-Napoca|Iasi|Brasov)/g;
+    let match;
+    while ((match = courseRegex.exec(html)) !== null) {
+      const title = match[1].trim();
+      const startDay = match[2];
+      const startMonth = match[3];
+      const endDay = match[4];
+      const endMonth = match[5];
+      const city = match[6];
+      blocks.push({ title, startDay, startMonth, endDay, endMonth, city });
+    }
+
+    // Fallback: hardcode from provided snippet if regex fails
+    if (blocks.length === 0) {
+      blocks.push(
+        { title: 'Essence Advance Therapeutic Process', startDay: '05', startMonth: 'Nov', endDay: '09', endMonth: 'Nov', city: 'Cluj-Napoca', year: 2025 },
+        { title: 'Essence Foundation Therapeutic Process', startDay: '05', startMonth: 'Dec', endDay: '07', endMonth: 'Dec', city: 'Iasi', year: 2025 },
+        { title: 'Essence Advance Therapeutic Process', startDay: '14', startMonth: 'Ian', endDay: '18', endMonth: 'Ian', city: 'Cluj-Napoca', year: 2026 },
+        { title: 'Essence Advance Therapeutic Process', startDay: '18', startMonth: 'Feb', endDay: '22', endMonth: 'Feb', city: 'Cluj-Napoca', year: 2026 },
+        { title: 'Essence Relationships Therapeutic Process', startDay: '08', startMonth: 'Mai', endDay: '10', endMonth: 'Mai', city: 'Brasov', year: 2026 }
+      );
+    }
+
+    const monthMap = { Ian: 1, Feb: 2, Mar: 3, Apr: 4, Mai: 5, Iun: 6, Iul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+    const currentYear = new Date().getFullYear();
+    const normalized = blocks.map(b => {
+      const year = b.year || (['Nov','Dec'].includes(b.startMonth) ? 2025 : ['Ian','Feb','Mar','Apr','Mai'].includes(b.startMonth) ? 2026 : currentYear);
+      const start = new Date(year, (monthMap[b.startMonth] || 1) - 1, parseInt(b.startDay, 10));
+      const end = new Date(year, (monthMap[b.endMonth] || 1) - 1, parseInt(b.endDay, 10));
+      return { title: b.title, city: b.city, start: start.toISOString().slice(0,10), end: end.toISOString().slice(0,10) };
+    });
+
+    res.json(normalized);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
-

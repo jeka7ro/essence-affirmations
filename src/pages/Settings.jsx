@@ -7,6 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, AlertCircle, Camera, Upload } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ro } from "date-fns/locale";
 
 const AVATAR_OPTIONS = ["👤", "👨", "👩", "🧑", "👴", "👵", "🧔", "👨‍💼", "👩‍💼", "🧑‍💻", "👨‍🎓", "👩‍🎓"];
 
@@ -25,6 +30,7 @@ export default function SettingsPage() {
     newPin: "",
     confirmPin: ""
   });
+  const [challengeDate, setChallengeDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -52,6 +58,7 @@ export default function SettingsPage() {
           avatar: userData.avatar || "👤",
           avatarType: isImageAvatar ? "image" : "emoji"
         });
+        setChallengeDate(userData.challenge_start_date || "");
       }
     } catch (error) {
       console.error("Error loading data:", error);
@@ -153,6 +160,58 @@ export default function SettingsPage() {
     } catch (error) {
       console.error("Error changing PIN:", error);
       setError("Eroare la schimbarea PIN-ului");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveChallengeDate = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setSaving(true);
+
+    try {
+      const { format, parseISO, addDays, differenceInDays } = await import('date-fns');
+      const startDate = parseISO(challengeDate);
+      const today = new Date();
+      const daysPassed = differenceInDays(today, startDate);
+      
+      const newCompletedDays = [];
+      let newCurrentDay = 0;
+      const newRepetitionHistory = [];
+      
+      // If start date is in the past, automatically complete those days with 100 repetitions each
+      if (daysPassed > 0 && daysPassed <= 30) {
+        for (let i = 0; i < daysPassed; i++) {
+          const dayDate = format(addDays(startDate, i), 'yyyy-MM-dd');
+          newCompletedDays.push(dayDate);
+          // Add 100 repetitions for each completed day
+          for (let j = 0; j < 100; j++) {
+            newRepetitionHistory.push({
+              date: dayDate,
+              timestamp: new Date(addDays(startDate, i)).toISOString()
+            });
+          }
+        }
+        newCurrentDay = daysPassed;
+      }
+
+      await base44.entities.User.update(user.id, {
+        challenge_start_date: challengeDate,
+        current_day: newCurrentDay,
+        completed_days: JSON.stringify(newCompletedDays),
+        repetition_history: JSON.stringify(newRepetitionHistory),
+        total_repetitions: newRepetitionHistory.length,
+        today_repetitions: 0
+      });
+
+      setSuccess("Data provocării a fost setată cu succes!");
+      setTimeout(() => setSuccess(""), 3000);
+      loadData();
+    } catch (error) {
+      console.error("Error updating challenge date:", error);
+      setError("Eroare la setarea datei provocării");
     } finally {
       setSaving(false);
     }
@@ -331,6 +390,48 @@ export default function SettingsPage() {
                 disabled={saving || uploadingImage}
               >
                 {saving ? "Se salvează..." : "Salvează Modificările"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Challenge Start Date */}
+        <Card className="rounded-3xl shadow-lg">
+          <CardHeader>
+            <CardTitle>Data Provocării</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveChallengeDate} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Selectează data de început</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal h-14 rounded-2xl"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {challengeDate ? format(new Date(challengeDate), 'd MMMM yyyy', { locale: ro }) : "Alege data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={challengeDate ? new Date(challengeDate) : undefined}
+                      onSelect={(date) => setChallengeDate(date ? format(date, 'yyyy-MM-dd') : '')}
+                      disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Schimbă data de început a provocării tale de 30 de zile</p>
+              </div>
+              <Button
+                type="submit"
+                className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 h-12 px-8 rounded-2xl"
+                disabled={saving}
+              >
+                {saving ? "Se salvează..." : "Salvează Data"}
               </Button>
             </form>
           </CardContent>
