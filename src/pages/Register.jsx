@@ -169,7 +169,7 @@ export default function RegisterPage() {
         role: isSuperAdmin ? "admin" : "user" // Only super admin can create groups
       };
 
-      await base44.entities.User.create(userData);
+      const createdUser = await base44.entities.User.create(userData);
 
       await base44.entities.Activity.create({
         username: formData.username,
@@ -177,7 +177,13 @@ export default function RegisterPage() {
         description: `${formData.username} s-a alăturat comunității`
       });
 
-      navigate(createPageUrl("Autentificare"));
+      // Auto-login after registration
+      localStorage.setItem('essence_user_id', createdUser.id);
+      localStorage.setItem('essence_username', formData.username);
+      
+      // Redirect to home
+      navigate(createPageUrl("Home"));
+      window.location.reload(); // Force reload to apply layout
       
     } catch (error) {
       console.error("Registration error:", error);
