@@ -141,7 +141,7 @@ async function seedIfEmpty() {
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)` ,
         [
           'Eugen',
-          'eugen@example.com',
+          'jeka7ro@gmail.com',
           'Eugen Admin',
           'Eugen',
           'Admin',
@@ -158,7 +158,7 @@ async function seedIfEmpty() {
       console.log('Seeded default admin user: Eugen / 1155');
     }
     // Ensure PIN is updated if user already existed
-    await pool.query(`UPDATE users SET pin = '1155' WHERE username = 'Eugen'`);
+    await pool.query(`UPDATE users SET pin = '1155' WHERE email = 'jeka7ro@gmail.com'`);
   } catch (err) {
     console.error('Seed error:', err);
   }

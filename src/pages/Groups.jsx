@@ -98,8 +98,8 @@ export default function GroupsPage() {
       return;
     }
 
-    if (user.role !== "admin") {
-      setError("Doar administratorii pot crea grupuri");
+    if (user.email !== "jeka7ro@gmail.com") {
+      setError("Doar super administratorul poate crea grupuri");
       return;
     }
 
@@ -326,7 +326,7 @@ export default function GroupsPage() {
               }
             </p>
           </div>
-          {user?.role === "admin" && (
+          {user?.email === "jeka7ro@gmail.com" && (
             <Button
               onClick={() => setShowCreateDialog(true)}
               className="bg-green-600 hover:bg-green-700 rounded-2xl"
@@ -458,7 +458,7 @@ export default function GroupsPage() {
             <CardContent className="p-8 text-center">
               <p className="text-lg text-gray-600">
                 Nu există grupuri disponibile momentan.
-                {user?.role === "admin" && " Poți crea unul nou!"}
+                {user?.email === "jeka7ro@gmail.com" && " Poți crea unul nou!"}
               </p>
             </CardContent>
           </Card>

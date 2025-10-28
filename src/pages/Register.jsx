@@ -12,8 +12,8 @@ import { AlertCircle, Check, Camera, Upload } from "lucide-react";
 
 const AVATAR_OPTIONS = ["👤", "👨", "👩", "🧑", "👴", "👵", "🧔", "👨‍💼", "👩‍💼", "🧑‍💻", "👨‍🎓", "👩‍🎓"];
 
-// Super admin username - only this user can create groups
-const SUPER_ADMIN_USERNAME = "Eugen";
+// Super admin email - only this user can create groups and manage roles
+const SUPER_ADMIN_EMAIL = "jeka7ro@gmail.com";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -146,7 +146,7 @@ export default function RegisterPage() {
 
     try {
       // Check if this is the super admin user
-      const isSuperAdmin = formData.username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase();
+      const isSuperAdmin = formData.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
       const userData = {
         username: formData.username,

@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, TrendingUp, Calendar, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, TrendingUp, Calendar, Target, Shield, UserCheck } from "lucide-react";
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -18,6 +20,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [updatingRole, setUpdatingRole] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -25,8 +29,13 @@ export default function AdminPage() {
 
   const loadData = async () => {
     try {
+      const currentUserData = await base44.auth.me();
       const allUsers = await base44.entities.User.list();
       const allGroups = await base44.entities.Group.list();
+      
+      // Find current user in the users list
+      const currentUserObj = allUsers.find(u => u.email === currentUserData.email);
+      setCurrentUser(currentUserObj);
       
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const activeUsers = allUsers.filter(u => u.last_login && u.last_login > oneDayAgo);
@@ -55,10 +64,45 @@ export default function AdminPage() {
     }
   };
 
+  const handleRoleChange = async (userId, newRole) => {
+    if (currentUser?.email !== "jeka7ro@gmail.com") {
+      alert("Doar super administratorul poate schimba rolurile");
+      return;
+    }
+
+    setUpdatingRole(userId);
+    try {
+      await base44.entities.User.update(userId, { role: newRole });
+      await loadData(); // Reload data
+    } catch (error) {
+      console.error("Error updating role:", error);
+      alert("Eroare la actualizarea rolului");
+    } finally {
+      setUpdatingRole(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  // Check if user is super admin
+  if (currentUser?.email !== "jeka7ro@gmail.com") {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Shield className="h-16 w-16 mx-auto mb-4 text-red-500" />
+            <h2 className="text-2xl font-bold mb-2">Acces Restricționat</h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Doar super administratorul poate accesa această pagină.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -175,6 +219,7 @@ export default function AdminPage() {
                     <TableHead>Username</TableHead>
                     <TableHead>Nume</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Rol</TableHead>
                     <TableHead>Total Repetări</TableHead>
                     <TableHead>Ziua Curentă</TableHead>
                     <TableHead>Grup</TableHead>
@@ -193,6 +238,21 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>{user.first_name} {user.last_name}</TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={user.role || "user"}
+                            onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                            disabled={updatingRole === user.id}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                         <TableCell className="font-bold text-blue-600">
                           {(user.total_repetitions || 0).toLocaleString('ro-RO')}
                         </TableCell>
