@@ -27,7 +27,10 @@ export default function Layout({ children, currentPageName }) {
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
   const shouldShowLayout = !noLayoutPages.includes(currentPageName);
 
+  console.log('DEBUG Layout:', { currentPageName, shouldShowLayout, noLayoutPages });
+
   useEffect(() => {
+    console.log('DEBUG Layout useEffect:', { shouldShowLayout, currentPageName });
     if (shouldShowLayout) {
       loadUser();
     } else {
