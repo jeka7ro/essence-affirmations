@@ -42,69 +42,89 @@ export default function RegisterPage() {
     setError("");
     
     try {
-      let authUrl = "";
-      let clientId = "";
-      
-      switch (provider) {
-        case 'google':
-          clientId = "your-google-client-id.apps.googleusercontent.com";
-          authUrl = `https://accounts.google.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=email profile&state=${provider}`;
-          break;
-        case 'microsoft':
-          clientId = "your-microsoft-client-id";
-          authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(window.location.origin)}&scope=openid email profile&state=${provider}`;
-          break;
-        case 'yahoo':
-          clientId = "your-yahoo-client-id";
-          authUrl = `https://api.login.yahoo.com/oauth2/request_auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&state=${provider}`;
-          break;
-        default:
-          throw new Error("Provider not supported");
-      }
-      
-      // Open popup for OAuth
-      const popup = window.open(authUrl, 'oauth', 'width=500,height=600,scrollbars=yes,resizable=yes');
-      
-      // Listen for popup completion
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          setLoading(false);
-          setError("Autentificarea a fost anulată");
-        }
-      }, 1000);
-      
-      // For demo purposes, simulate successful login
-      setTimeout(() => {
-        if (!popup.closed) {
-          popup.close();
-          clearInterval(checkClosed);
-          
-          // Simulate user data from OAuth
-          const mockUserData = {
-            username: `${provider}_user_${Date.now()}`,
-            email: `user@${provider}.com`,
-            first_name: `${provider.charAt(0).toUpperCase() + provider.slice(1)}`,
-            last_name: "User",
-            avatar: provider === 'google' ? '🔴' : provider === 'microsoft' ? '🔵' : '🟣',
-            avatarType: "emoji"
+      if (provider === 'google') {
+        // Use Google Identity Services for real authentication
+        if (typeof google === 'undefined') {
+          // Load Google Identity Services if not already loaded
+          const script = document.createElement('script');
+          script.src = 'https://accounts.google.com/gsi/client';
+          script.onload = () => {
+            initializeGoogleAuth();
           };
-          
-          // Auto-fill form with OAuth data
-          setFormData(prev => ({
-            ...prev,
-            ...mockUserData,
-            pin: "1234",
-            confirmPin: "1234"
-          }));
-          
-          setError(`✅ Autentificare ${provider.charAt(0).toUpperCase() + provider.slice(1)} reușită! Completează PIN-ul și finalizează înregistrarea.`);
-          setLoading(false);
+          document.head.appendChild(script);
+        } else {
+          initializeGoogleAuth();
         }
-      }, 2000);
-      
+      } else {
+        setError(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login nu este încă implementat`);
+        setLoading(false);
+      }
     } catch (error) {
       setError(`Eroare la autentificarea ${provider}: ${error.message}`);
+      setLoading(false);
+    }
+  };
+
+  const initializeGoogleAuth = () => {
+    if (typeof google === 'undefined') {
+      setError("Google Identity Services nu s-au încărcat");
+      setLoading(false);
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+      callback: handleGoogleCallback,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // Fallback to popup
+        const popup = google.accounts.id.renderButton(
+          document.createElement('div'),
+          {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular'
+          }
+        );
+        
+        // Trigger popup manually
+        google.accounts.id.prompt();
+      }
+    });
+  };
+
+  const handleGoogleCallback = (response) => {
+    try {
+      // Decode the JWT token
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      
+      const userData = {
+        username: payload.email.split('@')[0] + '_' + Date.now(),
+        email: payload.email,
+        first_name: payload.given_name || payload.name.split(' ')[0],
+        last_name: payload.family_name || payload.name.split(' ').slice(1).join(' ') || '',
+        avatar: payload.picture || '🔴',
+        avatarType: payload.picture ? "image" : "emoji"
+      };
+      
+      // Auto-fill form with real Google data
+      setFormData(prev => ({
+        ...prev,
+        ...userData,
+        pin: "1234",
+        confirmPin: "1234"
+      }));
+      
+      setError(`✅ Autentificare Google reușită cu ${payload.email}! Completează PIN-ul și finalizează înregistrarea.`);
+      setLoading(false);
+      
+    } catch (error) {
+      setError(`Eroare la procesarea datelor Google: ${error.message}`);
       setLoading(false);
     }
   };
