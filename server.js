@@ -1,3 +1,4 @@
+// Force redeploy - CORS fix
 import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
