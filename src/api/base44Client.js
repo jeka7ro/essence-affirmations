@@ -7,25 +7,42 @@ const API_URL = (window.location.hostname.includes('vercel.app') ||
   : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
 
 console.log('DEBUG: hostname =', window.location.hostname);
+console.log('DEBUG: userAgent =', navigator.userAgent);
+console.log('DEBUG: isMobile =', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 console.log('DEBUG: includes vercel.app =', window.location.hostname.includes('vercel.app'));
 console.log('DEBUG: includes myessence.ro =', window.location.hostname.includes('myessence.ro'));
 console.log('DEBUG: includes essence-affirmations =', window.location.hostname.includes('essence-affirmations'));
 console.log('DEBUG: API_URL =', API_URL);
+console.log('DEBUG: localStorage available =', typeof(Storage) !== "undefined");
+console.log('DEBUG: localStorage essence_user_id =', localStorage.getItem('essence_user_id'));
+console.log('DEBUG: localStorage essence_username =', localStorage.getItem('essence_username'));
 
 function createEntityApi(entityName) {
   return {
     async list() {
       console.log(`DEBUG ${entityName}.list(): Fetching from ${API_URL}/${entityName}`);
+      console.log(`DEBUG ${entityName}.list(): Mobile device:`, /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      
       try {
+        // Add timeout for mobile devices
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch(`${API_URL}/${entityName}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           mode: 'cors',
-          credentials: 'include'
+          credentials: 'include',
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         console.log(`DEBUG ${entityName}.list(): Response status:`, response.status, response.statusText);
+        console.log(`DEBUG ${entityName}.list(): Response headers:`, Object.fromEntries(response.headers.entries()));
+        
         if (!response.ok) {
           const errorText = await response.text();
           console.log(`DEBUG ${entityName}.list(): Error response:`, errorText);
@@ -36,6 +53,9 @@ function createEntityApi(entityName) {
         return data;
       } catch (error) {
         console.error(`DEBUG ${entityName}.list(): Network error:`, error);
+        if (error.name === 'AbortError') {
+          throw new Error(`Request timeout for ${entityName}. Check your internet connection.`);
+        }
         throw new Error(`Network error fetching ${entityName}: ${error.message}`);
       }
     },

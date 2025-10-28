@@ -56,8 +56,14 @@ export default function AutentificarePage() {
     setLoading(true);
 
     console.log('DEBUG Login attempt:', { username, pin });
+    console.log('DEBUG Mobile device:', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    console.log('DEBUG localStorage before login:', {
+      essence_user_id: localStorage.getItem('essence_user_id'),
+      essence_username: localStorage.getItem('essence_username')
+    });
 
     try {
+      console.log('DEBUG About to call base44.entities.User.list()');
       const users = await base44.entities.User.list();
       console.log('DEBUG Users from API:', users);
       
@@ -78,6 +84,12 @@ export default function AutentificarePage() {
         userId: user.id, 
         username: user.username 
       });
+      
+      // Verify localStorage was saved correctly
+      console.log('DEBUG localStorage after save:', {
+        essence_user_id: localStorage.getItem('essence_user_id'),
+        essence_username: localStorage.getItem('essence_username')
+      });
 
       // Save or remove credentials based on "Remember Me"
       if (rememberMe) {
@@ -92,9 +104,11 @@ export default function AutentificarePage() {
       });
 
       console.log('DEBUG Login: Success, redirecting to Home');
+      console.log('DEBUG About to navigate to:', createPageUrl("Home"));
 
       // Redirect to home
       navigate(createPageUrl("Home"));
+      console.log('DEBUG After navigate, about to reload');
       window.location.reload(); // Force reload to apply layout
       
     } catch (error) {
