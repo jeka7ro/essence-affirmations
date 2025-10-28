@@ -1,4 +1,4 @@
-// Force redeploy - CORS fix v3
+// Force redeploy - CORS fix v4 - add myessence.ro domains
 import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
@@ -13,7 +13,9 @@ const corsOptions = {
     'http://localhost:3000',
     'http://localhost:5173',
     'https://essence-affirmations.vercel.app',
-    'https://essence-affirmations-backend.onrender.com'
+    'https://essence-affirmations-backend.onrender.com',
+    'https://www.myessence.ro',
+    'https://myessence.ro'
   ],
   credentials: true
 };
