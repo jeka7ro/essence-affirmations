@@ -18,6 +18,7 @@ const AVATAR_OPTIONS = ["👤", "👨", "👩", "🧑", "👴", "👵", "🧔", 
 export default function SettingsPage() {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
+    email: "",
     first_name: "",
     last_name: "",
     phone: "",
@@ -49,8 +50,9 @@ export default function SettingsPage() {
       
       if (userData) {
         setUser(userData);
-        const isImageAvatar = userData.avatar?.startsWith('http');
+        const isImageAvatar = userData.avatar?.startsWith('http') || userData.avatar?.startsWith('data:image');
         setFormData({
+          email: userData.email || "",
           first_name: userData.first_name || "",
           last_name: userData.last_name || "",
           phone: userData.phone || "",
@@ -107,6 +109,7 @@ export default function SettingsPage() {
 
     try {
       await base44.entities.User.update(user.id, {
+        email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
@@ -116,6 +119,7 @@ export default function SettingsPage() {
 
       setSuccess("Datele personale au fost salvate cu succes!");
       setTimeout(() => setSuccess(""), 3000);
+      await loadData(); // Reload to show updated email
     } catch (error) {
       console.error("Error saving profile:", error);
       setError("Eroare la salvarea datelor");
@@ -253,6 +257,17 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSaveProfile} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="first_name">Prenume</Label>
