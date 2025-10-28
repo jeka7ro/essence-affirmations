@@ -237,12 +237,18 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   try {
     const { username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role } = req.body;
+    
+    console.log('DEBUG POST /api/users:', { username, email, first_name, last_name, phone, birth_date, pin, role });
+    
     const result = await pool.query(
       'INSERT INTO users (username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
       [username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role || 'user']
     );
+    
+    console.log('DEBUG POST /api/users success:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('DEBUG POST /api/users error:', err);
     res.status(500).json({ error: err.message });
   }
 });
