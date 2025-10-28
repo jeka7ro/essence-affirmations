@@ -432,14 +432,20 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Google Login în dezvoltare
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500">
-              Pentru moment, folosește formularul de mai sus pentru înregistrare
-            </p>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-3 h-12"
+            onClick={() => window.open('https://accounts.google.com', '_blank')}
+          >
+            <img 
+              src="https://www.google.com/favicon.ico" 
+              alt="Google" 
+              className="w-5 h-5"
+              onError={(e) => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIyLjU2IDExLjIyaC4wMTVjLS4xNiAyLjQ1LS45MyA0LjI0LTIuNjIgNS42NC0xLjYzIDEuMzctMy43NCAyLjA5LTYuMzUgMi4wOS00LjQ5IDAtNy44NS0yLjYyLTcuODUtNy40MiAwLTQuNDIgMy4yNC03LjQxIDcuNzMtNy40MSAyLjYyIDAgNC41MS45MyA1Ljg0IDEuNTlsLTEuNTEgMS40MmMtLjkyLS4zOC0yLjA3LS42MS0zLjMzLS42MS0yLjg1IDAtNC43MyAxLjc0LTUuNTggNC4xM2wtMi4yOC0uMDhjLS4zNC02LjU5IDQuMDctOC40NyA2LjMyLTEuMjd0LS4wN2gxLjY1djUuNzRoMS42N1YxMS4yMXoiLz48L3N2Zz4='; }}
+            />
+            Continuă cu Google
+          </Button>
 
           <Button
             variant="link"
