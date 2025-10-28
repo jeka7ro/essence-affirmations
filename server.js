@@ -331,7 +331,7 @@ app.post('/api/messages', async (req, res) => {
 });
 
 // Add a catch-all route for debugging
-app.use('*', (req, res) => {
+app.use((req, res) => {
   console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ 
     error: 'Route not found', 
