@@ -68,7 +68,7 @@ function PagesContent() {
         <Layout currentPageName={currentPage}>
             <Routes>            
                 
-                    <Route path="/" element={<Register />} />
+                    <Route path="/" element={<Autentificare />} />
                 
                 
                 <Route path="/Register" element={<Register />} />
