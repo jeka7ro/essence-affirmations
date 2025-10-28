@@ -172,6 +172,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend is working!', port: port });
+});
+
 // Users
 app.get('/api/users', async (req, res) => {
   try {
@@ -325,6 +330,19 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
+// Add a catch-all route for debugging
+app.use('*', (req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ 
+    error: 'Route not found', 
+    method: req.method, 
+    url: req.originalUrl,
+    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses']
+  });
+});
+
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Database URL configured: ${!!process.env.DATABASE_URL}`);
 });
