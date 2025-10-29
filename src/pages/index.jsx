@@ -20,7 +20,6 @@ import Autentificare from "./Autentificare";
 
 import Courses from "./Courses";
 import GroupDetails from "./GroupDetails";
-import TopMembri from "./TopMembri";
 import UserDetails from "./UserDetails";
 import Zodii from "./Zodii";
 
@@ -50,7 +49,6 @@ const PAGES = {
     
     GroupDetails: GroupDetails,
     
-    TopMembri: TopMembri,
     
     UserDetails: UserDetails,
     
@@ -107,7 +105,7 @@ function PagesContent() {
                 
                 <Route path="/GroupDetails" element={<GroupDetails />} />
                 
-                <Route path="/TopMembri" element={<TopMembri />} />
+                
                 
                 <Route path="/UserDetails" element={<UserDetails />} />
                 

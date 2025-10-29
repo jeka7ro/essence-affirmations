@@ -750,9 +750,10 @@ export default function HomePage() {
               }
             }}
           >
-            <DialogContent className="sm:max-w-md">
+            {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
+            <DialogContent className={`sm:max-w-md ${isHalloween ? 'bg-orange-600 text-white' : ''}`}>
               <DialogHeader>
-                <DialogTitle className="text-3xl font-bold text-center text-green-600">🎉 Felicitări! 🎉</DialogTitle>
+                <DialogTitle className={`text-3xl font-bold text-center ${isHalloween ? 'text-white' : 'text-green-600'}`}>{isHalloween ? '🎃 Felicitări! 🎃' : '🎉 Felicitări! 🎉'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4 text-center">
                 <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
@@ -764,12 +765,12 @@ export default function HomePage() {
                     await markCongratulationsSeen();
                     setShowCongratulationsDialog(false);
                   }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
+                  className={`w-full text-lg font-bold py-6 ${isHalloween ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                 >
-                  Continuă Provocarea! 🚀
+                  {isHalloween ? 'Continuă Provocarea! 🎃' : 'Continuă Provocarea! 🚀'}
                 </Button>
               </div>
-            </DialogContent>
+            </DialogContent> ); })()}
           </Dialog>
         )}
         
@@ -849,28 +850,32 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex flex-col items-center gap-3">
-                  <Button
-                    onClick={() => handleRepetition(1)}
-                    className="w-full md:w-80 h-14 text-xl font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-2xl shadow-lg transform transition-transform hover:scale-105"
-                  >
-                    Am repetat (+1)
-                  </Button>
+                  {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
+                    <>
+                      <Button
+                        onClick={() => handleRepetition(1)}
+                        className={`w-full md:w-80 h-14 text-xl font-bold rounded-2xl shadow-lg transform transition-transform hover:scale-105 ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'}`}
+                      >
+                        Am repetat (+1)
+                      </Button>
 
-                  <div className="flex gap-3 w-full md:w-80">
-                    <Button
-                      onClick={() => handleRepetition(-10)}
-                      className="flex-1 h-12 text-lg font-bold bg-red-600 hover:bg-red-700 text-white rounded-2xl shadow-md"
-                      disabled={todayRepetitions < 10}
-                    >
-                      -10
-                    </Button>
-                    <Button
-                      onClick={() => handleRepetition(10)}
-                      className="flex-1 h-12 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-md"
-                    >
-                      +10
-                    </Button>
-                  </div>
+                      <div className="flex gap-3 w-full md:w-80">
+                        <Button
+                          onClick={() => handleRepetition(-10)}
+                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'}`}
+                          disabled={todayRepetitions < 10}
+                        >
+                          -10
+                        </Button>
+                        <Button
+                          onClick={() => handleRepetition(10)}
+                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                          +10
+                        </Button>
+                      </div>
+                    </>
+                  ); })()}
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-2">

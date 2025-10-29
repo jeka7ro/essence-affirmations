@@ -194,6 +194,10 @@ button:focus-visible {
   --primary-foreground: 0 0% 98%;
   --accent: 24 94% 95%;
   --accent-foreground: 24 90% 20%;
+  /* carduri portocalii */
+  --card: 24 32% 18%;
+  --card-foreground: 0 0% 98%;
+  --border: 24 60% 30%;
 }
 
 /* Fundal cu dovleci discreți (SVG pattern) */
@@ -201,6 +205,22 @@ button:focus-visible {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 30c-6 0-8-4-8-8s2-8 8-8 8 4 8 8-2 8-8 8z'/%3E%3Cpath d='M32 30c-6 0-8-4-8-8s2-8 8-8 8 4 8 8-2 8-8 8z'/%3E%3Cpath d='M24 14c1-3 3-4 4-5'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 48px 48px;
 }
+
+/* Sidebar highlight and links in orange during Halloween */
+.halloween .text-blue-600, .halloween .text-blue-700 { color: #f97316 !important; }
+.halloween .bg-blue-50 { background-color: #fff7ed !important; }
+.halloween .dark .text-blue-300 { color: #fdba74 !important; }
+
+/* Affirmation title accent */
+.halloween .affirmation-title { color: #f97316 !important; }
+
+/* Force card-like surfaces to orange theme (specific utility overrides) */
+.halloween .bg-white { background-color: #2b1a0a !important; }
+.halloween.dark .bg-gray-900 { background-color: #2b1a0a !important; }
+.halloween .border-gray-200 { border-color: #fb923c !important; }
+.halloween.dark .border-gray-800 { border-color: #fb923c !important; }
+.halloween .text-gray-900, .halloween.dark .text-gray-100 { color: #fff7ed !important; }
+.halloween .text-gray-600, .halloween .text-gray-500, .halloween.dark .text-gray-400 { color: #fdba74 !important; }
 
 
 

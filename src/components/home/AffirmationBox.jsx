@@ -37,14 +37,14 @@ export default function AffirmationBox({
               }
               return (
                 <img 
-                  src="/favicon_essence.png" 
-                  alt="Essence Logo" 
-                  className="w-12 h-12 object-contain cursor-pointer hover:opacity-80 transition-opacity" 
+                  src="https://cdn.vectorstock.com/i/1000v/30/29/abstract-lotus-logo-vector-21283029.jpg" 
+                  alt="App Logo" 
+                  className="w-12 h-12 object-cover rounded-xl cursor-pointer hover:opacity-80 transition-opacity" 
                   onClick={() => navigate(createPageUrl("Home"))}
                 />
               );
             })()}
-            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <CardTitle className="affirmation-title text-2xl font-bold text-gray-900 dark:text-gray-100">
               Afirmația Mea Essence
             </CardTitle>
           </div>

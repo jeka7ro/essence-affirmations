@@ -29,6 +29,7 @@ export default function Layout({ children, currentPageName }) {
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [birthdayUsers, setBirthdayUsers] = useState([]);
   const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
+  const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
 
   // Scorpio unicode sign (clean and consistent with text icons)
   const ScorpioIcon = ({ className = "w-5 h-5" }) => (
@@ -256,7 +257,6 @@ export default function Layout({ children, currentPageName }) {
     { title: "Acasă", url: createPageUrl("Home"), icon: Home },
     { title: "Cursuri Essence", url: createPageUrl("Courses"), icon: Activity },
     { title: "Grupuri", url: createPageUrl("Groups"), icon: Users },
-    { title: "Top Membri", url: createPageUrl("TopMembri"), icon: Trophy },
     { title: "Chat", url: createPageUrl("Chat"), icon: MessageSquare },
     { title: "Feed", url: createPageUrl("Feed"), icon: Activity },
     { title: "Setări", url: createPageUrl("Settings"), icon: Settings },
@@ -299,9 +299,9 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex flex-col items-center gap-4">
             <Link to={createPageUrl("Home")}>
               <img 
-                src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
-                alt="Essence Logo" 
-                className="w-32 h-auto cursor-pointer hover:opacity-80 transition-opacity"
+                src="https://cdn.vectorstock.com/i/1000v/30/29/abstract-lotus-logo-vector-21283029.jpg" 
+                alt="App Logo" 
+                className="w-32 h-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded-xl"
               />
             </Link>
             <div className="text-center">
@@ -314,19 +314,22 @@ export default function Layout({ children, currentPageName }) {
                   {(() => {
                     const avatarDisplay = getAvatarDisplay(user);
                     return avatarDisplay && (
-                      <>
+                      <div className="relative">
                         {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
                           <img 
                             src={avatarDisplay} 
                             alt="Avatar" 
-                            className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
+                            className={`w-12 h-12 rounded-full border-2 object-cover ${isHalloween ? 'border-orange-500' : 'border-blue-600'}`}
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${isHalloween ? 'border-2 border-orange-500 bg-orange-50' : 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600'}`}>
                             {avatarDisplay}
                           </div>
                         )}
-                      </>
+                        {isHalloween && (
+                          <span className="absolute -bottom-1 -right-1 text-lg">🎃</span>
+                        )}
+                      </div>
                     );
                   })()}
                 </div>
@@ -400,9 +403,9 @@ export default function Layout({ children, currentPageName }) {
               </Button>
               <Link to={createPageUrl("Home")}>
                 <img 
-                  src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
-                  alt="Essence" 
-                  className="h-8 cursor-pointer hover:opacity-80 transition-opacity"
+                  src="https://cdn.vectorstock.com/i/1000v/30/29/abstract-lotus-logo-vector-21283029.jpg" 
+                  alt="App Logo" 
+                  className="h-8 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded"
                 />
               </Link>
             </div>
@@ -455,14 +458,18 @@ export default function Layout({ children, currentPageName }) {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
-                        <img
-                          src={avatarDisplay}
-                          alt="Avatar"
-                          className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
-                        />
+                        <div className="relative">
+                          <img
+                            src={avatarDisplay}
+                            alt="Avatar"
+                            className={`w-12 h-12 rounded-full border-2 object-cover ${isHalloween ? 'border-orange-500' : 'border-blue-600'}`}
+                          />
+                          {isHalloween && <span className="absolute -bottom-1 -right-1 text-lg">🎃</span>}
+                        </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
+                        <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-2xl ${isHalloween ? 'border-2 border-orange-500 bg-orange-50' : 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600'}`}>
                           {avatarDisplay}
+                          {isHalloween && <span className="absolute -bottom-1 -right-1 text-lg">🎃</span>}
                         </div>
                       )}
                     </Link>
@@ -516,9 +523,9 @@ export default function Layout({ children, currentPageName }) {
         <Dialog open={true} onOpenChange={(open) => {
           if (!open) setShowBirthdayDialog(false);
         }}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className={`sm:max-w-md ${isHalloween ? 'bg-orange-600 text-white' : ''}`}>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-center">🎂 Zile de naștere astăzi</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-center">{isHalloween ? '🎃 Zile de naștere astăzi 🎃' : '🎂 Zile de naștere astăzi'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2 text-center">
               <p className="text-lg">Astăzi își serbează ziua:
