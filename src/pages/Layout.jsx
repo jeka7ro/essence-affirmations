@@ -297,7 +297,7 @@ export default function Layout({ children, currentPageName }) {
               />
             </Link>
             <div className="text-center">
-              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Afirmatii Essence</h2>
+              <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Afirmatii</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Advanced</p>
             </div>
             {user && (

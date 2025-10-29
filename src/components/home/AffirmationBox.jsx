@@ -45,7 +45,7 @@ export default function AffirmationBox({
               );
             })()}
             <CardTitle className="affirmation-title text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Afirmația Mea Essence
+              Afirmația Mea
             </CardTitle>
           </div>
           {!isEditing ? (

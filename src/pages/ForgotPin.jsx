@@ -35,7 +35,7 @@ export default function ForgotPinPage() {
       // Send email with PIN using Core.SendEmail integration
       await base44.integrations.Core.SendEmail({
         to: email,
-        subject: "PIN-ul tău pentru Afirmatii Essence",
+        subject: "PIN-ul tău pentru Afirmatii",
         body: `Bună ${user.first_name},\n\nPIN-ul tău este: ${user.pin}\n\nDacă nu ai solicitat această informație, te rugăm să ignori acest email.\n\nCu drag,\nEchipa Essence`
       });
 
