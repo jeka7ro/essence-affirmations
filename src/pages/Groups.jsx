@@ -214,6 +214,30 @@ export default function GroupsPage() {
     }
   };
 
+  // Direct join by secret code from the input (one-time entry)
+  const handleJoinBySecretCode = async () => {
+    setError("");
+    if (currentGroup) return; // already in a group; do nothing
+    if (!secretCode || secretCode.length !== 8) {
+      setError("Introdu un cod secret valid (8 caractere)");
+      return;
+    }
+    const match = groups.find(g => (g.secret_code || '').toUpperCase() === secretCode.toUpperCase());
+    if (!match) {
+      setError("Cod invalid sau grup inexistent.");
+      return;
+    }
+    try {
+      await base44.entities.User.update(user.id, { group_id: match.id });
+      await base44.entities.Group.update(match.id, { member_count: (match.member_count || 0) + 1 });
+      setSecretCode("");
+      await loadData(); // refresh and hide the join section next render
+    } catch (e) {
+      console.error("Join by code error:", e);
+      setError("Eroare la alăturare. Încearcă din nou.");
+    }
+  };
+
   const handleLeaveGroup = async () => {
     if (!window.confirm("Sigur vrei să părăsești grupul?")) return;
 
@@ -427,7 +451,7 @@ export default function GroupsPage() {
           <Card className="rounded-3xl">
             <CardContent className="p-6 space-y-4">
               <h2 className="text-xl font-bold text-gray-900">Intră într-un grup cu cod</h2>
-              <p className="text-gray-600 text-sm">Accesul la grupuri se face exclusiv pe baza unui cod secret primit de la organizator.</p>
+              <p className="text-gray-600 text-sm">Introdu o singură dată codul secret primit de la organizator. După aderare, vei vedea statisticile grupului tău.</p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Input
                   placeholder="CODUL SECRET (8 caractere)"
@@ -439,15 +463,7 @@ export default function GroupsPage() {
                 <Button
                   className="bg-blue-600 hover:bg-blue-700 rounded-2xl"
                   disabled={secretCode.length !== 8}
-                  onClick={() => {
-                    const byCode = groups.find(g => (g.secret_code || '').toUpperCase() === secretCode);
-                    if (!byCode) {
-                      setError('Cod invalid sau grup inexistent.');
-                      return;
-                    }
-                    setSelectedGroup(byCode);
-                    setShowJoinDialog(true);
-                  }}
+                  onClick={handleJoinBySecretCode}
                 >
                   Continuă
                 </Button>
@@ -460,7 +476,7 @@ export default function GroupsPage() {
         {!currentGroup && availableGroups.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-gray-900">Detalii despre grupuri</h2>
-            <p className="text-gray-600">Utilizatorii noi pot vedea informații generale. Pentru a te alătura, ai nevoie de codul secret.</p>
+            <p className="text-gray-600">Fără Grup: urmărești provocarea individual și nu vezi statisticile generale ale comunității. Pentru a te alătura unui grup, ai nevoie de codul secret.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {availableGroups.map(group => {
                 const cities = (() => {
