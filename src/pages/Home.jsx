@@ -81,17 +81,23 @@ export default function HomePage() {
   };
 
   // Helper function to mark congratulations as seen for today (save to database)
+  // This ensures popup won't show again until next day
   const markCongratulationsSeen = async () => {
     if (!user) return;
     const today = format(new Date(), 'yyyy-MM-dd');
+    
+    // Update local state IMMEDIATELY to prevent showing popup again
+    setUser(prev => prev ? { ...prev, congratulations_seen_date: today } : prev);
+    
     try {
+      // Save to database - this persists across devices and page refreshes
       await base44.entities.User.update(user.id, {
         congratulations_seen_date: today
       });
-      // Update local user state IMMEDIATELY to prevent showing popup again on refresh
-      setUser(prev => prev ? { ...prev, congratulations_seen_date: today } : prev);
+      console.log(`Marked congratulations as seen for user ${user.id} on ${today}`);
     } catch (error) {
       console.error("Error marking congratulations as seen:", error);
+      // Even if DB update fails, local state is updated to prevent immediate re-show
     }
   };
 
@@ -672,7 +678,17 @@ export default function HomePage() {
         </Dialog>
 
         {/* Congratulations Dialog - shown when user reaches 100 repetitions */}
-        <Dialog open={showCongratulationsDialog} onOpenChange={setShowCongratulationsDialog}>
+        <Dialog 
+          open={showCongratulationsDialog} 
+          onOpenChange={async (open) => {
+            if (!open) {
+              // When dialog is closing (by any means - X button, click outside, or button click)
+              // Mark as seen in database to prevent showing again today
+              await markCongratulationsSeen();
+              setShowCongratulationsDialog(false);
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-3xl font-bold text-center text-green-600">
@@ -688,7 +704,7 @@ export default function HomePage() {
               </p>
               <Button 
                 onClick={async () => {
-                  // Mark as seen before closing (should already be marked, but double-check)
+                  // Mark as seen and close - won't show again until tomorrow
                   await markCongratulationsSeen();
                   setShowCongratulationsDialog(false);
                 }}
