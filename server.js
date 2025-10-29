@@ -408,10 +408,15 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Courses endpoints - Get all courses from database
+// Courses endpoints - Get all courses from database (only future/current courses)
 app.get('/api/courses', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM courses ORDER BY start_date ASC, created_at DESC');
+    // Filter out expired courses (where end_date < today)
+    const { rows } = await pool.query(`
+      SELECT * FROM courses 
+      WHERE end_date >= CURRENT_DATE OR end_date IS NULL
+      ORDER BY start_date ASC, created_at DESC
+    `);
     res.json(rows);
   } catch (err) {
     console.error('GET /api/courses error:', err);
