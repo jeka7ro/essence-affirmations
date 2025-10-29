@@ -919,6 +919,7 @@ app.get('/api/backups', async (req, res) => {
 // Create manual backup (all users)
 app.post('/api/backups/create', async (req, res) => {
   try {
+    console.log('POST /api/backups/create called', { body: req.body });
     const { description } = req.body || {};
     const { user } = req.body || {};
     
@@ -946,10 +947,14 @@ app.post('/api/backups/create', async (req, res) => {
       backup_timestamp: new Date().toISOString()
     };
     
+    const now = new Date();
+    const roTime = now.toLocaleString('ro-RO', { hour12: false });
+    const autoName = `Backup automat ${roTime}`;
+
     const result = await pool.query(
       `INSERT INTO system_backups (backup_type, description, backup_data, created_by)
        VALUES ($1, $2, $3, $4) RETURNING id, backup_type, description, created_at`,
-      ['manual', description || `Manual backup - ${users.length} users`, JSON.stringify(backupData), user?.username || 'admin']
+      ['manual', description || `Backup manual ${roTime} - ${users.length} utilizatori`, JSON.stringify(backupData), user?.username || 'admin']
     );
     
     // Update last_backup_at in settings
@@ -1237,10 +1242,14 @@ async function performAutoBackup() {
       backup_timestamp: now.toISOString()
     };
     
+    const now = new Date();
+    const roTime = now.toLocaleString('ro-RO', { hour12: false });
+    const autoName = `Backup automat ${roTime}`;
+
     await pool.query(
       `INSERT INTO system_backups (backup_type, description, backup_data, created_by)
        VALUES ($1, $2, $3, $4)`,
-      ['automatic', `Automatic backup - ${usersResult.rows.length} users`, JSON.stringify(backupData), 'system']
+      ['automatic', autoName, JSON.stringify(backupData), 'system']
     );
     
     // Update last_backup_at
