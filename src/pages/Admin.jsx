@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download, Database, RotateCcw, Save, Settings, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
+import { format, differenceInMonths } from 'date-fns';
 import { ro } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -187,6 +187,15 @@ export default function AdminPage() {
           aVal = a.birth_date ? new Date(a.birth_date).getTime() : 0;
           bVal = b.birth_date ? new Date(b.birth_date).getTime() : 0;
           break;
+        case 'age':
+          // Sort by birth date (older = higher age)
+          aVal = a.birth_date ? new Date(a.birth_date).getTime() : 9999999999999;
+          bVal = b.birth_date ? new Date(b.birth_date).getTime() : 9999999999999;
+          break;
+        case 'zodiac':
+          aVal = calculateZodiac(a.birth_date).toLowerCase();
+          bVal = calculateZodiac(b.birth_date).toLowerCase();
+          break;
         default:
           return 0;
       }
@@ -223,6 +232,59 @@ export default function AdminPage() {
     return sortDirection === 'asc' 
       ? <ArrowUp className="w-4 h-4 ml-1 text-blue-600" />
       : <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
+  };
+
+  // Helper function to calculate age from birth date
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return '-';
+    
+    try {
+      const birth = new Date(birthDate);
+      const today = new Date();
+      
+      // Calculate total months difference
+      const totalMonths = differenceInMonths(today, birth);
+      
+      // Calculate years and remaining months
+      const years = Math.floor(totalMonths / 12);
+      const months = totalMonths % 12;
+      
+      if (months === 0) {
+        return `${years} ani`;
+      }
+      return `${years} ani și ${months} ${months === 1 ? 'lună' : 'luni'}`;
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  // Helper function to calculate zodiac sign from birth date
+  const calculateZodiac = (birthDate) => {
+    if (!birthDate) return '-';
+    
+    try {
+      const birth = new Date(birthDate);
+      const month = birth.getMonth() + 1; // 1-12
+      const day = birth.getDate();
+      
+      // Zodiac signs based on date ranges
+      if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return 'Berbec';
+      if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return 'Taur';
+      if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return 'Gemeni';
+      if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return 'Rac';
+      if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return 'Leu';
+      if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return 'Fecioară';
+      if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return 'Balanță';
+      if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return 'Scorpion';
+      if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return 'Săgetător';
+      if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return 'Capricorn';
+      if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return 'Vărsător';
+      if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return 'Pești';
+      
+      return '-';
+    } catch (error) {
+      return '-';
+    }
   };
 
   const getApiUrl = () => {
@@ -621,6 +683,24 @@ export default function AdminPage() {
                     </TableHead>
                     <TableHead>
                       <button
+                        onClick={() => handleSort('age')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Vârstă
+                        <SortIcon column="age" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('zodiac')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Zodie
+                        <SortIcon column="zodiac" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
                         onClick={() => handleSort('total_repetitions')}
                         className="flex items-center hover:text-blue-600 transition-colors"
                       >
@@ -709,6 +789,14 @@ export default function AdminPage() {
                             ? format(new Date(user.birth_date), 'dd.MM.yyyy', { locale: ro })
                             : '-'
                           }
+                        </TableCell>
+                        <TableCell>
+                          {calculateAge(user.birth_date)}
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-medium text-purple-600 dark:text-purple-400">
+                            {calculateZodiac(user.birth_date)}
+                          </span>
                         </TableCell>
                         <TableCell className="font-bold text-blue-600">
                           {(user.total_repetitions || 0).toLocaleString('ro-RO')}
