@@ -514,7 +514,7 @@ export default function GroupsPage() {
         )}
 
         {/* Join by code */}
-        {!currentGroup && user?.role !== 'admin' && (
+        {!currentGroup && (
           <Card className="rounded-3xl">
             <CardContent className="p-6 space-y-4">
               <h2 className="text-xl font-bold text-gray-900">Intră într-un grup cu cod</h2>
