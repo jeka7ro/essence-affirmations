@@ -811,9 +811,10 @@ export default function HomePage() {
                   <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     Repetări Astăzi: {todayRepetitions}/100
                   </h3>
+                  {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
                   <div className="relative h-5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div 
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 ease-out"
+                      className={`absolute top-0 left-0 h-full transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
                       style={{ width: `${progressPercentage}%` }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -822,6 +823,7 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
+                  ); })()}
                   <div className="space-y-3">
                     <p className={`text-sm font-semibold ${
                       todayRepetitions >= 100 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,27 @@ export default function AffirmationBox({
   onAddRepetition
 }) {
   const navigate = useNavigate();
+  const [pumpkins, setPumpkins] = useState([]);
+
+  const createPumpkins = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const newPumpkins = Array.from({ length: 8 }, (_, i) => ({
+      id: Date.now() + i,
+      x: centerX,
+      y: centerY,
+      angle: (i * 45) * (Math.PI / 180),
+      distance: 80 + Math.random() * 40,
+    }));
+    
+    setPumpkins(newPumpkins);
+    
+    setTimeout(() => {
+      setPumpkins([]);
+    }, 2000);
+  };
   
   return (
     <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
@@ -27,8 +48,11 @@ export default function AffirmationBox({
               if (isHalloween) {
                 return (
                   <div
-                    className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => navigate(createPageUrl("Home"))}
+                    className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl cursor-pointer hover:opacity-90 transition-opacity relative"
+                    onClick={(e) => {
+                      createPumpkins(e);
+                      navigate(createPageUrl("Home"));
+                    }}
                     title="Halloween"
                   >
                     🎃
@@ -110,6 +134,43 @@ export default function AffirmationBox({
           </div>
         )}
       </CardContent>
+      {/* Animated pumpkins container */}
+      {pumpkins.length > 0 && (
+        <>
+          <div className="fixed inset-0 pointer-events-none z-50">
+            {pumpkins.map((pumpkin) => {
+              const deltaX = (pumpkin.x + Math.cos(pumpkin.angle) * pumpkin.distance) - pumpkin.x;
+              const deltaY = (pumpkin.y + Math.sin(pumpkin.angle) * pumpkin.distance - 50) - pumpkin.y;
+              
+              return (
+                <div
+                  key={pumpkin.id}
+                  className="absolute text-2xl"
+                  style={{
+                    left: `${pumpkin.x}px`,
+                    top: `${pumpkin.y}px`,
+                    animation: `pumpkinJump${pumpkin.id} 2s ease-out forwards`,
+                  }}
+                >
+                  <style>{`
+                    @keyframes pumpkinJump${pumpkin.id} {
+                      0% {
+                        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                        opacity: 1;
+                      }
+                      100% {
+                        transform: translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px)) scale(0.4) rotate(360deg);
+                        opacity: 0;
+                      }
+                    }
+                  `}</style>
+                  🎃
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </Card>
   );
 }
