@@ -1198,23 +1198,29 @@ app.put('/api/backup-settings', async (req, res) => {
     
     const { auto_backup_enabled, auto_backup_interval_hours, auto_backup_time } = req.body;
     
+    // If auto_backup_time is empty string, set to NULL (interval-based mode)
+    // Otherwise, use the provided time (time-based mode)
+    const backupTime = (auto_backup_time && auto_backup_time.trim() !== '') 
+      ? auto_backup_time 
+      : null;
+    
     const result = await pool.query(
       `UPDATE backup_settings 
        SET auto_backup_enabled = $1, 
            auto_backup_interval_hours = $2,
-           auto_backup_time = COALESCE($3::TIME, auto_backup_time, '02:00:00'::TIME),
+           auto_backup_time = $3::TIME,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = (SELECT id FROM backup_settings ORDER BY id DESC LIMIT 1)
        RETURNING *`,
-      [auto_backup_enabled || false, auto_backup_interval_hours || 24, auto_backup_time || '02:00:00']
+      [auto_backup_enabled || false, auto_backup_interval_hours || 24, backupTime]
     );
     
     if (result.rows.length === 0) {
       // Create if doesn't exist
       const insertResult = await pool.query(
         `INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours, auto_backup_time)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [auto_backup_enabled || false, auto_backup_interval_hours || 24, auto_backup_time || '02:00:00']
+         VALUES ($1, $2, $3::TIME) RETURNING *`,
+        [auto_backup_enabled || false, auto_backup_interval_hours || 24, backupTime]
       );
       console.log('PUT /api/backup-settings created new:', insertResult.rows[0]);
       res.json(insertResult.rows[0]);
@@ -1240,32 +1246,55 @@ async function performAutoBackup() {
     }
     
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    // Get backup time from settings (format: HH:MM:SS)
-    const backupTime = settings.auto_backup_time || '02:00:00';
-    const [backupHour, backupMinute] = backupTime.split(':').map(Number);
-    
-    // Check if we're at the specified backup time (within the same minute)
-    if (currentHour !== backupHour || currentMinute !== backupMinute) {
-      return; // Not the right time yet
-    }
-    
-    // Check if backup already ran today at this time
     const lastBackup = settings.last_backup_at;
-    if (lastBackup) {
-      const lastBackupTime = new Date(lastBackup);
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const lastBackupDate = new Date(lastBackupTime.getFullYear(), lastBackupTime.getMonth(), lastBackupTime.getDate());
-      if (lastBackupDate.getTime() === today.getTime() && 
-          lastBackupTime.getHours() === backupHour && 
-          lastBackupTime.getMinutes() === backupMinute) {
-        return; // Already backed up today at this time
+    
+    // LOGIC: If time is set, use TIME-based backup (daily at that hour)
+    //        If time is NOT set (NULL/empty), use INTERVAL-based backup
+    
+    if (settings.auto_backup_time && settings.auto_backup_time.trim() !== '') {
+      // TIME-BASED: Backup at specific daily hour
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const backupTime = settings.auto_backup_time;
+      const [backupHour, backupMinute] = backupTime.split(':').map(Number);
+      
+      // Check if we're at the specified backup time (within the same minute)
+      if (currentHour !== backupHour || currentMinute !== backupMinute) {
+        return; // Not the right time yet
+      }
+      
+      // Check if backup already ran today at this time
+      if (lastBackup) {
+        const lastBackupTime = new Date(lastBackup);
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const lastBackupDate = new Date(lastBackupTime.getFullYear(), lastBackupTime.getMonth(), lastBackupTime.getDate());
+        if (lastBackupDate.getTime() === today.getTime() && 
+            lastBackupTime.getHours() === backupHour && 
+            lastBackupTime.getMinutes() === backupMinute) {
+          return; // Already backed up today at this time
+        }
+      }
+      
+      console.log(`Performing automatic backup at scheduled time (${backupHour}:${backupMinute})...`);
+    } else {
+      // INTERVAL-BASED: Backup at regular intervals (every X hours)
+      const intervalHours = settings.auto_backup_interval_hours || 24;
+      
+      if (!lastBackup) {
+        // No previous backup, create one now
+        console.log('Performing initial automatic backup (interval-based)...');
+      } else {
+        // Check if interval has passed since last backup
+        const lastBackupTime = new Date(lastBackup);
+        const hoursSinceLastBackup = (now.getTime() - lastBackupTime.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursSinceLastBackup < intervalHours) {
+          return; // Interval not reached yet
+        }
+        
+        console.log(`Performing automatic backup (interval-based, every ${intervalHours} hours)...`);
       }
     }
-    
-    console.log('Performing automatic backup...');
     
     // Get all data
     const usersResult = await pool.query('SELECT * FROM users');

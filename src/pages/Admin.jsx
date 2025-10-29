@@ -1171,43 +1171,88 @@ export default function AdminPage() {
               {backupSettings.auto_backup_enabled && (
                 <>
                   <div>
-                    <Label htmlFor="backup-time">Ora backup (HH:MM)</Label>
-                    <Input
-                      id="backup-time"
-                      type="time"
-                      value={backupSettings.auto_backup_time ? backupSettings.auto_backup_time.substring(0, 5) : '02:00'}
-                      onChange={(e) =>
-                        setBackupSettings({
-                          ...backupSettings,
-                          auto_backup_time: e.target.value + ':00'
-                        })
-                      }
-                      className="rounded-xl"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Ora zilnică la care se face backup-ul automat
-                    </p>
+                    <Label>Tip backup automat</Label>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBackupSettings({
+                            ...backupSettings,
+                            auto_backup_time: backupSettings.auto_backup_time || '02:00:00',
+                            auto_backup_interval_hours: 24 // Reset interval when using time-based
+                          })
+                        }
+                        className={`flex-1 px-4 py-2 rounded-xl border-2 transition-colors ${
+                          backupSettings.auto_backup_time && backupSettings.auto_backup_time.trim() !== ''
+                            ? 'bg-blue-600 text-white border-blue-600' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        Ora fixă zilnic
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBackupSettings({
+                            ...backupSettings,
+                            auto_backup_time: '', // Clear time when using interval-based
+                            auto_backup_interval_hours: backupSettings.auto_backup_interval_hours || 24
+                          })
+                        }
+                        className={`flex-1 px-4 py-2 rounded-xl border-2 transition-colors ${
+                          !backupSettings.auto_backup_time || backupSettings.auto_backup_time.trim() === ''
+                            ? 'bg-blue-600 text-white border-blue-600' 
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        La interval
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="backup-interval">Interval backup (ore)</Label>
-                    <Input
-                      id="backup-interval"
-                      type="number"
-                      min="1"
-                      max="168"
-                      value={backupSettings.auto_backup_interval_hours}
-                      onChange={(e) =>
-                        setBackupSettings({
-                          ...backupSettings,
-                          auto_backup_interval_hours: parseInt(e.target.value) || 24
-                        })
-                      }
-                      className="rounded-xl"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Interval între backup-uri (1-168 ore / 1 săptămână) - dacă nu se face la ora setată
-                    </p>
-                  </div>
+
+                  {backupSettings.auto_backup_time && backupSettings.auto_backup_time.trim() !== '' ? (
+                    // TIME-BASED MODE
+                    <div>
+                      <Label htmlFor="backup-time">Ora backup (HH:MM)</Label>
+                      <Input
+                        id="backup-time"
+                        type="time"
+                        value={backupSettings.auto_backup_time ? backupSettings.auto_backup_time.substring(0, 5) : '02:00'}
+                        onChange={(e) =>
+                          setBackupSettings({
+                            ...backupSettings,
+                            auto_backup_time: e.target.value + ':00'
+                          })
+                        }
+                        className="rounded-xl"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Backup-ul se va face zilnic la această oră fixă
+                      </p>
+                    </div>
+                  ) : (
+                    // INTERVAL-BASED MODE
+                    <div>
+                      <Label htmlFor="backup-interval">Interval backup (ore)</Label>
+                      <Input
+                        id="backup-interval"
+                        type="number"
+                        min="1"
+                        max="168"
+                        value={backupSettings.auto_backup_interval_hours}
+                        onChange={(e) =>
+                          setBackupSettings({
+                            ...backupSettings,
+                            auto_backup_interval_hours: parseInt(e.target.value) || 24
+                          })
+                        }
+                        className="rounded-xl"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Backup-ul se va face la fiecare X ore (1-168 ore / maxim 1 săptămână)
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
               {backupSettings.last_backup_at && (
