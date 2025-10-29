@@ -232,7 +232,15 @@ export default function AdminPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <span className="text-xl">{user.avatar}</span>
+                            {(() => {
+                              const a = user.avatar || '';
+                              if (a.startsWith('http') || a.startsWith('data:') || a.startsWith('blob:')) {
+                                return (
+                                  <img src={a} alt="Avatar" className="w-6 h-6 rounded-full border object-cover" />
+                                );
+                              }
+                              return <span className="text-xl">{a || '👤'}</span>;
+                            })()}
                             {user.username}
                           </div>
                         </TableCell>
@@ -297,7 +305,11 @@ export default function AdminPage() {
                 <TableBody>
                   {groups.map((group) => (
                     <TableRow key={group.id}>
-                      <TableCell className="font-medium">{group.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <a href={`/GroupDetails?id=${group.id}`} className="text-blue-600 hover:underline">
+                          {group.name}
+                        </a>
+                      </TableCell>
                       <TableCell>
                         <span className="font-mono font-bold text-blue-600">
                           {group.secret_code}

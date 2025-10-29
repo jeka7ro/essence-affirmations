@@ -19,6 +19,7 @@ import ForgotPin from "./ForgotPin";
 import Autentificare from "./Autentificare";
 
 import Courses from "./Courses";
+import GroupDetails from "./GroupDetails";
 import TopMembri from "./TopMembri";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
@@ -44,6 +45,8 @@ const PAGES = {
     Autentificare: Autentificare,
     
     Courses: Courses,
+    
+    GroupDetails: GroupDetails,
     
     TopMembri: TopMembri,
     
@@ -95,6 +98,8 @@ function PagesContent() {
                 <Route path="/Autentificare" element={<Autentificare />} />
                 
                 <Route path="/Courses" element={<Courses />} />
+                
+                <Route path="/GroupDetails" element={<GroupDetails />} />
                 
                 <Route path="/TopMembri" element={<TopMembri />} />
                 
