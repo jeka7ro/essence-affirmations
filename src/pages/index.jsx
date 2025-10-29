@@ -22,6 +22,7 @@ import Courses from "./Courses";
 import GroupDetails from "./GroupDetails";
 import TopMembri from "./TopMembri";
 import UserDetails from "./UserDetails";
+import Zodii from "./Zodii";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -52,6 +53,8 @@ const PAGES = {
     TopMembri: TopMembri,
     
     UserDetails: UserDetails,
+    
+    Zodii: Zodii,
     
 }
 
@@ -107,6 +110,8 @@ function PagesContent() {
                 <Route path="/TopMembri" element={<TopMembri />} />
                 
                 <Route path="/UserDetails" element={<UserDetails />} />
+                
+                <Route path="/Zodii" element={<Zodii />} />
                 
             </Routes>
         </Layout>

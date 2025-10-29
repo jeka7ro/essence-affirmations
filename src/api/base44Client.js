@@ -1,6 +1,6 @@
 // PostgreSQL backend API client - data stored online on Render + PostgreSQL
 
-const API_URL = (window.location.hostname.includes('vercel.app') || 
+export const API_URL = (window.location.hostname.includes('vercel.app') || 
                  window.location.hostname.includes('myessence.ro') ||
                  window.location.hostname.includes('essence-affirmations'))
   ? 'https://essence-affirmations-backend.onrender.com/api'

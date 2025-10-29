@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
+import { base44, API_URL } from "@/api/base44Client";
 import { 
   Users, 
   Settings, 
@@ -17,6 +17,7 @@ import {
   Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -26,6 +27,8 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState('auto');
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [birthdayUsers, setBirthdayUsers] = useState([]);
+  const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
 
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
   const shouldShowLayout = !noLayoutPages.includes(currentPageName);
@@ -116,6 +119,28 @@ export default function Layout({ children, currentPageName }) {
 
     return () => clearInterval(interval);
   }, [user, location.pathname]);
+
+  // Birthday popup after 10:00, once per day across devices
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!user) return;
+        const now = new Date();
+        if (now.getHours() < 10) return;
+        const today = now.toISOString().slice(0,10);
+        if (user.birthday_notice_seen_date && String(user.birthday_notice_seen_date).slice(0,10) === today) return;
+        let url = `${API_URL}/birthdays/today`;
+        if (user.group_id) url += `?groupId=${user.group_id}`;
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const others = (data.users || []).filter(u => u.id !== user.id);
+        if (others.length === 0) return;
+        setBirthdayUsers(others);
+        setShowBirthdayDialog(true);
+      } catch {}
+    })();
+  }, [user]);
 
   // Theme init
   useEffect(() => {
@@ -218,6 +243,15 @@ export default function Layout({ children, currentPageName }) {
       title: "Admin",
       url: createPageUrl("Admin"),
       icon: Shield,
+    });
+  }
+
+  // Show Zodii only for users in a group
+  if (user?.group_id) {
+    navigationItems.splice(4, 0, {
+      title: "Zodii",
+      url: createPageUrl("Zodii"),
+      icon: Trophy,
     });
   }
 
@@ -452,6 +486,38 @@ export default function Layout({ children, currentPageName }) {
         <main className="flex-1 overflow-auto bg-white dark:bg-gray-900">
           {children}
         </main>
+
+      {/* Birthday Dialog */}
+      {showBirthdayDialog && (
+        <Dialog open={true} onOpenChange={(open) => {
+          if (!open) setShowBirthdayDialog(false);
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-center">🎂 Zile de naștere astăzi</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2 text-center">
+              <p className="text-lg">Astăzi își serbează ziua:
+                <br />
+                <span className="font-semibold">
+                  {birthdayUsers.map(u => `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username).join(', ')}
+                </span>
+              </p>
+              <Button
+                className="w-full"
+                onClick={async () => {
+                  try {
+                    await fetch(`${API_URL}/users/${user.id}/birthday-notice-seen`, { method: 'PUT' });
+                  } catch {}
+                  setShowBirthdayDialog(false);
+                }}
+              >
+                OK
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       </div>
     </div>
   );

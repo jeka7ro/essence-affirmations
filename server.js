@@ -157,6 +157,9 @@ async function initializeTables() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='congratulations_seen_date') THEN
           ALTER TABLE users ADD COLUMN congratulations_seen_date DATE;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='birthday_notice_seen_date') THEN
+          ALTER TABLE users ADD COLUMN birthday_notice_seen_date DATE;
+        END IF;
       END $$;
     `);
 
@@ -371,6 +374,47 @@ app.get('/api/health', (req, res) => {
 // Simple test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!', port: port });
+});
+
+// Birthdays today (optionally by group)
+app.get('/api/birthdays/today', async (req, res) => {
+  try {
+    const { groupId } = req.query;
+    const today = new Date();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    // Match month-day regardless of year
+    let sql = `SELECT id, username, first_name, last_name, birth_date, group_id FROM users WHERE birth_date IS NOT NULL`;
+    const params = [];
+    if (groupId) {
+      sql += ` AND group_id = $1`;
+      params.push(Number(groupId));
+    }
+    const { rows } = await pool.query(sql, params);
+    const list = rows.filter(u => {
+      const d = new Date(u.birth_date);
+      const mmu = String(d.getMonth() + 1).padStart(2, '0');
+      const ddu = String(d.getDate()).padStart(2, '0');
+      return mmu === mm && ddu === dd;
+    }).map(u => ({ id: u.id, username: u.username, first_name: u.first_name, last_name: u.last_name }));
+    res.json({ today: `${mm}-${dd}`, users: list });
+  } catch (err) {
+    console.error('GET /api/birthdays/today error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark birthday notice as seen for a user for today (prevents showing again)
+app.put('/api/users/:id/birthday-notice-seen', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const today = new Date().toISOString().slice(0,10);
+    const { rows } = await pool.query(`UPDATE users SET birthday_notice_seen_date = $2 WHERE id = $1 RETURNING id, birthday_notice_seen_date`, [id, today]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Send email endpoint
