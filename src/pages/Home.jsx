@@ -718,10 +718,11 @@ export default function HomePage() {
         </Dialog>
 
         {/* Congratulations Dialog - shown when user reaches 100 repetitions */}
-        {/* CRITICAL: Only render if NOT already seen today - double check before rendering */}
+        {/* CRITICAL: Only render if NOT already seen today */}
         {(() => {
+          if (!user) return null;
           const today = format(new Date(), 'yyyy-MM-dd');
-          const seenDate = normalizeDate(user?.congratulations_seen_date);
+          const seenDate = normalizeDate(user.congratulations_seen_date);
           const hasSeenToday = seenDate === today;
           
           // If already seen today, DO NOT RENDER DIALOG AT ALL
@@ -734,41 +735,39 @@ export default function HomePage() {
               open={showCongratulationsDialog && !hasSeenToday} 
               onOpenChange={async (open) => {
                 if (!open) {
-                  // When dialog is closing (by any means - X button, click outside, or button click)
-                  // Mark as seen in database to prevent showing again today
                   await markCongratulationsSeen();
                   setShowCongratulationsDialog(false);
                 }
               }}
             >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-bold text-center text-green-600">
-                🎉 Felicitări! 🎉
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4 text-center">
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                Ai terminat cele 100 repetări și ești {user?.sex === 'F' ? 'cea mai tare' : 'cel mai tare'}!
-              </p>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Continuă înainte așa! 💪
-              </p>
-              <Button 
-                onClick={async () => {
-                  // Mark as seen and close - won't show again until tomorrow
-                  await markCongratulationsSeen();
-                  setShowCongratulationsDialog(false);
-                }}
-                className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
-              >
-                Continuă Provocarea! 🚀
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-3xl font-bold text-center text-green-600">
+                    🎉 Felicitări! 🎉
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4 text-center">
+                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                    Ai terminat cele 100 repetări și ești {user?.sex === 'F' ? 'cea mai tare' : 'cel mai tare'}!
+                  </p>
+                  <p className="text-lg text-gray-600 dark:text-gray-400">
+                    Continuă înainte așa! 💪
+                  </p>
+                  <Button 
+                    onClick={async () => {
+                      await markCongratulationsSeen();
+                      setShowCongratulationsDialog(false);
+                    }}
+                    className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
+                  >
+                    Continuă Provocarea! 🚀
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           );
         })()}
+        
 
 
         <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-6">
