@@ -48,6 +48,7 @@ export default function GroupsPage() {
   const [showMembersDialog, setShowMembersDialog] = useState(false);
   const [membersForDialog, setMembersForDialog] = useState([]);
   const [memberSearch, setMemberSearch] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
   const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase() === 'jeka7ro@gmail.com';
 
   const romanianCities = [
@@ -310,11 +311,17 @@ export default function GroupsPage() {
       setError("Introdu un cod secret valid (8 caractere)");
       return;
     }
+    
+    setIsJoining(true);
+    setError("");
+    
     const match = groups.find(g => (g.secret_code || '').toUpperCase() === secretCode.toUpperCase());
     if (!match) {
       setError("Cod invalid sau grup inexistent.");
+      setIsJoining(false);
       return;
     }
+    
     try {
       await base44.entities.User.update(user.id, { 
         group_id: match.id,
@@ -328,17 +335,21 @@ export default function GroupsPage() {
         description: `${user.username} s-a alăturat grupului "${match.name}"`
       });
       
+      // Clear input immediately and show success
       setSecretCode("");
       setError("");
-      await loadData(); // refresh and hide the join section next render
+      setIsJoining(false);
       
-      // Show success dialog and redirect to Home
+      // Show success dialog immediately
       setJoinedGroupName(match.name);
       setShowJoinSuccessDialog(true);
+      
+      // Reload data in background
+      await loadData();
     } catch (e) {
       console.error("Join by code error:", e);
       setError("Eroare la alăturare. Încearcă din nou.");
-      setSuccessMessage("");
+      setIsJoining(false);
     }
   };
 
@@ -562,22 +573,37 @@ export default function GroupsPage() {
         {!currentGroup && (
           <Card className="rounded-3xl">
             <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-bold text-gray-900">Intră într-un grup cu cod</h2>
-              <p className="text-gray-600 text-sm">Introdu o singură dată codul secret primit de la organizator. După aderare, vei vedea statisticile grupului tău.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Intră într-un grup cu cod</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Introdu o singură dată codul secret primit de la organizator. După aderare, vei vedea statisticile grupului tău.</p>
+              {error && (
+                <Alert variant="destructive" className="rounded-2xl">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Input
                   placeholder="CODUL SECRET (8 caractere)"
                   maxLength={8}
                   value={secretCode}
                   onChange={(e) => setSecretCode(e.target.value.toUpperCase())}
-                  className="font-mono tracking-wider text-center rounded-2xl sm:flex-1"
+                  disabled={isJoining}
+                  className={`font-mono tracking-wider text-center rounded-2xl sm:flex-1 ${
+                    isJoining ? 'opacity-50' : ''
+                  }`}
                 />
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700 rounded-2xl"
-                  disabled={secretCode.length !== 8}
+                  className="bg-blue-600 hover:bg-blue-700 rounded-2xl min-w-[120px]"
+                  disabled={secretCode.length !== 8 || isJoining}
                   onClick={handleJoinBySecretCode}
                 >
-                  Continuă
+                  {isJoining ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Se procesează...
+                    </span>
+                  ) : (
+                    "Continuă"
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -1088,24 +1114,33 @@ export default function GroupsPage() {
 
         {/* Join Success Dialog - One-time popup with redirect to Home */}
         <Dialog open={showJoinSuccessDialog} onOpenChange={() => {}}>
-          <DialogContent className="rounded-3xl bg-green-600 border-green-700 text-white" style={{ pointerEvents: 'auto' }}>
+          <DialogContent className="rounded-3xl bg-gradient-to-br from-green-500 to-green-600 border-green-700 text-white shadow-2xl animate-in fade-in zoom-in duration-300" style={{ pointerEvents: 'auto' }}>
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-white text-center">
-                🎉 Felicitări!
+              <div className="flex justify-center mb-4">
+                <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center animate-bounce">
+                  <span className="text-5xl">🎉</span>
+                </div>
+              </div>
+              <DialogTitle className="text-3xl font-bold text-white text-center animate-in slide-in-from-top-2 duration-500">
+                Felicitări!
               </DialogTitle>
-              <DialogDescription className="text-green-100 text-center mt-2 text-lg">
-                Te-ai alăturat cu succes grupului <strong className="text-white">{joinedGroupName}</strong>!
+              <DialogDescription className="text-green-50 text-center mt-4 text-xl font-medium animate-in fade-in duration-700 delay-200">
+                Te-ai alăturat cu succes grupului
+                <br />
+                <strong className="text-white text-2xl">{joinedGroupName}</strong>
+                <br />
+                <span className="text-lg mt-2 block">🎯 Acum poți vedea progresul grupului!</span>
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
               <Button
                 onClick={() => {
                   setShowJoinSuccessDialog(false);
                   navigate(createPageUrl("Home"));
                 }}
-                className="bg-white text-green-600 hover:bg-green-50 font-bold px-8 py-3 rounded-2xl text-lg"
+                className="bg-white text-green-600 hover:bg-green-50 font-bold px-8 py-4 rounded-2xl text-lg shadow-lg transform hover:scale-105 transition-all duration-200"
               >
-                Mergi la Pagina Principală
+                Mergi la Pagina Principală →
               </Button>
             </div>
           </DialogContent>
