@@ -88,8 +88,8 @@ export default function HomePage() {
       await base44.entities.User.update(user.id, {
         congratulations_seen_date: today
       });
-      // Update local user state
-      setUser({ ...user, congratulations_seen_date: today });
+      // Update local user state IMMEDIATELY to prevent showing popup again on refresh
+      setUser(prev => prev ? { ...prev, congratulations_seen_date: today } : prev);
     } catch (error) {
       console.error("Error marking congratulations as seen:", error);
     }
@@ -97,17 +97,22 @@ export default function HomePage() {
 
   // Detect when user reaches 100 repetitions and show congratulations (only once per day, across all devices)
   useEffect(() => {
-    if (!user) return;
+    if (!user || loading) return;
+    
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const hasSeenToday = user.congratulations_seen_date === today;
     
     // Only show if:
     // 1. User reached 100 repetitions today
     // 2. Hasn't seen the popup today (checked from database - works across all devices)
-    if (todayRepetitions >= 100 && !hasSeenCongratulationsToday()) {
+    // 3. Dialog is not already shown (to prevent multiple triggers)
+    if (todayRepetitions >= 100 && !hasSeenToday && !showCongratulationsDialog) {
+      // Mark as seen FIRST, then show dialog to prevent race conditions
+      markCongratulationsSeen();
       setShowCongratulationsDialog(true);
-      markCongratulationsSeen(); // Save to database that user saw it today
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayRepetitions, user?.id, user?.congratulations_seen_date]);
+  }, [todayRepetitions, user?.id, user?.congratulations_seen_date, loading]);
 
   const loadData = async () => {
     try {
@@ -122,6 +127,12 @@ export default function HomePage() {
         setTodayRepetitions(userData.today_repetitions || 0);
         setTotalRepetitions(userData.total_repetitions || 0);
         setCurrentDay(userData.current_day || 0);
+        
+        // IMPORTANT: Check if user already saw congratulations today - if yes, don't show popup
+        const today = format(new Date(), 'yyyy-MM-dd');
+        if (userData.congratulations_seen_date === today) {
+          setShowCongratulationsDialog(false); // Explicitly hide if already seen today
+        }
         
         try {
           setRepetitionHistory(JSON.parse(userData.repetition_history || "[]"));
@@ -677,8 +688,9 @@ export default function HomePage() {
               </p>
               <Button 
                 onClick={async () => {
+                  // Mark as seen before closing (should already be marked, but double-check)
+                  await markCongratulationsSeen();
                   setShowCongratulationsDialog(false);
-                  await markCongratulationsSeen(); // Make sure it's saved to database when user closes
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
               >
