@@ -29,7 +29,8 @@ export default function Layout({ children, currentPageName }) {
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [birthdayUsers, setBirthdayUsers] = useState([]);
   const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
-  const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
+  const [seasonalActive, setSeasonalActive] = useState(false);
+  const isHalloween = seasonalActive;
 
   // Scorpio unicode sign (clean and consistent with text icons)
   const ScorpioIcon = ({ className = "w-5 h-5" }) => (
@@ -74,6 +75,7 @@ export default function Layout({ children, currentPageName }) {
         const isUserPreview = user && (user.username === 'Eugen' || user.first_name === 'Eugen');
         const active = isGlobalHalloween || isUserPreview;
         document.documentElement.classList.toggle('halloween', !!active);
+        setSeasonalActive(!!active);
       } catch {}
     };
     applySeasonal();
@@ -255,10 +257,7 @@ export default function Layout({ children, currentPageName }) {
 
   const navigationItems = [
     { title: "Acasă", url: createPageUrl("Home"), icon: Home },
-    { title: "Cursuri Essence", url: createPageUrl("Courses"), icon: Activity },
     { title: "Grupuri", url: createPageUrl("Groups"), icon: Users },
-    { title: "Chat", url: createPageUrl("Chat"), icon: MessageSquare },
-    { title: "Feed", url: createPageUrl("Feed"), icon: Activity },
     { title: "Setări", url: createPageUrl("Settings"), icon: Settings },
   ];
 
@@ -270,14 +269,7 @@ export default function Layout({ children, currentPageName }) {
     });
   }
 
-  // Show Zodii only for users in a group
-  if (user?.group_id) {
-    navigationItems.splice(4, 0, {
-      title: "Zodii",
-      url: createPageUrl("Zodii"),
-      icon: ScorpioIcon,
-    });
-  }
+  // Zodii, Chat, Feed, Cursuri Essence au fost eliminate din sidebar
 
   if (!shouldShowLayout) {
     return <>{children}</>;
@@ -299,7 +291,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex flex-col items-center gap-4">
             <Link to={createPageUrl("Home")}>
               <img 
-                src="https://cdn.vectorstock.com/i/1000v/30/29/abstract-lotus-logo-vector-21283029.jpg" 
+                src="/logo_essece2.png" 
                 alt="App Logo" 
                 className="w-32 h-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded-xl"
               />
@@ -403,7 +395,7 @@ export default function Layout({ children, currentPageName }) {
               </Button>
               <Link to={createPageUrl("Home")}>
                 <img 
-                  src="https://cdn.vectorstock.com/i/1000v/30/29/abstract-lotus-logo-vector-21283029.jpg" 
+                  src="/logo_essece2.png" 
                   alt="App Logo" 
                   className="h-8 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded"
                 />
@@ -412,8 +404,7 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <div className="flex items-center gap-3">
                 {/* Notifications icon */}
-                <Link
-                  to={createPageUrl("Chat")}
+                <div
                   className="relative"
                   onClick={() => {
                     localStorage.setItem(`last_read_messages_${user.id}`, Date.now().toString());
@@ -426,7 +417,7 @@ export default function Layout({ children, currentPageName }) {
                       {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
                     </span>
                   )}
-                </Link>
+                </div>
                 {/* Left: name + theme toggle */}
                 <div className="flex flex-col items-end gap-1">
                   <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>

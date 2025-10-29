@@ -37,7 +37,7 @@ export default function AffirmationBox({
               }
               return (
                 <img 
-                  src="https://cdn.vectorstock.com/i/1000v/30/29/abstract-lotus-logo-vector-21283029.jpg" 
+                  src="/logo_essece2.png" 
                   alt="App Logo" 
                   className="w-12 h-12 object-cover rounded-xl cursor-pointer hover:opacity-80 transition-opacity" 
                   onClick={() => navigate(createPageUrl("Home"))}
@@ -94,15 +94,17 @@ export default function AffirmationBox({
             {/* Round green + button below text to add repetition - always at bottom */}
             {onAddRepetition && (
               <div className="flex justify-end mt-2">
-                <Button
-                  onClick={onAddRepetition}
-                  size="icon"
-                  className="h-12 w-12 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                  aria-label="Adaugă repetare"
-                  title="Adaugă repetare"
-                >
-                  +
-                </Button>
+                {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
+                  <Button
+                    onClick={onAddRepetition}
+                    size="icon"
+                    className={`h-12 w-12 rounded-full text-white shadow-lg ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                    aria-label="Adaugă repetare"
+                    title="Adaugă repetare"
+                  >
+                    {isHalloween ? '🎃' : '+'}
+                  </Button>
+                ); })()}
               </div>
             )}
           </div>
