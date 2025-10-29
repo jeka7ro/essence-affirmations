@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, ArrowLeft } from "lucide-react";
+import { Users, Calendar, ArrowLeft, Pencil, Power } from "lucide-react";
 
 function useQuery() {
   const { search } = useLocation();
@@ -18,6 +18,9 @@ export default function GroupDetailsPage() {
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState({ name: "", description: "", start_date: "", end_date: "" });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -27,6 +30,7 @@ export default function GroupDetailsPage() {
         setGroup(g || null);
         const users = await base44.entities.User.list();
         setMembers(users.filter(u => u.group_id === groupId));
+        if (g) setForm({ name: g.name || "", description: g.description || "", start_date: g.start_date || "", end_date: g.end_date || "" });
       } finally {
         setLoading(false);
       }
@@ -46,6 +50,34 @@ export default function GroupDetailsPage() {
     }
     return { total, today: todayCount };
   }, [members, today]);
+
+  const toggleActive = async () => {
+    if (!group) return;
+    setSaving(true);
+    try {
+      await base44.entities.Group.update(group.id, { is_active: !group.is_active });
+      setGroup({ ...group, is_active: !group.is_active });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveChanges = async () => {
+    if (!group) return;
+    setSaving(true);
+    try {
+      await base44.entities.Group.update(group.id, {
+        name: form.name,
+        description: form.description,
+        start_date: form.start_date,
+        end_date: form.end_date,
+      });
+      setGroup({ ...group, ...form });
+      setEditMode(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -76,7 +108,13 @@ export default function GroupDetailsPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">{group.name}</h1>
             <p className="text-gray-600 dark:text-gray-400">Cod: <span className="font-mono font-semibold">{group.secret_code}</span></p>
           </div>
-          <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1"/>Înapoi</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft className="w-4 h-4 mr-1"/>Înapoi</Button>
+            <Button variant="outline" onClick={() => setEditMode(v => !v)} className="hidden md:inline-flex"><Pencil className="w-4 h-4 mr-1"/>{editMode ? 'Renunță' : 'Editează'}</Button>
+            <Button onClick={toggleActive} disabled={saving} className={`${group.is_active ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' : 'bg-green-600 hover:bg-green-700 text-white'}`}>
+              <Power className="w-4 h-4 mr-1"/>{group.is_active ? 'Dezactivează' : 'Activează'}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -98,9 +136,23 @@ export default function GroupDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5"/>Perioadă</CardTitle>
           </CardHeader>
-          <CardContent className="text-gray-700 dark:text-gray-300">
-            {group.start_date ? new Date(group.start_date).toLocaleDateString('ro-RO') : '-'}
-            {group.end_date ? ` – ${new Date(group.end_date).toLocaleDateString('ro-RO')}` : ''}
+          <CardContent className="text-gray-700 dark:text-gray-300 space-y-3">
+            {!editMode ? (
+              <div>
+                {group.start_date ? new Date(group.start_date).toLocaleDateString('ro-RO') : '-'}
+                {group.end_date ? ` – ${new Date(group.end_date).toLocaleDateString('ro-RO')}` : ''}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input type="text" className="border rounded-xl px-3 py-2 bg-white dark:bg-gray-800" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Nume" />
+                <input type="text" className="border rounded-xl px-3 py-2 bg-white dark:bg-gray-800" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Descriere" />
+                <input type="date" className="border rounded-xl px-3 py-2 bg-white dark:bg-gray-800" value={form.start_date || ''} onChange={e => setForm({ ...form, start_date: e.target.value })} />
+                <input type="date" className="border rounded-xl px-3 py-2 bg-white dark:bg-gray-800" value={form.end_date || ''} onChange={e => setForm({ ...form, end_date: e.target.value })} />
+                <div className="md:col-span-2 flex justify-end">
+                  <Button onClick={saveChanges} disabled={saving} className="bg-blue-600 hover:bg-blue-700">{saving ? 'Se salvează...' : 'Salvează'}</Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

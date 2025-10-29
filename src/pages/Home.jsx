@@ -623,6 +623,7 @@ export default function HomePage() {
           onChange={setAffirmation}
           onSave={handleSaveAffirmation}
           saving={saving}
+          onAddRepetition={() => handleRepetition(1)}
         />
 
         {challengeStartDate && (
