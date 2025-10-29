@@ -5,10 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download } from "lucide-react";
+import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download, Database, RotateCcw, Save, Settings, Clock } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -29,9 +34,22 @@ export default function AdminPage() {
   const [deletingUser, setDeletingUser] = useState(null);
   const [sortColumn, setSortColumn] = useState('total_repetitions');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [backups, setBackups] = useState([]);
+  const [backupSettings, setBackupSettings] = useState({ auto_backup_enabled: false, auto_backup_interval_hours: 24 });
+  const [showBackupDialog, setShowBackupDialog] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState(null);
+  const [restoreUser, setRestoreUser] = useState('');
+  const [backupDescription, setBackupDescription] = useState('');
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState(false);
+  const [loadingBackups, setLoadingBackups] = useState(false);
 
   useEffect(() => {
     loadData();
+    loadBackups();
+    loadBackupSettings();
   }, []);
 
   const loadData = async () => {
@@ -203,6 +221,123 @@ export default function AdminPage() {
     return sortDirection === 'asc' 
       ? <ArrowUp className="w-4 h-4 ml-1 text-blue-600" />
       : <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
+  };
+
+  const loadBackups = async () => {
+    try {
+      setLoadingBackups(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backups`);
+      if (!response.ok) throw new Error('Failed to load backups');
+      const data = await response.json();
+      setBackups(data);
+    } catch (error) {
+      console.error('Error loading backups:', error);
+    } finally {
+      setLoadingBackups(false);
+    }
+  };
+
+  const loadBackupSettings = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backup-settings`);
+      if (!response.ok) throw new Error('Failed to load backup settings');
+      const data = await response.json();
+      setBackupSettings(data);
+    } catch (error) {
+      console.error('Error loading backup settings:', error);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    if (!confirm('Ești sigur că vrei să creezi un backup complet? Acest proces poate dura câteva momente.')) {
+      return;
+    }
+
+    setCreatingBackup(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backups/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: backupDescription || `Manual backup - ${new Date().toLocaleString('ro-RO')}`,
+          user: currentUser
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to create backup');
+      const result = await response.json();
+      
+      alert(`Backup creat cu succes!\n${result.stats.users} utilizatori\n${result.stats.groups} grupuri`);
+      setBackupDescription('');
+      setShowBackupDialog(false);
+      await loadBackups();
+      await loadBackupSettings();
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      alert(`Eroare la crearea backup-ului: ${error.message}`);
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = async () => {
+    if (!selectedBackup) return;
+    
+    const restoreType = restoreUser && restoreUser.trim() !== '' ? 'user' : 'all';
+    const userIdToRestore = restoreUser && restoreUser.trim() !== '' ? restoreUser.trim() : null;
+    
+    const confirmMsg = restoreType === 'all' 
+      ? 'Ești sigur că vrei să restaurezi datele pentru TOȚI utilizatorii din acest backup? Această acțiune va suprascrie datele curente și nu poate fi anulată!'
+      : `Ești sigur că vrei să restaurezi datele pentru utilizatorul cu ID ${userIdToRestore}?`;
+    
+    if (!confirm(confirmMsg)) return;
+
+    setRestoringBackup(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backups/${selectedBackup.id}/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userIdToRestore,
+          restoreType
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to restore backup');
+      }
+      const result = await response.json();
+      
+      alert(`Restaurare cu succes!\n${result.message}`);
+      setShowRestoreDialog(false);
+      setSelectedBackup(null);
+      setRestoreUser('');
+      await loadData(); // Reload users data
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      alert(`Eroare la restaurarea backup-ului: ${error.message}`);
+    } finally {
+      setRestoringBackup(false);
+    }
+  };
+
+  const handleSaveBackupSettings = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backup-settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backupSettings)
+      });
+      
+      if (!response.ok) throw new Error('Failed to save backup settings');
+      await loadBackupSettings();
+      setShowSettingsDialog(false);
+      alert('Setările de backup au fost salvate!');
+    } catch (error) {
+      console.error('Error saving backup settings:', error);
+      alert(`Eroare la salvarea setărilor: ${error.message}`);
+    }
   };
 
   const handleExportToExcel = () => {
@@ -594,6 +729,119 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
+        {/* Backup Management Section */}
+        <Card className="border-2 border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <Database className="w-5 h-5 text-blue-600" />
+                  Management Backup
+                </CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Creare și restaurare backup-uri pentru toate datele utilizatorilor
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowSettingsDialog(true)}
+                  variant="outline"
+                  className="rounded-xl"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Setări
+                </Button>
+                <Button
+                  onClick={() => setShowBackupDialog(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Backup Manual
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {backupSettings.auto_backup_enabled && (
+                <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  <AlertDescription className="text-blue-900 dark:text-blue-100">
+                    <strong>Backup automat activat:</strong> La fiecare {backupSettings.auto_backup_interval_hours} ore
+                    {backupSettings.last_backup_at && (
+                      <span className="block mt-1 text-sm">
+                        Ultimul backup: {format(new Date(backupSettings.last_backup_at), 'dd.MM.yyyy HH:mm', { locale: ro })}
+                      </span>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Tip</TableHead>
+                      <TableHead>Descriere</TableHead>
+                      <TableHead>Utilizatori</TableHead>
+                      <TableHead>Creat de</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Acțiuni</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loadingBackups ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ) : backups.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          Nu există backup-uri
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      backups.map((backup) => (
+                        <TableRow key={backup.id}>
+                          <TableCell className="font-mono text-sm">{backup.id}</TableCell>
+                          <TableCell>
+                            <span className="px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">
+                              {backup.backup_type === 'manual' ? 'Manual' : 'Automat'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">{backup.description || '-'}</TableCell>
+                          <TableCell>{backup.user_count || 0}</TableCell>
+                          <TableCell>{backup.created_by || 'admin'}</TableCell>
+                          <TableCell>
+                            {format(new Date(backup.created_at), 'dd.MM.yyyy HH:mm', { locale: ro })}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              onClick={() => {
+                                setSelectedBackup(backup);
+                                setShowRestoreDialog(true);
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="rounded-xl"
+                            >
+                              <RotateCcw className="w-4 h-4 mr-1" />
+                              Restaurează
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Groups Table */}
         <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <CardHeader>
@@ -655,6 +903,207 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Backup Dialog */}
+        <Dialog open={showBackupDialog} onOpenChange={setShowBackupDialog}>
+          <DialogContent className="rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Creează Backup Manual</DialogTitle>
+              <DialogDescription>
+                Creează un backup complet cu toate datele utilizatorilor, grupuri, mesaje și activități.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="backup-desc">Descriere (opțional)</Label>
+                <Input
+                  id="backup-desc"
+                  value={backupDescription}
+                  onChange={(e) => setBackupDescription(e.target.value)}
+                  placeholder="Ex: Backup înainte de actualizare"
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowBackupDialog(false)}
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                >
+                  Anulează
+                </Button>
+                <Button
+                  onClick={handleCreateBackup}
+                  disabled={creatingBackup}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl"
+                >
+                  {creatingBackup ? 'Se creează...' : 'Creează Backup'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Restore Dialog */}
+        <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+          <DialogContent className="rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Restaurează Backup</DialogTitle>
+              <DialogDescription>
+                {selectedBackup && (
+                  <>
+                    Backup din {format(new Date(selectedBackup.created_at), 'dd.MM.yyyy HH:mm', { locale: ro })}
+                    {selectedBackup.description && ` - ${selectedBackup.description}`}
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="restore-type">Tip restaurare</Label>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setRestoreUser('')}
+                    className={`flex-1 px-4 py-2 rounded-xl border-2 transition-colors ${
+                      restoreUser === '' 
+                        ? 'bg-blue-600 text-white border-blue-600' 
+                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Toți utilizatorii
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // When switching to user mode, keep empty for now, user will enter ID
+                    }}
+                    className={`flex-1 px-4 py-2 rounded-xl border-2 transition-colors ${
+                      restoreUser !== '' 
+                        ? 'bg-blue-600 text-white border-blue-600' 
+                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Utilizator specific
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Pentru utilizator specific, introdu ID-ul mai jos
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="restore-user">ID Utilizator (opțional)</Label>
+                <Input
+                  id="restore-user"
+                  type="number"
+                  value={restoreUser}
+                  onChange={(e) => setRestoreUser(e.target.value)}
+                  placeholder="Lăsat gol pentru a restaura toți utilizatorii"
+                  className="rounded-xl"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Dacă lăsați gol, se restaurează datele pentru toți utilizatorii
+                </p>
+              </div>
+              <Alert variant="destructive">
+                <AlertDescription>
+                  <strong>Atenție!</strong> Restaurarea va suprascrie datele curente. Această acțiune nu poate fi anulată!
+                </AlertDescription>
+              </Alert>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setShowRestoreDialog(false);
+                    setSelectedBackup(null);
+                    setRestoreUser('');
+                  }}
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                >
+                  Anulează
+                </Button>
+                <Button
+                  onClick={handleRestoreBackup}
+                  disabled={restoringBackup || !selectedBackup}
+                  variant="destructive"
+                  className="flex-1 rounded-xl"
+                >
+                  {restoringBackup ? 'Se restaurează...' : 'Restaurează'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Backup Settings Dialog */}
+        <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+          <DialogContent className="rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Setări Backup Automat</DialogTitle>
+              <DialogDescription>
+                Configurează backup-urile automate pentru datele utilizatorilor.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="auto-backup">Backup automat activat</Label>
+                  <p className="text-sm text-gray-500">Backup-urile se vor crea automat la intervalul setat</p>
+                </div>
+                <Switch
+                  id="auto-backup"
+                  checked={backupSettings.auto_backup_enabled}
+                  onCheckedChange={(checked) =>
+                    setBackupSettings({ ...backupSettings, auto_backup_enabled: checked })
+                  }
+                />
+              </div>
+              {backupSettings.auto_backup_enabled && (
+                <div>
+                  <Label htmlFor="backup-interval">Interval backup (ore)</Label>
+                  <Input
+                    id="backup-interval"
+                    type="number"
+                    min="1"
+                    max="168"
+                    value={backupSettings.auto_backup_interval_hours}
+                    onChange={(e) =>
+                      setBackupSettings({
+                        ...backupSettings,
+                        auto_backup_interval_hours: parseInt(e.target.value) || 24
+                      })
+                    }
+                    className="rounded-xl"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Interval între backup-uri (1-168 ore / 1 săptămână)
+                  </p>
+                </div>
+              )}
+              {backupSettings.last_backup_at && (
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <strong>Ultimul backup:</strong>{' '}
+                  {format(new Date(backupSettings.last_backup_at), 'dd.MM.yyyy HH:mm', { locale: ro })}
+                </div>
+              )}
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowSettingsDialog(false)}
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                >
+                  Anulează
+                </Button>
+                <Button
+                  onClick={handleSaveBackupSettings}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl"
+                >
+                  Salvează
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

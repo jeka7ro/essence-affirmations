@@ -167,6 +167,37 @@ async function initializeTables() {
       )
     `);
 
+    // Full system backups table (complete user data snapshots)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_backups (
+        id SERIAL PRIMARY KEY,
+        backup_type VARCHAR(50) NOT NULL,
+        description TEXT,
+        user_id INTEGER,
+        backup_data JSONB NOT NULL,
+        created_by VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Backup settings table (for automatic backups)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS backup_settings (
+        id SERIAL PRIMARY KEY,
+        auto_backup_enabled BOOLEAN DEFAULT false,
+        auto_backup_interval_hours INTEGER DEFAULT 24,
+        last_backup_at TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Initialize backup settings if empty
+    await pool.query(`
+      INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours)
+      SELECT false, 24
+      WHERE NOT EXISTS (SELECT 1 FROM backup_settings)
+    `);
+
     // Activities table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activities (
@@ -807,6 +838,311 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
+// Backup Management Endpoints (Admin only)
+
+// Get all system backups
+app.get('/api/backups', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT id, backup_type, description, user_id, created_by, created_at,
+             CASE 
+               WHEN backup_data::text LIKE '%"users"%' THEN 
+                 jsonb_array_length(backup_data->'users')
+               ELSE 0
+             END as user_count
+      FROM system_backups 
+      ORDER BY created_at DESC 
+      LIMIT 100
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/backups error:', err);
+    // Fallback: simpler query without jsonb function
+    try {
+      const { rows } = await pool.query(`
+        SELECT id, backup_type, description, user_id, created_by, created_at, 
+               NULL as user_count
+        FROM system_backups 
+        ORDER BY created_at DESC 
+        LIMIT 100
+      `);
+      res.json(rows);
+    } catch (fallbackErr) {
+      res.status(500).json({ error: fallbackErr.message });
+    }
+  }
+});
+
+// Create manual backup (all users)
+app.post('/api/backups/create', async (req, res) => {
+  try {
+    const { description } = req.body || {};
+    const { user } = req.body || {};
+    
+    // Get all users with their complete data
+    const usersResult = await pool.query('SELECT * FROM users');
+    const users = usersResult.rows;
+    
+    // Get all groups
+    const groupsResult = await pool.query('SELECT * FROM groups');
+    const groups = groupsResult.rows;
+    
+    // Get all messages
+    const messagesResult = await pool.query('SELECT * FROM messages ORDER BY created_date DESC LIMIT 1000');
+    const messages = messagesResult.rows;
+    
+    // Get all activities
+    const activitiesResult = await pool.query('SELECT * FROM activities ORDER BY created_date DESC LIMIT 1000');
+    const activities = activitiesResult.rows;
+    
+    const backupData = {
+      users,
+      groups,
+      messages,
+      activities,
+      backup_timestamp: new Date().toISOString()
+    };
+    
+    const result = await pool.query(
+      `INSERT INTO system_backups (backup_type, description, backup_data, created_by)
+       VALUES ($1, $2, $3, $4) RETURNING id, backup_type, description, created_at`,
+      ['manual', description || `Manual backup - ${users.length} users`, JSON.stringify(backupData), user?.username || 'admin']
+    );
+    
+    // Update last_backup_at in settings
+    await pool.query('UPDATE backup_settings SET last_backup_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP');
+    
+    res.json({ 
+      success: true, 
+      backup: result.rows[0],
+      stats: {
+        users: users.length,
+        groups: groups.length,
+        messages: messages.length,
+        activities: activities.length
+      }
+    });
+  } catch (err) {
+    console.error('POST /api/backups/create error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get specific backup
+app.get('/api/backups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query('SELECT * FROM system_backups WHERE id = $1', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Backup not found' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('GET /api/backups/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Restore backup (all users or specific user)
+app.post('/api/backups/:id/restore', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, restoreType = 'all' } = req.body; // restoreType: 'all' or 'user'
+    
+    // Get backup
+    const backupResult = await pool.query('SELECT * FROM system_backups WHERE id = $1', [id]);
+    if (backupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Backup not found' });
+    }
+    
+    const backup = backupResult.rows[0];
+    const backupData = typeof backup.backup_data === 'string' 
+      ? JSON.parse(backup.backup_data) 
+      : backup.backup_data;
+    
+    if (!backupData.users || !Array.isArray(backupData.users)) {
+      return res.status(400).json({ error: 'Invalid backup data format' });
+    }
+    
+    let restored = [];
+    
+    if (restoreType === 'user' && userId) {
+      // Restore single user
+      const userBackup = backupData.users.find(u => u.id === userId || u.id === parseInt(userId));
+      if (!userBackup) {
+        return res.status(404).json({ error: 'User not found in backup' });
+      }
+      
+      // Update user with backup data (exclude id and created_at)
+      const { id: _, created_at: __, ...userData } = userBackup;
+      
+      const allowedFields = ['username','email','full_name','first_name','last_name','phone','birth_date','sex','pin','avatar','affirmation','preferences','role',
+        'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id','group_joined_at'];
+      
+      const updates = Object.entries(userData)
+        .filter(([k]) => allowedFields.has(k))
+        .map(([k, v]) => `${k} = $${Object.keys(userData).indexOf(k) + 2}`)
+        .join(', ');
+      
+      const values = Object.entries(userData)
+        .filter(([k]) => allowedFields.has(k))
+        .map(([_, v]) => v === '' ? null : v);
+      
+      await pool.query(
+        `UPDATE users SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+        [userId, ...values]
+      );
+      
+      restored.push({ type: 'user', id: userId });
+    } else {
+      // Restore all users
+      for (const userBackup of backupData.users) {
+        const { id: backupUserId, created_at: __, ...userData } = userBackup;
+        
+        // Check if user exists
+        const existingUser = await pool.query('SELECT id FROM users WHERE id = $1', [backupUserId]);
+        
+        if (existingUser.rows.length > 0) {
+          // Update existing user
+          const allowedFields = ['username','email','full_name','first_name','last_name','phone','birth_date','sex','pin','avatar','affirmation','preferences','role',
+            'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id','group_joined_at'];
+          
+          const updates = Object.entries(userData)
+            .filter(([k]) => allowedFields.has(k))
+            .map(([k, v]) => `${k} = $${Object.keys(userData).indexOf(k) + 2}`)
+            .join(', ');
+          
+          const values = Object.entries(userData)
+            .filter(([k]) => allowedFields.has(k))
+            .map(([_, v]) => v === '' ? null : v);
+          
+          await pool.query(
+            `UPDATE users SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [backupUserId, ...values]
+          );
+          restored.push({ type: 'user', id: backupUserId, action: 'updated' });
+        }
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      restored,
+      message: restoreType === 'user' 
+        ? `User ${userId} restored successfully`
+        : `${restored.length} users restored successfully`
+    });
+  } catch (err) {
+    console.error('POST /api/backups/:id/restore error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get backup settings
+app.get('/api/backup-settings', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM backup_settings ORDER BY id DESC LIMIT 1');
+    res.json(rows[0] || { auto_backup_enabled: false, auto_backup_interval_hours: 24 });
+  } catch (err) {
+    console.error('GET /api/backup-settings error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update backup settings
+app.put('/api/backup-settings', async (req, res) => {
+  try {
+    const { auto_backup_enabled, auto_backup_interval_hours } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE backup_settings 
+       SET auto_backup_enabled = $1, 
+           auto_backup_interval_hours = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = (SELECT id FROM backup_settings ORDER BY id DESC LIMIT 1)
+       RETURNING *`,
+      [auto_backup_enabled || false, auto_backup_interval_hours || 24]
+    );
+    
+    if (result.rows.length === 0) {
+      // Create if doesn't exist
+      const insertResult = await pool.query(
+        `INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours)
+         VALUES ($1, $2) RETURNING *`,
+        [auto_backup_enabled || false, auto_backup_interval_hours || 24]
+      );
+      res.json(insertResult.rows[0]);
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (err) {
+    console.error('PUT /api/backup-settings error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Auto-backup function
+async function performAutoBackup() {
+  try {
+    // Check if auto-backup is enabled
+    const settingsResult = await pool.query('SELECT * FROM backup_settings ORDER BY id DESC LIMIT 1');
+    const settings = settingsResult.rows[0];
+    
+    if (!settings || !settings.auto_backup_enabled) {
+      return; // Auto-backup is disabled
+    }
+    
+    const intervalHours = settings.auto_backup_interval_hours || 24;
+    const lastBackup = settings.last_backup_at;
+    const now = new Date();
+    
+    // Check if it's time for a backup
+    if (lastBackup) {
+      const lastBackupTime = new Date(lastBackup);
+      const hoursSinceLastBackup = (now.getTime() - lastBackupTime.getTime()) / (1000 * 60 * 60);
+      if (hoursSinceLastBackup < intervalHours) {
+        return; // Not time yet
+      }
+    }
+    
+    console.log('Performing automatic backup...');
+    
+    // Get all data
+    const usersResult = await pool.query('SELECT * FROM users');
+    const groupsResult = await pool.query('SELECT * FROM groups');
+    const messagesResult = await pool.query('SELECT * FROM messages ORDER BY created_date DESC LIMIT 1000');
+    const activitiesResult = await pool.query('SELECT * FROM activities ORDER BY created_date DESC LIMIT 1000');
+    
+    const backupData = {
+      users: usersResult.rows,
+      groups: groupsResult.rows,
+      messages: messagesResult.rows,
+      activities: activitiesResult.rows,
+      backup_timestamp: now.toISOString()
+    };
+    
+    await pool.query(
+      `INSERT INTO system_backups (backup_type, description, backup_data, created_by)
+       VALUES ($1, $2, $3, $4)`,
+      ['automatic', `Automatic backup - ${usersResult.rows.length} users`, JSON.stringify(backupData), 'system']
+    );
+    
+    // Update last_backup_at
+    if (settings && settings.id) {
+      await pool.query('UPDATE backup_settings SET last_backup_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1', [settings.id]);
+    } else {
+      await pool.query('UPDATE backup_settings SET last_backup_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP');
+    }
+    
+    console.log(`Automatic backup completed: ${usersResult.rows.length} users backed up`);
+  } catch (err) {
+    console.error('Auto-backup error:', err);
+  }
+}
+
+// Check for auto-backup every hour
+setInterval(performAutoBackup, 60 * 60 * 1000); // Every hour
+
 // Add a catch-all route for debugging
 app.use((req, res) => {
   console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
@@ -814,7 +1150,7 @@ app.use((req, res) => {
     error: 'Route not found', 
     method: req.method, 
     url: req.originalUrl,
-    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses', '/api/courses-scrape', '/api/courses-seed']
+    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses', '/api/courses-scrape', '/api/courses-seed', '/api/backups', '/api/backup-settings']
   });
 });
 
@@ -822,4 +1158,5 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database URL configured: ${!!process.env.DATABASE_URL}`);
+  console.log('Auto-backup checker started (checks every hour)');
 });
