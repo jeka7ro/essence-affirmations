@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  Home
+  Home,
+  Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -120,6 +121,7 @@ export default function Layout({ children, currentPageName }) {
     { title: "Acasă", url: createPageUrl("Home"), icon: Home },
     { title: "Cursuri", url: createPageUrl("Courses"), icon: Activity },
     { title: "Grupuri", url: createPageUrl("Groups"), icon: Users },
+    { title: "Top Membri", url: createPageUrl("TopMembri"), icon: Trophy },
     { title: "Chat", url: createPageUrl("Chat"), icon: MessageSquare },
     { title: "Feed", url: createPageUrl("Feed"), icon: Activity },
     { title: "Setări", url: createPageUrl("Settings"), icon: Settings },
@@ -257,27 +259,8 @@ export default function Layout({ children, currentPageName }) {
               />
             </div>
             {user && (
-              <div className="flex flex-col items-center gap-1">
-                {/* Avatar above username on mobile */}
-                {(() => {
-                  const avatarDisplay = getAvatarDisplay(user);
-                  return avatarDisplay && (
-                    <>
-                      {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
-                        <img
-                          src={avatarDisplay}
-                          alt="Avatar"
-                          className="w-8 h-8 rounded-full border-2 border-blue-600 object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-lg">
-                          {avatarDisplay}
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-                <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>
+              <div className="flex flex-col items-center gap-2">
+                {/* Theme toggle first */}
                 <button 
                   onClick={cycleTheme} 
                   className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
@@ -296,6 +279,25 @@ export default function Layout({ children, currentPageName }) {
                   </span>
                 </button>
                 
+                {/* Avatar - larger, without username */}
+                {(() => {
+                  const avatarDisplay = getAvatarDisplay(user);
+                  return avatarDisplay && (
+                    <>
+                      {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                        <img
+                          src={avatarDisplay}
+                          alt="Avatar"
+                          className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
+                          {avatarDisplay}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>

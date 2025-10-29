@@ -25,7 +25,8 @@ export default function GroupsPage() {
     description: "",
     start_date: "",
     end_date: "",
-    cities: []
+    cities: [],
+    secret_code: ""
   });
   const [citiesOpen, setCitiesOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -35,7 +36,8 @@ export default function GroupsPage() {
     description: "",
     start_date: "",
     end_date: "",
-    cities: []
+    cities: [],
+    secret_code: ""
   });
 
   const romanianCities = [
@@ -58,8 +60,15 @@ export default function GroupsPage() {
 
       const allGroups = await base44.entities.Group.list();
       
+      // Filter groups: only show active groups, or groups user is part of
+      const filteredGroups = allGroups.filter(group => {
+        if (group.is_active) return true; // Show all active groups
+        if (userData?.group_id === group.id) return true; // Show user's group even if inactive
+        return false; // Hide inactive groups user is not part of
+      });
+      
       // Calculate actual member count for each group
-      const groupsWithCount = allGroups.map(group => {
+      const groupsWithCount = filteredGroups.map(group => {
         const members = users.filter(u => u.group_id === group.id);
         return {
           ...group,
@@ -125,7 +134,8 @@ export default function GroupsPage() {
     }
 
     try {
-      const secretCode = generateSecretCode();
+      // Use provided secret code or generate one
+      const secretCode = newGroup.secret_code.trim() || generateSecretCode();
       
       const groupData = {
         name: newGroup.name,
@@ -158,7 +168,7 @@ export default function GroupsPage() {
       });
 
       setShowCreateDialog(false);
-      setNewGroup({ name: "", description: "", start_date: "", end_date: "", cities: [] });
+      setNewGroup({ name: "", description: "", start_date: "", end_date: "", cities: [], secret_code: "" });
       loadData();
     } catch (error) {
       console.error("Error creating group:", error);
@@ -233,7 +243,8 @@ export default function GroupsPage() {
       description: group.description || "",
       start_date: group.start_date || "",
       end_date: group.end_date || "",
-      cities: group.cities ? JSON.parse(group.cities) : []
+      cities: group.cities ? JSON.parse(group.cities) : [],
+      secret_code: group.secret_code || ""
     });
     setShowEditDialog(true);
   };
@@ -270,7 +281,8 @@ export default function GroupsPage() {
         description: editGroup.description,
         start_date: editGroup.start_date,
         end_date: editGroup.end_date,
-        cities: JSON.stringify(editGroup.cities)
+        cities: JSON.stringify(editGroup.cities),
+        secret_code: editGroup.secret_code.trim() || editingGroup.secret_code
       });
 
       await base44.entities.Activity.create({
@@ -289,7 +301,8 @@ export default function GroupsPage() {
   };
 
   const currentGroup = groups.find(g => g.id === user?.group_id);
-  const availableGroups = groups.filter(g => g.is_active);
+  // Only show available groups that user is not already part of
+  const availableGroups = groups.filter(g => g.is_active && g.id !== user?.group_id);
 
   if (loading) {
     return (
@@ -560,6 +573,17 @@ export default function GroupsPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="secret_code">Cod Secret (opțional - se generează automat dacă nu e introdus)</Label>
+                <Input
+                  id="secret_code"
+                  value={newGroup.secret_code}
+                  onChange={(e) => setNewGroup({ ...newGroup, secret_code: e.target.value.toUpperCase() })}
+                  placeholder="Ex: ABC12345"
+                  className="rounded-2xl"
+                  maxLength={20}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Orașe din România *</Label>
                 <Popover open={citiesOpen} onOpenChange={setCitiesOpen}>
                   <PopoverTrigger asChild>
@@ -750,6 +774,17 @@ export default function GroupsPage() {
                   onChange={(e) => setEditGroup({ ...editGroup, end_date: e.target.value })}
                   className="rounded-2xl"
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_secret_code">Cod Secret</Label>
+                <Input
+                  id="edit_secret_code"
+                  value={editGroup.secret_code}
+                  onChange={(e) => setEditGroup({ ...editGroup, secret_code: e.target.value.toUpperCase() })}
+                  placeholder="Ex: ABC12345"
+                  className="rounded-2xl"
+                  maxLength={20}
                 />
               </div>
               <div className="space-y-2">

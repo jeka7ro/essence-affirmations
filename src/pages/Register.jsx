@@ -209,13 +209,31 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    // Initialize Google Identity Services - DISABLED until proper client ID is configured
-    // if (window.google) {
-    //   window.google.accounts.id.initialize({
-    //     client_id: "YOUR_GOOGLE_CLIENT_ID", // Replace with your actual client ID
-    //     callback: handleGoogleSignIn
-    //   });
-    // }
+    // Initialize Google Identity Services if client ID is available
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    
+    if (window.google && googleClientId) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleSignIn
+        });
+        
+        // Render button
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: 'signin_with',
+            locale: 'ro'
+          }
+        );
+      } catch (error) {
+        console.error('Error initializing Google Sign-In:', error);
+      }
+    }
   }, []);
 
   // Global function for Google callback
@@ -463,20 +481,34 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full flex items-center justify-center gap-3 h-12"
-            onClick={() => window.open('https://accounts.google.com', '_blank')}
-          >
-            <img 
-              src="https://www.google.com/favicon.ico" 
-              alt="Google" 
-              className="w-5 h-5"
-              onError={(e) => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIyLjU2IDExLjIyaC4wMTVjLS4xNiAyLjQ1LS45MyA0LjI0LTIuNjIgNS42NC0xLjYzIDEuMzctMy43NCAyLjA5LTYuMzUgMi4wOS00LjQ5IDAtNy44NS0yLjYyLTcuODUtNy40MiAwLTQuNDIgMy4yNC03LjQxIDcuNzMtNy40MSAyLjYyIDAgNC41MS45MyA1Ljg0IDEuNTlsLTEuNTEgMS40MmMtLjkyLS4zOC0yLjA3LS42MS0zLjMzLS42MS0yLjg1IDAtNC43MyAxLjc0LTUuNTggNC4xM2wtMi4yOC0uMDhjLS4zNC02LjU5IDQuMDctOC40NyA2LjMyLTEuMjd0LS4wN2gxLjY1djUuNzRoMS42N1YxMS4yMXoiLz48L3N2Zz4='; }}
+          {/* Google Sign-In Button */}
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+            <div 
+              id="google-signin-button"
+              className="w-full"
+              style={{ height: '48px' }}
             />
-            Continuă cu Google
-          </Button>
+          ) : (
+            <div className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full flex items-center justify-center gap-3 h-12"
+                onClick={() => {
+                  setError('Google Sign-In necesită configurare. Contactează administratorul pentru activare.');
+                }}
+                disabled
+              >
+                <img 
+                  src="https://www.google.com/favicon.ico" 
+                  alt="Google" 
+                  className="w-5 h-5"
+                  onError={(e) => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d nursLnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIyLjU2IDExLjIyaC4wMTVjLS4xNiAyLjQ1LS45MyA0LjI0LTIuNjIgNS42NC0xLjYzIDEuMzctMy43NCAyLjA5LTYuMzUgMi4wOS00LjQ5IDAtNy44NS0yLjYyLTcuODUtNy40MiAwLTQuNDIgMy4yNC03LjQxIDcuNzMtNy40MSAyLjYyIDAgNC41MS45MyA1Ljg0IDEuNTlsLTEuNTEgMS40MmMtLjkyLS4zOC0yLjA3LS42MS0zLjMzLS42MS0yLjg1IDAtNC43MyAxLjc0LTUuNTggNC4xM2wtMi4yOC0uMDhjLS4zNC02LjU5IDQuMDctOC40NyA2LjMyLTEuMjd0LS4wN2gxLjY1djUuNzRoMS42N1YxMS4yMXoiLz48L3N2Zz4='; }}
+                />
+                Continuă cu Google (Necesită configurare)
+              </Button>
+            </div>
+          )}
 
           <Button
             variant="link"

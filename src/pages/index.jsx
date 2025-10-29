@@ -19,6 +19,7 @@ import ForgotPin from "./ForgotPin";
 import Autentificare from "./Autentificare";
 
 import Courses from "./Courses";
+import TopMembri from "./TopMembri";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -43,6 +44,8 @@ const PAGES = {
     Autentificare: Autentificare,
     
     Courses: Courses,
+    
+    TopMembri: TopMembri,
     
 }
 
@@ -92,6 +95,8 @@ function PagesContent() {
                 <Route path="/Autentificare" element={<Autentificare />} />
                 
                 <Route path="/Courses" element={<Courses />} />
+                
+                <Route path="/TopMembri" element={<TopMembri />} />
                 
             </Routes>
         </Layout>

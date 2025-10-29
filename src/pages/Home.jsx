@@ -606,7 +606,6 @@ export default function HomePage() {
             value={stats.activeUsers}
             subtitle="ultimele 24h"
             color="green"
-            className="hidden md:block"
           />
           <StatsCards
             icon={Calendar}
@@ -615,25 +614,6 @@ export default function HomePage() {
             subtitle="repetări"
             color="blue"
           />
-        </div>
-
-        {/* Avatar under stats on mobile */}
-        <div className="md:hidden flex justify-center">
-          {user?.avatar ? (
-            <img
-              src={user.avatar}
-              alt="Avatar"
-              className="w-16 h-16 rounded-full border-2 border-blue-600 object-cover"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-2xl">
-              {(() => {
-                const emojis = ['👤','👨','👩','🧑','👴','👵','🧔','👨\u200d💼','👩\u200d💼','🧑\u200d💻'];
-                const idx = (user?.id || 0) % emojis.length;
-                return emojis[idx];
-              })()}
-            </div>
-          )}
         </div>
 
         <AffirmationBox
