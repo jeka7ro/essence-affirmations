@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import fetch from 'node-fetch';
+import nodemailer from 'nodemailer';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -370,6 +371,82 @@ app.get('/api/health', (req, res) => {
 // Simple test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!', port: port });
+});
+
+// Send email endpoint
+app.post('/api/send-email', async (req, res) => {
+  try {
+    const { to, subject, body } = req.body;
+    
+    if (!to || !subject || !body) {
+      return res.status(400).json({ error: 'Missing required fields: to, subject, body' });
+    }
+    
+    // Check if SMTP credentials are configured
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || process.env.APP_PASSWORD;
+    
+    if (!smtpUser || !smtpPass) {
+      console.error('SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.');
+      return res.status(500).json({ 
+        error: 'Email service not configured',
+        message: 'SMTP credentials are not set. Please configure SMTP_USER and SMTP_PASS environment variables.'
+      });
+    }
+    
+    // Configure nodemailer transporter
+    // Use environment variables for SMTP configuration, or default to Gmail
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
+    });
+    
+    // Verify transporter configuration
+    try {
+      await transporter.verify();
+      console.log('SMTP server is ready to send emails');
+    } catch (error) {
+      console.error('SMTP verification failed:', error.message);
+      return res.status(500).json({ 
+        error: 'SMTP verification failed',
+        message: 'Could not connect to SMTP server. Please check your SMTP configuration.'
+      });
+    }
+    
+    // Send email
+    const mailOptions = {
+      from: process.env.SMTP_FROM || smtpUser,
+      to: to,
+      subject: subject,
+      text: body,
+      html: body.replace(/\n/g, '<br>') // Convert newlines to HTML breaks
+    };
+    
+    const info = await transporter.sendMail(mailOptions);
+    
+    console.log('Email sent successfully:', {
+      to: to,
+      subject: subject,
+      messageId: info.messageId
+    });
+    
+    res.json({ 
+      success: true, 
+      messageId: info.messageId,
+      message: 'Email sent successfully' 
+    });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ 
+      error: 'Failed to send email',
+      message: error.message 
+    });
+  }
 });
 
 // Get user by ID

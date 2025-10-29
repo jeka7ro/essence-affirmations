@@ -41,6 +41,28 @@ export default function AdminPage() {
   const [showBackupDialog, setShowBackupDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [updatingPinFor, setUpdatingPinFor] = useState(null);
+
+  const handleSetUserPin = async (user) => {
+    try {
+      const input = window.prompt(`Setează PIN nou pentru ${user.username} (4 cifre):`, "");
+      if (input === null) return; // cancelled
+      const newPin = String(input).trim().replace(/\D/g, "");
+      if (newPin.length !== 4) {
+        alert("PIN-ul trebuie să aibă exact 4 cifre");
+        return;
+      }
+      setUpdatingPinFor(user.id);
+      await base44.entities.User.update(user.id, { pin: newPin });
+      alert(`PIN setat cu succes pentru ${user.username}`);
+      await loadData();
+    } catch (err) {
+      console.error("Set PIN error:", err);
+      alert("Eroare la setarea PIN-ului");
+    } finally {
+      setUpdatingPinFor(null);
+    }
+  };
   const [selectedBackup, setSelectedBackup] = useState(null);
   const [restoreUser, setRestoreUser] = useState('');
   const [backupDescription, setBackupDescription] = useState('');
@@ -862,15 +884,26 @@ export default function AdminPage() {
                           }
                         </TableCell>
                         <TableCell>
-                          <Button
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={deletingUser === user.id || user.email === "jeka7ro@gmail.com"}
-                            variant="destructive"
-                            size="sm"
-                            className="rounded-xl"
-                          >
-                            {deletingUser === user.id ? 'Se șterge...' : 'Șterge'}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleSetUserPin(user)}
+                              size="sm"
+                              className="rounded-xl"
+                              variant="outline"
+                              disabled={updatingPinFor === user.id}
+                            >
+                              {updatingPinFor === user.id ? 'Se setează...' : 'Setează PIN'}
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteUser(user.id)}
+                              disabled={deletingUser === user.id || user.email === "jeka7ro@gmail.com"}
+                              variant="destructive"
+                              size="sm"
+                              className="rounded-xl"
+                            >
+                              {deletingUser === user.id ? 'Se șterge...' : 'Șterge'}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

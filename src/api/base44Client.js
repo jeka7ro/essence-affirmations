@@ -84,7 +84,31 @@ export const base44 = {
           reader.readAsDataURL(file);
         });
       },
-      async SendEmail() { return { ok: true }; },
+      async SendEmail({ to, subject, body }) {
+        try {
+          const response = await fetch(`${API_URL}/send-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            mode: 'cors',
+            credentials: 'include',
+            body: JSON.stringify({ to, subject, body })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `Failed to send email: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          return { ok: true, ...data };
+        } catch (error) {
+          console.error('Error sending email:', error);
+          throw error;
+        }
+      },
       async GenerateImage() { return { url: '' }; },
       async CreateFileSignedUrl() { return { url: '' }; },
       async UploadPrivateFile() { return { file_url: '' }; },

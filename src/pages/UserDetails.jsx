@@ -25,6 +25,13 @@ export default function UserDetailsPage() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
+  const pageStartIndex = (page - 1) * pageSize;
+  const pageEndIndex = Math.min(filteredHistory.length, pageStartIndex + pageSize);
+  const pagedHistory = filteredHistory.slice(pageStartIndex, pageEndIndex);
 
   useEffect(() => {
     if (userId) {
@@ -34,6 +41,8 @@ export default function UserDetailsPage() {
 
   useEffect(() => {
     applyFilters();
+    // Reset to first page whenever filters change
+    setPage(1);
   }, [repetitionHistory, selectedDate, dateFilter, startDate, endDate]);
 
   const loadUserData = async () => {
@@ -78,6 +87,14 @@ export default function UserDetailsPage() {
     }
 
     setFilteredHistory(filtered);
+  };
+
+  const handleChangePageSize = (value) => {
+    const size = parseInt(value, 10);
+    if (!Number.isNaN(size) && size > 0) {
+      setPageSize(size);
+      setPage(1);
+    }
   };
 
   const handleExportExcel = () => {
@@ -337,13 +354,29 @@ export default function UserDetailsPage() {
               <CardTitle className="text-gray-900 dark:text-gray-100">
                 Tabel Repetări ({filteredHistory.length} repetări)
               </CardTitle>
-              <Button
-                onClick={handleExportExcel}
-                className="bg-green-600 hover:bg-green-700 text-white rounded-xl"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export Excel
-              </Button>
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <span>Afișează</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handleChangePageSize(e.target.value)}
+                    className="px-2 py-1 rounded-lg border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={200}>200</option>
+                  </select>
+                  <span>pe pagină</span>
+                </div>
+                <Button
+                  onClick={handleExportExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white rounded-xl"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Excel
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -365,10 +398,10 @@ export default function UserDetailsPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredHistory.map((rep, index) => (
+                    pagedHistory.map((rep, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-mono text-sm text-gray-500">
-                          {filteredHistory.length - index}
+                          {filteredHistory.length - (pageStartIndex + index)}
                         </TableCell>
                         <TableCell>
                           {rep.date 
@@ -397,6 +430,35 @@ export default function UserDetailsPage() {
                 </TableBody>
               </Table>
             </div>
+            {/* Pagination Controls */}
+            {filteredHistory.length > 0 && (
+              <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Afișate {pageStartIndex + 1}-{pageEndIndex} din {filteredHistory.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="rounded-xl"
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Pagina {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl"
+                    disabled={page === totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  >
+                    Următor
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

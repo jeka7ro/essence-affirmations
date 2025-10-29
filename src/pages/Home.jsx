@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -42,6 +42,8 @@ export default function HomePage() {
   const [repsNeededPerHour, setRepsNeededPerHour] = useState(0);
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
+  // Track if we've already shown mailman congratulations dialog in this session
+  const congratulationsShownRef = useRef(false);
   useEffect(() => {
     loadData();
     
@@ -138,14 +140,23 @@ export default function HomePage() {
       if (showCongratulationsDialog) {
         setShowCongratulationsDialog(false);
       }
+      congratulationsShownRef.current = true; // Mark as shown to prevent re-display
       return;
+    }
+    
+    // Reset ref if it's a new day (user data changed and it's not today)
+    if (seenDate && seenDate !== today) {
+      congratulationsShownRef.current = false;
     }
     
     // Only show if:
     // 1. User reached 100 repetitions today
     // 2. Hasn't seen the popup today (checked from database - works across all devices)
     // 3. Dialog is not already shown (to prevent multiple triggers)
-    if (todayRepetitions >= 100 && !hasSeenToday && !showCongratulationsDialog) {
+    // 4. Haven't shown in this session yet (prevents re-trigger on state updates)
+    if (todayRepetitions >= 100 && !hasSeenToday && !showCongratulationsDialog && !congratulationsShownRef.current) {
+      // Mark as shown immediately to prevent re-trigger
+      congratulationsShownRef.current = true;
       // Mark as seen IMMEDIATELY and synchronously in state BEFORE showing
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       setUser(prev => prev ? { ...prev, congratulations_seen_date: todayStr } : prev);
@@ -154,7 +165,7 @@ export default function HomePage() {
       markCongratulationsSeen();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayRepetitions, user?.id, user?.congratulations_seen_date, loading, showCongratulationsDialog]);
+  }, [todayRepetitions, user?.id, user?.congratulations_seen_date, loading]);
 
   const loadData = async () => {
     try {
@@ -175,8 +186,13 @@ export default function HomePage() {
         const seenDateFromDB = normalizeDate(userData.congratulations_seen_date);
         if (seenDateFromDB === today) {
           setShowCongratulationsDialog(false); // Explicitly hide if already seen today
+          congratulationsShownRef.current = true; // Mark as shown to prevent re-display
           console.log(`[loadData] User ${userData.id} already saw congratulations on ${seenDateFromDB} (today is ${today}), NOT showing popup`);
         } else {
+          // Reset ref if it's a new day (allows showing dialog again tomorrow)
+          if (seenDateFromDB && seenDateFromDB !== today) {
+            congratulationsShownRef.current = false;
+          }
           console.log(`[loadData] User ${userData.id} has NOT seen congratulations today. seenDate=${seenDateFromDB}, today=${today}`);
         }
         
@@ -621,6 +637,12 @@ export default function HomePage() {
     );
   }
 
+  // Precompute congratulations dialog visibility to avoid complex inline logic
+  const disableCongrats = import.meta.env.VITE_DISABLE_CONGRATS === 'true';
+  const todayStrForCongrats = format(new Date(), 'yyyy-MM-dd');
+  const seenTodayCongrats = user ? normalizeDate(user.congratulations_seen_date) === todayStrForCongrats : false;
+  const shouldShowCongratulationsDialog = !!user && !seenTodayCongrats && showCongratulationsDialog && !disableCongrats;
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -718,55 +740,38 @@ export default function HomePage() {
         </Dialog>
 
         {/* Congratulations Dialog - shown when user reaches 100 repetitions */}
-        {/* CRITICAL: Only render if NOT already seen today */}
-        {(() => {
-          if (!user) return null;
-          const today = format(new Date(), 'yyyy-MM-dd');
-          const seenDate = normalizeDate(user.congratulations_seen_date);
-          const hasSeenToday = seenDate === today;
-          
-          // If already seen today, DO NOT RENDER DIALOG AT ALL
-          if (hasSeenToday) {
-            return null;
-          }
-          
-          return (
-            <Dialog 
-              open={showCongratulationsDialog && !hasSeenToday} 
-              onOpenChange={async (open) => {
-                if (!open) {
-                  await markCongratulationsSeen();
-                  setShowCongratulationsDialog(false);
-                }
-              }}
-            >
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-3xl font-bold text-center text-green-600">
-                    🎉 Felicitări! 🎉
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4 text-center">
-                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                    Ai terminat cele 100 repetări și ești {user?.sex === 'F' ? 'cea mai tare' : 'cel mai tare'}!
-                  </p>
-                  <p className="text-lg text-gray-600 dark:text-gray-400">
-                    Continuă înainte așa! 💪
-                  </p>
-                  <Button 
-                    onClick={async () => {
-                      await markCongratulationsSeen();
-                      setShowCongratulationsDialog(false);
-                    }}
-                    className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
-                  >
-                    Continuă Provocarea! 🚀
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          );
-        })()}
+        {shouldShowCongratulationsDialog && (
+          <Dialog 
+            open={true}
+            onOpenChange={async (open) => {
+              if (!open) {
+                await markCongratulationsSeen();
+                setShowCongratulationsDialog(false);
+              }
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-3xl font-bold text-center text-green-600">🎉 Felicitări! 🎉</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4 text-center">
+                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                  Ai terminat cele 100 repetări și ești {user?.sex === 'F' ? 'cea mai tare' : 'cel mai tare'}!
+                </p>
+                <p className="text-lg text-gray-600 dark:text-gray-400">Continuă înainte așa! 💪</p>
+                <Button 
+                  onClick={async () => {
+                    await markCongratulationsSeen();
+                    setShowCongratulationsDialog(false);
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
+                >
+                  Continuă Provocarea! 🚀
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
         
 
 
