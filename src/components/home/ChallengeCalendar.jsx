@@ -27,16 +27,45 @@ export default function ChallengeCalendar({
     // Only allow editing past days
     if (!isPast) return;
     
-    // If already completed, just unmark it
+    // If already completed, unmark it (mark as incomplete)
     if (isCompleted) {
       const newCompletedDays = completedDays.filter(d => d !== dayDate);
+      
       try {
-        await base44.entities.User.update(userId, {
-          completed_days: JSON.stringify(newCompletedDays)
-        });
+        // Get current user data
+        const users = await base44.entities.User.list();
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+        
+        // Check if this is the first day of the challenge
+        const isFirstDay = dayDate === startDate;
+        
+        // Remove all repetitions for this day from history
+        const newHistory = Array.isArray(repetitionHistory) 
+          ? repetitionHistory.filter(r => r && r.date !== dayDate)
+          : [];
+        
+        // Calculate how many repetitions to remove (up to 100 for this day)
+        const repsToRemove = Math.min(dayReps, 100);
+        const newTotalReps = Math.max(0, (user.total_repetitions || 0) - repsToRemove);
+        
+        const updates = {
+          completed_days: JSON.stringify(newCompletedDays),
+          repetition_history: JSON.stringify(newHistory),
+          total_repetitions: newTotalReps
+        };
+        
+        // If this is the first day, move challenge start date to next day
+        if (isFirstDay) {
+          const nextDay = format(addDays(parseISO(startDate), 1), 'yyyy-MM-dd');
+          updates.challenge_start_date = nextDay;
+        }
+        
+        await base44.entities.User.update(userId, updates);
         onUpdate();
       } catch (error) {
         console.error("Error updating day:", error);
+        alert("Eroare la marcarea zilei ca neîndeplinită");
       }
       return;
     }
@@ -203,7 +232,7 @@ export default function ChallengeCalendar({
           {renderCalendar()}
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
-          Click pe o zi trecută necompletă pentru a o marca ca îndeplinită
+          Click pe o zi trecută pentru a o marca ca îndeplinită sau neîndeplinită
         </p>
       </CardContent>
 
