@@ -39,6 +39,7 @@ export default function GroupsPage() {
     cities: [],
     secret_code: ""
   });
+  const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase() === 'jeka7ro@gmail.com';
 
   const romanianCities = [
     "București", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Craiova",
@@ -60,12 +61,14 @@ export default function GroupsPage() {
 
       const allGroups = await base44.entities.Group.list();
       
-      // Filter groups: only show active groups, or groups user is part of
-      const filteredGroups = allGroups.filter(group => {
-        if (group.is_active) return true; // Show all active groups
-        if (userData?.group_id === group.id) return true; // Show user's group even if inactive
-        return false; // Hide inactive groups user is not part of
-      });
+      // Admin sees all groups; regular users see only active groups (or their own)
+      const filteredGroups = (userData?.role === 'admin' || (userData?.email || '').toLowerCase() === 'jeka7ro@gmail.com')
+        ? allGroups
+        : allGroups.filter(group => {
+            if (group.is_active) return true;
+            if (userData?.group_id === group.id) return true;
+            return false;
+          });
       
       // Calculate actual member count for each group
       const groupsWithCount = filteredGroups.map(group => {
@@ -81,6 +84,16 @@ export default function GroupsPage() {
       console.error("Error loading data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleActive = async (group) => {
+    try {
+      await base44.entities.Group.update(group.id, { is_active: !group.is_active });
+      await loadData();
+    } catch (e) {
+      console.error('Toggle active error:', e);
+      setError('Nu s-a putut schimba statusul grupului.');
     }
   };
 
@@ -447,7 +460,7 @@ export default function GroupsPage() {
         )}
 
         {/* Join by code */}
-        {!currentGroup && (
+        {!currentGroup && user?.role !== 'admin' && (
           <Card className="rounded-3xl">
             <CardContent className="p-6 space-y-4">
               <h2 className="text-xl font-bold text-gray-900">Intră într-un grup cu cod</h2>
@@ -472,8 +485,50 @@ export default function GroupsPage() {
           </Card>
         )}
 
-        {/* Public details about groups (read-only) */}
-        {!currentGroup && availableGroups.length > 0 && (
+        {/* Admin-only management view */}
+        {user?.role === 'admin' && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900">Administrare grupuri</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {groups.map(group => {
+                const cities = (() => { try { return group.cities ? JSON.parse(group.cities) : []; } catch { return []; } })();
+                return (
+                  <Card key={`admin-${group.id}`} className="rounded-3xl border-2">
+                    <CardHeader className="flex-row items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Lock className={`w-4 h-4 ${group.is_active ? 'text-blue-600' : 'text-gray-400'}`} />
+                        {group.name}
+                      </CardTitle>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="rounded-2xl" onClick={() => handleEditGroup(group)}>Editează</Button>
+                        <Button size="sm" className={`rounded-2xl ${group.is_active ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' : 'bg-green-600 hover:bg-green-700 text-white'}`} onClick={() => handleToggleActive(group)}>
+                          {group.is_active ? 'Dezactivează' : 'Activează'}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600"><Users className="w-4 h-4" /><span>{group.member_count || 0} membri</span></div>
+                      <div className="flex items-center gap-2 text-gray-600"><Calendar className="w-4 h-4" /><span>Perioadă: {group.start_date ? new Date(group.start_date).toLocaleDateString('ro-RO') : '-'}{group.end_date ? ` – ${new Date(group.end_date).toLocaleDateString('ro-RO')}` : ''}</span></div>
+                      {cities.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {cities.slice(0, 5).map((c) => (
+                            <span key={c} className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-xs">{c}</span>
+                          ))}
+                          {cities.length > 5 && (
+                            <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs">+{cities.length - 5} orașe</span>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Public details about groups (read-only) for non-admins */}
+        {!currentGroup && availableGroups.length > 0 && user?.role !== 'admin' && (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-gray-900">Detalii despre grupuri</h2>
             <p className="text-gray-600">Fără Grup: urmărești provocarea individual și nu vezi statisticile generale ale comunității. Pentru a te alătura unui grup, ai nevoie de codul secret.</p>
