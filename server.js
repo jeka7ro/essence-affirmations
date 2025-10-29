@@ -145,6 +145,21 @@ async function initializeTables() {
       END $$;
     `);
 
+    // User backups table (point-in-time snapshots of progress)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_backups (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        today_repetitions INTEGER,
+        total_repetitions INTEGER,
+        current_day INTEGER,
+        last_date DATE,
+        repetition_history TEXT,
+        completed_days TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Activities table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activities (
@@ -236,6 +251,17 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
+// Get backups for a user (latest first)
+app.get('/api/users/:id/backups', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query('SELECT * FROM user_backups WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100', [id]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Users
 app.get('/api/users', async (req, res) => {
   try {
@@ -317,6 +343,21 @@ app.put('/api/users/:id', async (req, res) => {
 
     const result = await pool.query(sql, [id, ...values]);
     console.log('DEBUG Update result:', result.rows[0]);
+    // Backup snapshot if progress fields changed
+    try {
+      const progressKeys = new Set(['today_repetitions','total_repetitions','current_day','last_date','repetition_history','completed_days']);
+      const changedProgress = columns.some(k => progressKeys.has(k));
+      if (changedProgress) {
+        const u = result.rows[0];
+        await pool.query(
+          `INSERT INTO user_backups (user_id, today_repetitions, total_repetitions, current_day, last_date, repetition_history, completed_days)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [u.id, u.today_repetitions || 0, u.total_repetitions || 0, u.current_day || 0, u.last_date || null, u.repetition_history || null, u.completed_days || null]
+        );
+      }
+    } catch (e) {
+      console.error('Backup insert error:', e);
+    }
     res.json(result.rows[0]);
   } catch (err) {
     console.error('DEBUG PUT /api/users/:id error:', err);
