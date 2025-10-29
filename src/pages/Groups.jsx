@@ -323,17 +323,33 @@ export default function GroupsPage() {
     }
     
     try {
+      // Update user first
       await base44.entities.User.update(user.id, { 
         group_id: match.id,
         group_joined_at: new Date().toISOString()
       });
-      await base44.entities.Group.update(match.id, { member_count: (match.member_count || 0) + 1 });
       
-      await base44.entities.Activity.create({
-        username: user.username,
-        activity_type: "joined",
-        description: `${user.username} s-a alăturat grupului "${match.name}"`
-      });
+      // Reload user data to ensure we have latest state
+      const updatedUser = await base44.entities.User.get(user.id);
+      
+      // Update group member count (non-critical, can fail silently)
+      try {
+        await base44.entities.Group.update(match.id, { member_count: (match.member_count || 0) + 1 });
+      } catch (groupErr) {
+        console.warn("Warning: Could not update group member count:", groupErr);
+        // Continue anyway - member count will be recalculated on next load
+      }
+      
+      // Create activity (non-critical, can fail silently)
+      try {
+        await base44.entities.Activity.create({
+          username: user.username,
+          activity_type: "joined",
+          description: `${user.username} s-a alăturat grupului "${match.name}"`
+        });
+      } catch (activityErr) {
+        console.warn("Warning: Could not create activity:", activityErr);
+      }
       
       // Clear input immediately and show success
       setSecretCode("");
@@ -344,12 +360,31 @@ export default function GroupsPage() {
       setJoinedGroupName(match.name);
       setShowJoinSuccessDialog(true);
       
-      // Reload data in background
-      await loadData();
+      // Reload data in background (non-blocking)
+      loadData().catch(err => console.warn("Background reload failed:", err));
     } catch (e) {
       console.error("Join by code error:", e);
-      setError("Eroare la alăturare. Încearcă din nou.");
-      setIsJoining(false);
+      // Only show error if user was NOT successfully added to group
+      // Check if user is actually in the group now
+      try {
+        const checkUser = await base44.entities.User.get(user.id);
+        if (checkUser.group_id === match.id) {
+          // User was successfully added, just show success despite error
+          setSecretCode("");
+          setError("");
+          setIsJoining(false);
+          setJoinedGroupName(match.name);
+          setShowJoinSuccessDialog(true);
+          loadData().catch(err => console.warn("Background reload failed:", err));
+        } else {
+          // User was not added, show error
+          setError("Eroare la alăturare. Încearcă din nou.");
+          setIsJoining(false);
+        }
+      } catch (checkErr) {
+        setError("Eroare la alăturare. Încearcă din nou.");
+        setIsJoining(false);
+      }
     }
   };
 

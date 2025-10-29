@@ -153,18 +153,22 @@ export default function HomePage() {
       }
       
       const allUsers = await base44.entities.User.list();
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const activeUsers = allUsers.filter(u => u.last_login && u.last_login > oneDayAgo);
       const today = format(new Date(), 'yyyy-MM-dd');
       
-      // Calculate total reps - if user is in a group, calculate only for group members
-      let totalRepsToday = 0;
+      // Calculate stats based on group membership
       const isInGroup = !!userData?.group_id;
+      let groupMembers = [];
+      let groupRepsToday = 0;
+      let totalMembersInGroup = 0;
+      let totalRepsAllTime = 0; // Total repetitions from all users since challenge start
       
       if (isInGroup) {
-        // Calculate only for group members
-        const groupMembers = allUsers.filter(u => u.group_id === userData.group_id);
-        totalRepsToday = groupMembers.reduce((sum, u) => {
+        // Get group members only
+        groupMembers = allUsers.filter(u => u.group_id === userData.group_id);
+        totalMembersInGroup = groupMembers.length;
+        
+        // Calculate group repetitions for today
+        groupRepsToday = groupMembers.reduce((sum, u) => {
           try {
             const history = JSON.parse(u.repetition_history || '[]');
             const todayCount = history.filter(r => r.date === today).length;
@@ -174,22 +178,24 @@ export default function HomePage() {
           }
         }, 0);
       } else {
-        // Calculate for all users
-        totalRepsToday = allUsers.reduce((sum, u) => {
-          try {
-            const history = JSON.parse(u.repetition_history || '[]');
-            const todayCount = history.filter(r => r.date === today).length;
-            return sum + todayCount;
-          } catch {
-            return sum;
-          }
-        }, 0);
+        totalMembersInGroup = 0;
+        groupRepsToday = 0;
       }
       
+      // Calculate total repetitions from all users (all time)
+      totalRepsAllTime = allUsers.reduce((sum, u) => {
+        try {
+          const history = JSON.parse(u.repetition_history || '[]');
+          return sum + history.length;
+        } catch {
+          return sum;
+        }
+      }, 0);
+      
       setStats({
-        totalUsers: allUsers.length,
-        activeUsers: activeUsers.length,
-        totalRepetitionsToday: totalRepsToday,
+        totalUsers: isInGroup ? totalMembersInGroup : allUsers.length,
+        activeUsers: groupRepsToday, // Activi Azi = repetări grup astăzi
+        totalRepetitionsToday: totalRepsAllTime, // Total grup general = toate repetările de la început
         isInGroup: isInGroup
       });
       
@@ -662,21 +668,21 @@ export default function HomePage() {
             icon={Users}
             title="Total membri"
             value={stats.totalUsers}
-            subtitle="membri"
+            subtitle={stats.isInGroup ? "în grup" : "membri"}
             color="blue"
           />
           <StatsCards
             icon={TrendingUp}
             title="Activi Azi"
             value={stats.activeUsers}
-            subtitle="ultimele 24h"
+            subtitle={stats.isInGroup ? "repetări grup astăzi" : "ultimele 24h"}
             color="green"
           />
           <StatsCards
             icon={Calendar}
-            title={stats.isInGroup ? "Total grup" : "Total Azi"}
+            title="Total grup general"
             value={stats.totalRepetitionsToday.toLocaleString('ro-RO')}
-            subtitle="repetări"
+            subtitle="repetări de la început"
             color="blue"
           />
         </div>

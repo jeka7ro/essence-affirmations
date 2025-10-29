@@ -186,6 +186,7 @@ async function initializeTables() {
         id SERIAL PRIMARY KEY,
         auto_backup_enabled BOOLEAN DEFAULT false,
         auto_backup_interval_hours INTEGER DEFAULT 24,
+        auto_backup_time TIME DEFAULT '02:00:00',
         last_backup_at TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -193,9 +194,19 @@ async function initializeTables() {
 
     // Initialize backup settings if empty
     await pool.query(`
-      INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours)
-      SELECT false, 24
+      INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours, auto_backup_time)
+      SELECT false, 24, '02:00:00'::TIME
       WHERE NOT EXISTS (SELECT 1 FROM backup_settings)
+    `);
+
+    // Add auto_backup_time column if it doesn't exist
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='backup_settings' AND column_name='auto_backup_time') THEN
+          ALTER TABLE backup_settings ADD COLUMN auto_backup_time TIME DEFAULT '02:00:00';
+        END IF;
+      END $$;
     `);
 
     // Activities table
@@ -1042,7 +1053,7 @@ app.post('/api/backups/:id/restore', async (req, res) => {
 app.get('/api/backup-settings', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM backup_settings ORDER BY id DESC LIMIT 1');
-    res.json(rows[0] || { auto_backup_enabled: false, auto_backup_interval_hours: 24 });
+    res.json(rows[0] || { auto_backup_enabled: false, auto_backup_interval_hours: 24, auto_backup_time: '02:00:00' });
   } catch (err) {
     console.error('GET /api/backup-settings error:', err);
     res.status(500).json({ error: err.message });
@@ -1052,24 +1063,25 @@ app.get('/api/backup-settings', async (req, res) => {
 // Update backup settings
 app.put('/api/backup-settings', async (req, res) => {
   try {
-    const { auto_backup_enabled, auto_backup_interval_hours } = req.body;
+    const { auto_backup_enabled, auto_backup_interval_hours, auto_backup_time } = req.body;
     
     const result = await pool.query(
       `UPDATE backup_settings 
        SET auto_backup_enabled = $1, 
            auto_backup_interval_hours = $2,
+           auto_backup_time = COALESCE($3::TIME, auto_backup_time, '02:00:00'::TIME),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = (SELECT id FROM backup_settings ORDER BY id DESC LIMIT 1)
        RETURNING *`,
-      [auto_backup_enabled || false, auto_backup_interval_hours || 24]
+      [auto_backup_enabled || false, auto_backup_interval_hours || 24, auto_backup_time || '02:00:00']
     );
     
     if (result.rows.length === 0) {
       // Create if doesn't exist
       const insertResult = await pool.query(
-        `INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours)
-         VALUES ($1, $2) RETURNING *`,
-        [auto_backup_enabled || false, auto_backup_interval_hours || 24]
+        `INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours, auto_backup_time)
+         VALUES ($1, $2, $3) RETURNING *`,
+        [auto_backup_enabled || false, auto_backup_interval_hours || 24, auto_backup_time || '02:00:00']
       );
       res.json(insertResult.rows[0]);
     } else {
@@ -1092,16 +1104,29 @@ async function performAutoBackup() {
       return; // Auto-backup is disabled
     }
     
-    const intervalHours = settings.auto_backup_interval_hours || 24;
-    const lastBackup = settings.last_backup_at;
     const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
     
-    // Check if it's time for a backup
+    // Get backup time from settings (format: HH:MM:SS)
+    const backupTime = settings.auto_backup_time || '02:00:00';
+    const [backupHour, backupMinute] = backupTime.split(':').map(Number);
+    
+    // Check if we're at the specified backup time (within the same minute)
+    if (currentHour !== backupHour || currentMinute !== backupMinute) {
+      return; // Not the right time yet
+    }
+    
+    // Check if backup already ran today at this time
+    const lastBackup = settings.last_backup_at;
     if (lastBackup) {
       const lastBackupTime = new Date(lastBackup);
-      const hoursSinceLastBackup = (now.getTime() - lastBackupTime.getTime()) / (1000 * 60 * 60);
-      if (hoursSinceLastBackup < intervalHours) {
-        return; // Not time yet
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const lastBackupDate = new Date(lastBackupTime.getFullYear(), lastBackupTime.getMonth(), lastBackupTime.getDate());
+      if (lastBackupDate.getTime() === today.getTime() && 
+          lastBackupTime.getHours() === backupHour && 
+          lastBackupTime.getMinutes() === backupMinute) {
+        return; // Already backed up today at this time
       }
     }
     

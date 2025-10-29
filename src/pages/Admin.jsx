@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download, Database, RotateCcw, Save, Settings, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
@@ -16,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -35,7 +37,7 @@ export default function AdminPage() {
   const [sortColumn, setSortColumn] = useState('total_repetitions');
   const [sortDirection, setSortDirection] = useState('desc');
   const [backups, setBackups] = useState([]);
-  const [backupSettings, setBackupSettings] = useState({ auto_backup_enabled: false, auto_backup_interval_hours: 24 });
+  const [backupSettings, setBackupSettings] = useState({ auto_backup_enabled: false, auto_backup_interval_hours: 24, auto_backup_time: '02:00' });
   const [showBackupDialog, setShowBackupDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -223,10 +225,19 @@ export default function AdminPage() {
       : <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
   };
 
+  const getApiUrl = () => {
+    return (window.location.hostname.includes('vercel.app') || 
+            window.location.hostname.includes('myessence.ro') ||
+            window.location.hostname.includes('essence-affirmations'))
+      ? 'https://essence-affirmations-backend.onrender.com/api'
+      : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
+  };
+
   const loadBackups = async () => {
     try {
       setLoadingBackups(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backups`);
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/backups`);
       if (!response.ok) throw new Error('Failed to load backups');
       const data = await response.json();
       setBackups(data);
@@ -239,7 +250,8 @@ export default function AdminPage() {
 
   const loadBackupSettings = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backup-settings`);
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/backup-settings`);
       if (!response.ok) throw new Error('Failed to load backup settings');
       const data = await response.json();
       setBackupSettings(data);
@@ -255,7 +267,8 @@ export default function AdminPage() {
 
     setCreatingBackup(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backups/create`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/backups/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -294,7 +307,8 @@ export default function AdminPage() {
 
     setRestoringBackup(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backups/${selectedBackup.id}/restore`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/backups/${selectedBackup.id}/restore`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -324,7 +338,8 @@ export default function AdminPage() {
 
   const handleSaveBackupSettings = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/backup-settings`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/backup-settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(backupSettings)
@@ -662,7 +677,14 @@ export default function AdminPage() {
                             {user.username}
                           </div>
                         </TableCell>
-                        <TableCell>{user.first_name} {user.last_name}</TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() => navigate(`/UserDetails?id=${user.id}`)}
+                            className="text-blue-600 hover:underline font-medium"
+                          >
+                            {user.first_name} {user.last_name}
+                          </button>
+                        </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
                           <Select
@@ -1059,26 +1081,46 @@ export default function AdminPage() {
                 />
               </div>
               {backupSettings.auto_backup_enabled && (
-                <div>
-                  <Label htmlFor="backup-interval">Interval backup (ore)</Label>
-                  <Input
-                    id="backup-interval"
-                    type="number"
-                    min="1"
-                    max="168"
-                    value={backupSettings.auto_backup_interval_hours}
-                    onChange={(e) =>
-                      setBackupSettings({
-                        ...backupSettings,
-                        auto_backup_interval_hours: parseInt(e.target.value) || 24
-                      })
-                    }
-                    className="rounded-xl"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Interval între backup-uri (1-168 ore / 1 săptămână)
-                  </p>
-                </div>
+                <>
+                  <div>
+                    <Label htmlFor="backup-time">Ora backup (HH:MM)</Label>
+                    <Input
+                      id="backup-time"
+                      type="time"
+                      value={backupSettings.auto_backup_time ? backupSettings.auto_backup_time.substring(0, 5) : '02:00'}
+                      onChange={(e) =>
+                        setBackupSettings({
+                          ...backupSettings,
+                          auto_backup_time: e.target.value + ':00'
+                        })
+                      }
+                      className="rounded-xl"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ora zilnică la care se face backup-ul automat
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="backup-interval">Interval backup (ore)</Label>
+                    <Input
+                      id="backup-interval"
+                      type="number"
+                      min="1"
+                      max="168"
+                      value={backupSettings.auto_backup_interval_hours}
+                      onChange={(e) =>
+                        setBackupSettings({
+                          ...backupSettings,
+                          auto_backup_interval_hours: parseInt(e.target.value) || 24
+                        })
+                      }
+                      className="rounded-xl"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Interval între backup-uri (1-168 ore / 1 săptămână) - dacă nu se face la ora setată
+                    </p>
+                  </div>
+                </>
               )}
               {backupSettings.last_backup_at && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
