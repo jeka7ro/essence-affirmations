@@ -205,7 +205,7 @@ export default function Layout({ children, currentPageName }) {
 
   const navigationItems = [
     { title: "Acasă", url: createPageUrl("Home"), icon: Home },
-    { title: "Cursuri", url: createPageUrl("Courses"), icon: Activity },
+    { title: "Cursuri Essence", url: createPageUrl("Courses"), icon: Activity },
     { title: "Grupuri", url: createPageUrl("Groups"), icon: Users },
     { title: "Top Membri", url: createPageUrl("TopMembri"), icon: Trophy },
     { title: "Chat", url: createPageUrl("Chat"), icon: MessageSquare },

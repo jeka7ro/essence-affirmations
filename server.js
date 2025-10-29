@@ -577,6 +577,72 @@ app.delete('/api/courses/:id', async (req, res) => {
   }
 });
 
+// Force seed courses endpoint (for admin/debugging)
+app.post('/api/courses-seed', async (req, res) => {
+  try {
+    // Delete existing courses first
+    await pool.query('DELETE FROM courses');
+    
+    // Insert courses
+    const courses = [
+      {
+        title: 'Essence Advance Therapeutic Process',
+        city: 'Cluj-Napoca',
+        start_date: '2025-11-05',
+        end_date: '2025-11-09',
+        link: 'https://essence-process.com/ro/cursuri/',
+        description: 'Cursul Advance te duce la un nivel mult mai adânc, unde vei dezvolta convingeri pozitive noi și tipare comportamentale care îți îmbogățesc viața.'
+      },
+      {
+        title: 'Essence Foundation Therapeutic Process',
+        city: 'Iasi',
+        start_date: '2025-12-05',
+        end_date: '2025-12-07',
+        link: 'https://essence-process.com/ro/cursuri/',
+        description: 'Curs extrem de practic unde participanții trăiesc o experiență blândă și distractivă, timp de trei zile, pe structura unor exerciții educaționale și interactive.'
+      },
+      {
+        title: 'Essence Advance Therapeutic Process',
+        city: 'Cluj-Napoca',
+        start_date: '2026-01-14',
+        end_date: '2026-01-18',
+        link: 'https://essence-process.com/ro/cursuri/',
+        description: 'Cursul Advance te duce la un nivel mult mai adânc, unde vei dezvolta convingeri pozitive noi și tipare comportamentale care îți îmbogățesc viața.'
+      },
+      {
+        title: 'Essence Advance Therapeutic Process',
+        city: 'Cluj-Napoca',
+        start_date: '2026-02-18',
+        end_date: '2026-02-22',
+        link: 'https://essence-process.com/ro/cursuri/',
+        description: 'Cursul Advance te duce la un nivel mult mai adânc, unde vei dezvolta convingeri pozitive noi și tipare comportamentale care îți îmbogățesc viața.'
+      },
+      {
+        title: 'Essence Relationships Therapeutic Process',
+        city: 'Brasov',
+        start_date: '2026-05-08',
+        end_date: '2026-05-10',
+        link: 'https://essence-process.com/ro/cursuri/',
+        description: 'Cursul oferă o oportunitate valoroasă de a construi relații mai bune cu partenerii noștri, cu familiile, prietenii, colegii și nu în ultimul rând, cu noi înșine.'
+      }
+    ];
+
+    const inserted = [];
+    for (const course of courses) {
+      const { rows } = await pool.query(
+        'INSERT INTO courses (title, city, start_date, end_date, link, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [course.title, course.city, course.start_date, course.end_date, course.link, course.description]
+      );
+      inserted.push(rows[0]);
+    }
+    
+    res.json({ success: true, count: inserted.length, courses: inserted });
+  } catch (err) {
+    console.error('POST /api/courses-seed error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Old scraping endpoint - kept for migration
 app.get('/api/courses-scrape', async (req, res) => {
   try {
@@ -750,7 +816,7 @@ app.use((req, res) => {
     error: 'Route not found', 
     method: req.method, 
     url: req.originalUrl,
-    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses', '/api/courses-scrape']
+    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses', '/api/courses-scrape', '/api/courses-seed']
   });
 });
 
