@@ -90,6 +90,7 @@ async function initializeTables() {
         last_name VARCHAR(255),
         phone VARCHAR(50),
         birth_date DATE,
+        sex VARCHAR(1),
         pin VARCHAR(10),
         avatar TEXT,
         affirmation TEXT,
@@ -133,6 +134,9 @@ async function initializeTables() {
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='groups' AND column_name='cities') THEN
           ALTER TABLE groups ADD COLUMN cities TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='sex') THEN
+          ALTER TABLE users ADD COLUMN sex VARCHAR(1);
         END IF;
       END $$;
     `);
@@ -240,18 +244,18 @@ app.get('/api/users', async (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role, 
+    const { username, email, full_name, first_name, last_name, phone, birth_date, sex, pin, avatar, affirmation, role, 
             total_repetitions, current_day, today_repetitions, last_date, repetition_history, completed_days, challenge_start_date } = req.body;
     
-    console.log('DEBUG POST /api/users:', { username, email, first_name, last_name, phone, birth_date, pin, role });
+    console.log('DEBUG POST /api/users:', { username, email, first_name, last_name, phone, birth_date, sex, pin, role });
     
     const result = await pool.query(
       `INSERT INTO users (
-        username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role,
+        username, email, full_name, first_name, last_name, phone, birth_date, sex, pin, avatar, affirmation, role,
         total_repetitions, current_day, today_repetitions, last_date, repetition_history, completed_days, challenge_start_date
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
       [
-        username, email, full_name, first_name, last_name, phone, birth_date, pin, avatar, affirmation, role || 'user',
+        username, email, full_name, first_name, last_name, phone, birth_date, sex, pin, avatar, affirmation, role || 'user',
         total_repetitions || 0, current_day || 0, today_repetitions || 0, last_date, repetition_history, completed_days, challenge_start_date
       ]
     );
@@ -279,7 +283,7 @@ app.put('/api/users/:id', async (req, res) => {
 
     // Whitelist of updatable columns
     const allowedFields = new Set([
-      'username','email','full_name','first_name','last_name','phone','birth_date','pin','avatar','affirmation','role',
+      'username','email','full_name','first_name','last_name','phone','birth_date','sex','pin','avatar','affirmation','role',
       'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id'
     ]);
 

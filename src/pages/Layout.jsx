@@ -27,6 +27,20 @@ export default function Layout({ children, currentPageName }) {
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
   const shouldShowLayout = !noLayoutPages.includes(currentPageName);
 
+  // Helper function to get avatar or default emoji based on sex
+  const getAvatarDisplay = (user) => {
+    if (user?.avatar) {
+      return user.avatar;
+    }
+    // Fallback to emoji based on sex
+    if (user?.sex === 'M') {
+      return '👨';
+    } else if (user?.sex === 'F') {
+      return '👩';
+    }
+    return '👤'; // Default
+  };
+
   useEffect(() => {
     if (shouldShowLayout) {
       loadUser();
@@ -149,21 +163,24 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <div className="text-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-800 w-full">
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  {user.avatar && (
-                    <>
-                      {user.avatar.startsWith('http') || user.avatar.startsWith('blob:') || user.avatar.startsWith('data:') ? (
-                        <img 
-                          src={user.avatar} 
-                          alt="Avatar" 
-                          className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
-                          {user.avatar}
-                        </div>
-                      )}
-                    </>
-                  )}
+                  {(() => {
+                    const avatarDisplay = getAvatarDisplay(user);
+                    return avatarDisplay && (
+                      <>
+                        {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                          <img 
+                            src={avatarDisplay} 
+                            alt="Avatar" 
+                            className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
+                            {avatarDisplay}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-200">Utilizator:</p>
                 <p className="text-lg font-bold text-blue-600">{user.username || user.email}</p>
@@ -242,21 +259,24 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <div className="flex flex-col items-center gap-1">
                 {/* Avatar above username on mobile */}
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt="Avatar"
-                    className="w-8 h-8 rounded-full border-2 border-blue-600 object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-lg">
-                    {(() => {
-                      const emojis = ['👤','👨','👩','🧑','👴','👵','🧔','👨\u200d💼','👩\u200d💼','🧑\u200d💻'];
-                      const idx = (user?.id || 0) % emojis.length;
-                      return emojis[idx];
-                    })()}
-                  </div>
-                )}
+                {(() => {
+                  const avatarDisplay = getAvatarDisplay(user);
+                  return avatarDisplay && (
+                    <>
+                      {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                        <img
+                          src={avatarDisplay}
+                          alt="Avatar"
+                          className="w-8 h-8 rounded-full border-2 border-blue-600 object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-lg">
+                          {avatarDisplay}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>
                 <button 
                   onClick={cycleTheme} 

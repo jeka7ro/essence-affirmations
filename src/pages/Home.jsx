@@ -40,6 +40,9 @@ export default function HomePage() {
   const [selectedStartDate, setSelectedStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [timeUntilMidnight, setTimeUntilMidnight] = useState('');
   const [repsNeededPerHour, setRepsNeededPerHour] = useState(0);
+  const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
+  const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
+  const [hasShownCongratulations, setHasShownCongratulations] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -69,6 +72,19 @@ export default function HomePage() {
     
     return () => clearInterval(interval);
   }, [todayRepetitions]);
+
+  // Detect when user reaches 100 repetitions and show congratulations
+  useEffect(() => {
+    if (todayRepetitions >= 100 && !hasShownCongratulations) {
+      setShowCongratulationsDialog(true);
+      setHasShownCongratulations(true);
+      // Reset flag after 24 hours (in case they do 100 again tomorrow)
+      const resetTimer = setTimeout(() => {
+        setHasShownCongratulations(false);
+      }, 24 * 60 * 60 * 1000);
+      return () => clearTimeout(resetTimer);
+    }
+  }, [todayRepetitions, hasShownCongratulations]);
 
   const loadData = async () => {
     try {
@@ -234,6 +250,9 @@ export default function HomePage() {
       setRepetitionHistory(newRepetitionHistory);
       setTotalRepetitions(newRepetitionHistory.length);
       setShowStartDialog(false);
+      
+      // Show group info dialog after setting start date
+      setShowGroupInfoDialog(true);
       
       await base44.entities.Activity.create({
         username: user.username,
@@ -506,6 +525,69 @@ export default function HomePage() {
                 className="w-full h-16 text-xl font-bold bg-green-600 hover:bg-green-700 rounded-2xl shadow-lg"
               >
                 {saving ? "Se setează..." : "🚀 Începe Provocarea"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Group Info Dialog - shown after setting start date */}
+        <Dialog open={showGroupInfoDialog} onOpenChange={setShowGroupInfoDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-center">🎯 Informații despre Grupuri</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-base text-gray-700 dark:text-gray-300">
+                Felicitări că ai început provocarea! 🎉
+              </p>
+              <p className="text-base text-gray-700 dark:text-gray-300">
+                Dacă vrei să te alături unui grup pentru a comunica și motiva alături de ceilalți membri care urmează aceeași provocare, poți să accesezi secțiunea <strong>"Grupuri"</strong> din meniu.
+              </p>
+              <p className="text-base text-gray-700 dark:text-gray-300">
+                Acolo vei putea vedea grupuri disponibile și să te alături unuia folosind un cod secret.
+              </p>
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  onClick={() => {
+                    setShowGroupInfoDialog(false);
+                    navigate(createPageUrl("Groups"));
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  Vezi Grupurile
+                </Button>
+                <Button 
+                  onClick={() => setShowGroupInfoDialog(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Mai Târziu
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Congratulations Dialog - shown when user reaches 100 repetitions */}
+        <Dialog open={showCongratulationsDialog} onOpenChange={setShowCongratulationsDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-bold text-center text-green-600">
+                🎉 Felicitări! 🎉
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4 text-center">
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                Ai terminat cele 100 repetări și ești cel mai tare!
+              </p>
+              <p className="text-lg text-gray-600 dark:text-gray-400">
+                Contină înainte așa! 💪
+              </p>
+              <Button 
+                onClick={() => setShowCongratulationsDialog(false)}
+                className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
+              >
+                Contină Provocarea! 🚀
               </Button>
             </div>
           </DialogContent>

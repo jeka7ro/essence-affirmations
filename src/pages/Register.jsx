@@ -24,6 +24,7 @@ export default function RegisterPage() {
     last_name: "",
     phone: "",
     birth_date: "",
+    sex: "",
     pin: "",
     confirmPin: "",
     avatar: "👤",
@@ -75,7 +76,20 @@ export default function RegisterPage() {
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-set avatar emoji based on sex
+      if (field === 'sex') {
+        if (value === 'M') {
+          updated.avatar = '👨';
+        } else if (value === 'F') {
+          updated.avatar = '👩';
+        }
+      }
+      
+      return updated;
+    });
     
     if (field === 'username') {
       checkUsername(value);
@@ -156,6 +170,7 @@ export default function RegisterPage() {
         last_name: formData.last_name,
         phone: formData.phone,
         birth_date: formData.birth_date,
+        sex: formData.sex,
         pin: formData.pin,
         avatar: formData.avatar,
         affirmation: "",
@@ -372,6 +387,22 @@ export default function RegisterPage() {
                   onChange={(e) => handleChange('birth_date', e.target.value)}
                   className="h-12 text-lg"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sex" className="text-base font-semibold">
+                  Sex *
+                </Label>
+                <select
+                  id="sex"
+                  value={formData.sex}
+                  onChange={(e) => handleChange('sex', e.target.value)}
+                  className="w-full h-12 text-lg px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  required
+                >
+                  <option value="">Selectează...</option>
+                  <option value="M">Masculin</option>
+                  <option value="F">Feminin</option>
+                </select>
               </div>
             </div>
 
