@@ -72,12 +72,36 @@ export default function HomePage() {
   }, [todayRepetitions]);
 
 
+  // Helper function to normalize date to yyyy-MM-dd format
+  const normalizeDate = (dateValue) => {
+    if (!dateValue) return null;
+    // If it's already a string in yyyy-MM-dd format
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return dateValue;
+    }
+    // If it's a Date object
+    if (dateValue instanceof Date) {
+      return format(dateValue, 'yyyy-MM-dd');
+    }
+    // If it's a string with time (ISO format)
+    if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      return format(parseISO(dateValue), 'yyyy-MM-dd');
+    }
+    // Try to parse as date
+    try {
+      return format(parseISO(dateValue), 'yyyy-MM-dd');
+    } catch {
+      return null;
+    }
+  };
+
   // Helper function to check if user has seen congratulations today (from database)
   const hasSeenCongratulationsToday = () => {
     if (!user) return false;
     const today = format(new Date(), 'yyyy-MM-dd');
+    const seenDate = normalizeDate(user.congratulations_seen_date);
     // Check from user data (from database, not localStorage)
-    return user.congratulations_seen_date === today;
+    return seenDate === today;
   };
 
   // Helper function to mark congratulations as seen for today (save to database)
@@ -106,7 +130,14 @@ export default function HomePage() {
     if (!user || loading) return;
     
     const today = format(new Date(), 'yyyy-MM-dd');
-    const hasSeenToday = user.congratulations_seen_date === today;
+    const seenDate = normalizeDate(user.congratulations_seen_date);
+    const hasSeenToday = seenDate === today;
+    
+    // CRITICAL: If already seen today, DO NOT SHOW POPUP
+    if (hasSeenToday) {
+      setShowCongratulationsDialog(false);
+      return;
+    }
     
     // Only show if:
     // 1. User reached 100 repetitions today
@@ -134,10 +165,12 @@ export default function HomePage() {
         setTotalRepetitions(userData.total_repetitions || 0);
         setCurrentDay(userData.current_day || 0);
         
-        // IMPORTANT: Check if user already saw congratulations today - if yes, don't show popup
+        // CRITICAL: Check if user already saw congratulations today - if yes, NEVER show popup
         const today = format(new Date(), 'yyyy-MM-dd');
-        if (userData.congratulations_seen_date === today) {
+        const seenDateFromDB = normalizeDate(userData.congratulations_seen_date);
+        if (seenDateFromDB === today) {
           setShowCongratulationsDialog(false); // Explicitly hide if already seen today
+          console.log(`User ${userData.id} already saw congratulations on ${seenDateFromDB}, not showing popup`);
         }
         
         try {
