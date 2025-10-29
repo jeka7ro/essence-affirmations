@@ -79,9 +79,23 @@ export default function HomePage() {
   useEffect(() => {
     if (!user) return;
     try {
-      const prefs = user.preferences ? JSON.parse(user.preferences) : {};
-      if (!prefs.dismissedThemeTip) setShowThemeTip(true);
-      if (!prefs.dismissedAffirmationTip) setShowAffirmationTip(true);
+      // Handle both string and object preferences
+      let prefs = {};
+      if (typeof user.preferences === 'string') {
+        try {
+          prefs = JSON.parse(user.preferences);
+        } catch {}
+      } else if (user.preferences) {
+        prefs = user.preferences;
+      }
+      
+      // Only show tips if they haven't been dismissed AND haven't been shown in this session
+      if (!prefs.dismissedThemeTip && !showThemeTip) {
+        setShowThemeTip(true);
+      }
+      if (!prefs.dismissedAffirmationTip && !user.affirmation && !showAffirmationTip) {
+        setShowAffirmationTip(true);
+      }
     } catch {}
   }, [user]);
 
@@ -637,15 +651,27 @@ export default function HomePage() {
         </Dialog>
 
         {/* Theme tip dialog */}
-        <Dialog open={showThemeTip} onOpenChange={(v) => {
-          setShowThemeTip(v);
+        <Dialog open={showThemeTip} onOpenChange={async (v) => {
           if (!v && user?.id) {
             try {
-              const prefs = (() => { try { return user.preferences ? JSON.parse(user.preferences) : {}; } catch { return {}; } })();
+              let prefs = {};
+              if (typeof user.preferences === 'string') {
+                try {
+                  prefs = JSON.parse(user.preferences);
+                } catch {}
+              } else if (user.preferences) {
+                prefs = user.preferences;
+              }
               prefs.dismissedThemeTip = true;
-              base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
-            } catch {}
+              await base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
+              // Update local user state
+              const updatedUser = await base44.entities.User.get(user.id);
+              setUser(updatedUser);
+            } catch (error) {
+              console.error("Error saving theme tip dismissal:", error);
+            }
           }
+          setShowThemeTip(v);
         }}>
           <DialogContent className="sm:max-w-md bg-green-600 text-white">
             <DialogHeader>
@@ -662,15 +688,27 @@ export default function HomePage() {
         </Dialog>
 
         {/* Affirmation copy tip dialog */}
-        <Dialog open={showAffirmationTip} onOpenChange={(v) => {
-          setShowAffirmationTip(v);
+        <Dialog open={showAffirmationTip} onOpenChange={async (v) => {
           if (!v && user?.id) {
             try {
-              const prefs = (() => { try { return user.preferences ? JSON.parse(user.preferences) : {}; } catch { return {}; } })();
+              let prefs = {};
+              if (typeof user.preferences === 'string') {
+                try {
+                  prefs = JSON.parse(user.preferences);
+                } catch {}
+              } else if (user.preferences) {
+                prefs = user.preferences;
+              }
               prefs.dismissedAffirmationTip = true;
-              base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
-            } catch {}
+              await base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
+              // Update local user state
+              const updatedUser = await base44.entities.User.get(user.id);
+              setUser(updatedUser);
+            } catch (error) {
+              console.error("Error saving affirmation tip dismissal:", error);
+            }
           }
+          setShowAffirmationTip(v);
         }}>
           <DialogContent className="sm:max-w-md bg-green-600 text-white">
             <DialogHeader>

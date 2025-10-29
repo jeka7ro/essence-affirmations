@@ -219,7 +219,7 @@ export default function ChatPage() {
                     groupMessages.map((msg) => {
                       const senderData = getUserByUsername(msg.sender);
                       const avatarDisplay = getAvatarDisplay(senderData);
-                      const senderName = senderData ? `${senderData.first_name || ''} ${senderData.last_name || ''}`.trim() || senderData.username : msg.sender;
+                      const senderName = senderData ? (senderData.username || senderData.email) : msg.sender;
                       const isOwnMessage = msg.sender === user.username;
                       const msgDate = msg.created_date ? new Date(msg.created_date) : new Date();
                       
@@ -333,12 +333,18 @@ export default function ChatPage() {
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">{member.avatar}</span>
+                            {(() => {
+                              const avatarDisplay = getAvatarDisplay(member);
+                              return avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                                <img src={avatarDisplay} alt="Avatar" className="w-8 h-8 rounded-full border object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 border flex items-center justify-center text-xl">
+                                  {avatarDisplay}
+                                </div>
+                              );
+                            })()}
                             <div>
-                              <p className="font-semibold">{member.username}</p>
-                              <p className="text-xs text-gray-500">
-                                {member.first_name} {member.last_name}
-                              </p>
+                              <p className="font-semibold">{member.username || member.email}</p>
                             </div>
                           </div>
                         </button>
