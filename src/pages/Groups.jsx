@@ -20,6 +20,7 @@ export default function GroupsPage() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [secretCode, setSecretCode] = useState("");
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [newGroup, setNewGroup] = useState({
     name: "",
     description: "",
@@ -262,7 +263,8 @@ export default function GroupsPage() {
 
     try {
       await base44.entities.User.update(user.id, {
-        group_id: selectedGroup.id
+        group_id: selectedGroup.id,
+        group_joined_at: new Date().toISOString()
       });
 
       await base44.entities.Group.update(selectedGroup.id, {
@@ -278,10 +280,14 @@ export default function GroupsPage() {
       setShowJoinDialog(false);
       setSelectedGroup(null);
       setSecretCode("");
+      setError("");
+      setSuccessMessage(`🎉 Felicitări! Te-ai alăturat cu succes grupului "${selectedGroup.name}"!`);
+      setTimeout(() => setSuccessMessage(""), 5000);
       loadData();
     } catch (error) {
       console.error("Error joining group:", error);
       setError("Eroare la alăturarea la grup");
+      setSuccessMessage("");
     }
   };
 
@@ -304,11 +310,25 @@ export default function GroupsPage() {
         group_joined_at: new Date().toISOString()
       });
       await base44.entities.Group.update(match.id, { member_count: (match.member_count || 0) + 1 });
+      
+      await base44.entities.Activity.create({
+        username: user.username,
+        activity_type: "joined",
+        description: `${user.username} s-a alăturat grupului "${match.name}"`
+      });
+      
       setSecretCode("");
+      setError("");
+      setSuccessMessage(`🎉 Felicitări! Te-ai alăturat cu succes grupului "${match.name}"!`);
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSuccessMessage(""), 5000);
+      
       await loadData(); // refresh and hide the join section next render
     } catch (e) {
       console.error("Join by code error:", e);
       setError("Eroare la alăturare. Încearcă din nou.");
+      setSuccessMessage("");
     }
   };
 
@@ -446,6 +466,14 @@ export default function GroupsPage() {
             </Button>
           )}
         </div>
+
+        {successMessage && (
+          <Alert className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-2xl">
+            <AlertDescription className="text-green-900 dark:text-green-100 font-semibold">
+              {successMessage}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!currentGroup && (
           <Alert className="bg-blue-50 border-2 border-blue-200">
