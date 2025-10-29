@@ -75,21 +75,15 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [todayRepetitions]);
 
-  // One-time onboarding popups after first registration/login
+  // One-time onboarding per user (persisted in server-side preferences)
   useEffect(() => {
-    const flag = localStorage.getItem('onboarding_shown_v1');
-    if (!flag) {
-      setShowThemeTip(true);
-      setShowAffirmationTip(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    // When both popups dismissed, set flag
-    if (!showThemeTip && !showAffirmationTip) {
-      localStorage.setItem('onboarding_shown_v1', '1');
-    }
-  }, [showThemeTip, showAffirmationTip]);
+    if (!user) return;
+    try {
+      const prefs = user.preferences ? JSON.parse(user.preferences) : {};
+      if (!prefs.dismissedThemeTip) setShowThemeTip(true);
+      if (!prefs.dismissedAffirmationTip) setShowAffirmationTip(true);
+    } catch {}
+  }, [user]);
 
   // Detect when user reaches 100 repetitions and show congratulations
   useEffect(() => {
