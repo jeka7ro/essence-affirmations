@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download, Database, RotateCcw, Save, Settings, Clock } from "lucide-react";
+import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download, Database, RotateCcw, Save, Settings, Clock, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
 import { format, differenceInMonths } from 'date-fns';
@@ -44,7 +44,11 @@ export default function AdminPage() {
   const [selectedBackup, setSelectedBackup] = useState(null);
   const [restoreUser, setRestoreUser] = useState('');
   const [backupDescription, setBackupDescription] = useState('');
+  const [backupCity, setBackupCity] = useState('');
   const [creatingBackup, setCreatingBackup] = useState(false);
+  const [showBackupDetailsDialog, setShowBackupDetailsDialog] = useState(false);
+  const [selectedBackupDetails, setSelectedBackupDetails] = useState(null);
+  const [loadingBackupDetails, setLoadingBackupDetails] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState(false);
   const [loadingBackups, setLoadingBackups] = useState(false);
 
@@ -323,6 +327,11 @@ export default function AdminPage() {
   };
 
   const handleCreateBackup = async () => {
+    if (!backupCity || backupCity.trim() === '') {
+      alert('Te rog introdu orașul pentru backup!');
+      return;
+    }
+
     if (!confirm('Ești sigur că vrei să creezi un backup complet? Acest proces poate dura câteva momente.')) {
       return;
     }
@@ -330,11 +339,15 @@ export default function AdminPage() {
     setCreatingBackup(true);
     try {
       const apiUrl = getApiUrl();
+      const now = new Date();
+      const roDate = format(now, 'dd.MM.yyyy HH:mm', { locale: ro });
+      const description = backupCity.trim() + ' ' + roDate + (backupDescription ? ' - ' + backupDescription : '');
+      
       const response = await fetch(`${apiUrl}/backups/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          description: backupDescription || `Manual backup - ${new Date().toLocaleString('ro-RO')}`,
+          description: description,
           user: currentUser
         })
       });
@@ -344,6 +357,7 @@ export default function AdminPage() {
       
       alert(`Backup creat cu succes!\n${result.stats.users} utilizatori\n${result.stats.groups} grupuri`);
       setBackupDescription('');
+      setBackupCity('');
       setShowBackupDialog(false);
       await loadBackups();
       await loadBackupSettings();
@@ -352,6 +366,34 @@ export default function AdminPage() {
       alert(`Eroare la crearea backup-ului: ${error.message}`);
     } finally {
       setCreatingBackup(false);
+    }
+  };
+
+  const handleViewBackupDetails = async (backup) => {
+    setLoadingBackupDetails(true);
+    setSelectedBackupDetails(backup);
+    setShowBackupDetailsDialog(true);
+    
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/backups/${backup.id}`);
+      if (!response.ok) throw new Error('Failed to load backup details');
+      const backupData = await response.json();
+      
+      // Parse backup data if it's a string
+      const parsedData = typeof backupData.backup_data === 'string' 
+        ? JSON.parse(backupData.backup_data)
+        : backupData.backup_data;
+      
+      setSelectedBackupDetails({
+        ...backup,
+        fullData: parsedData
+      });
+    } catch (error) {
+      console.error('Error loading backup details:', error);
+      alert('Eroare la încărcarea detaliilor backup-ului: ' + error.message);
+    } finally {
+      setLoadingBackupDetails(false);
     }
   };
 
@@ -929,18 +971,29 @@ export default function AdminPage() {
                             {format(new Date(backup.created_at), 'dd.MM.yyyy HH:mm', { locale: ro })}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              onClick={() => {
-                                setSelectedBackup(backup);
-                                setShowRestoreDialog(true);
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="rounded-xl"
-                            >
-                              <RotateCcw className="w-4 h-4 mr-1" />
-                              Restaurează
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleViewBackupDetails(backup)}
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl"
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                Vezi detalii
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  setSelectedBackup(backup);
+                                  setShowRestoreDialog(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl"
+                              >
+                                <RotateCcw className="w-4 h-4 mr-1" />
+                                Restaurează
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -1025,7 +1078,21 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="backup-desc">Descriere (opțional)</Label>
+                <Label htmlFor="backup-city">Oraș <span className="text-red-500">*</span></Label>
+                <Input
+                  id="backup-city"
+                  value={backupCity}
+                  onChange={(e) => setBackupCity(e.target.value)}
+                  placeholder="Ex: București"
+                  className="rounded-xl"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Numele backup-ului va fi: "Oraș Data Ora"
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="backup-desc">Descriere suplimentară (opțional)</Label>
                 <Input
                   id="backup-desc"
                   value={backupDescription}
@@ -1141,6 +1208,133 @@ export default function AdminPage() {
                   {restoringBackup ? 'Se restaurează...' : 'Restaurează'}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Backup Details Dialog */}
+        <Dialog open={showBackupDetailsDialog} onOpenChange={setShowBackupDetailsDialog}>
+          <DialogContent className="rounded-3xl max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detalii Backup</DialogTitle>
+              <DialogDescription>
+                {selectedBackupDetails && (
+                  <>
+                    Backup din {format(new Date(selectedBackupDetails.created_at), 'dd.MM.yyyy HH:mm', { locale: ro })}
+                    {selectedBackupDetails.description && ` - ${selectedBackupDetails.description}`}
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {loadingBackupDetails ? (
+              <div className="text-center py-8">Se încarcă detaliile...</div>
+            ) : selectedBackupDetails?.fullData ? (
+              <div className="space-y-6">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-blue-600">{selectedBackupDetails.fullData.users?.length || 0}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Utilizatori</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-green-600">
+                        {selectedBackupDetails.fullData.users?.reduce((sum, u) => sum + (u.total_repetitions || 0), 0) || 0}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Total Repetări</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {selectedBackupDetails.fullData.users?.filter(u => u.affirmation && u.affirmation.trim() !== '').length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Cu Afirmație</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-orange-600">{selectedBackupDetails.fullData.groups?.length || 0}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Grupuri</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Users Table */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">Utilizatori din Backup</h3>
+                  <div className="overflow-x-auto border-2 border-gray-200 dark:border-gray-800 rounded-xl">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Username</TableHead>
+                          <TableHead>Nume</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Afirmație</TableHead>
+                          <TableHead>Repetări</TableHead>
+                          <TableHead>Istoric</TableHead>
+                          <TableHead>PIN</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedBackupDetails.fullData.users?.map((user) => {
+                          const hasHistory = user.repetition_history && user.repetition_history !== '[]';
+                          let historyCount = 0;
+                          try {
+                            const history = JSON.parse(user.repetition_history || '[]');
+                            historyCount = Array.isArray(history) ? history.length : 0;
+                          } catch {}
+                          
+                          return (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">{user.username}</TableCell>
+                              <TableCell>{user.first_name} {user.last_name}</TableCell>
+                              <TableCell>{user.email || '-'}</TableCell>
+                              <TableCell>
+                                {user.affirmation && user.affirmation.trim() !== '' ? (
+                                  <span className="text-green-600 dark:text-green-400">✓</span>
+                                ) : (
+                                  <span className="text-red-600 dark:text-red-400">✗</span>
+                                )}
+                              </TableCell>
+                              <TableCell>{user.total_repetitions || 0}</TableCell>
+                              <TableCell>
+                                {hasHistory ? (
+                                  <span className="text-green-600 dark:text-green-400">{historyCount} intrări</span>
+                                ) : (
+                                  <span className="text-gray-400">Fără</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {user.pin ? (
+                                  <span className="text-green-600 dark:text-green-400">✓</span>
+                                ) : (
+                                  <span className="text-red-600 dark:text-red-400">✗</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">Nu există date de backup</div>
+            )}
+            
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={() => setShowBackupDetailsDialog(false)}
+                variant="outline"
+                className="rounded-xl"
+              >
+                Închide
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
