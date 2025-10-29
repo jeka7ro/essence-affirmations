@@ -42,7 +42,6 @@ export default function HomePage() {
   const [repsNeededPerHour, setRepsNeededPerHour] = useState(0);
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
-  const [hasShownCongratulations, setHasShownCongratulations] = useState(false);
   useEffect(() => {
     loadData();
     
@@ -73,18 +72,38 @@ export default function HomePage() {
   }, [todayRepetitions]);
 
 
-  // Detect when user reaches 100 repetitions and show congratulations
+  // Detect when user reaches 100 repetitions and show congratulations (only once per day)
   useEffect(() => {
-    if (todayRepetitions >= 100 && !hasShownCongratulations) {
+    if (!user) return;
+    
+    // Helper function to check if user has seen congratulations today
+    const hasSeenCongratulationsToday = () => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const lastSeen = localStorage.getItem(`congratulations_seen_${user.id}`);
+      return lastSeen === today;
+    };
+
+    // Helper function to mark congratulations as seen for today
+    const markCongratulationsSeen = () => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      localStorage.setItem(`congratulations_seen_${user.id}`, today);
+    };
+    
+    // Only show if:
+    // 1. User reached 100 repetitions today
+    // 2. Hasn't seen the popup today (checked via localStorage)
+    if (todayRepetitions >= 100 && !hasSeenCongratulationsToday()) {
       setShowCongratulationsDialog(true);
-      setHasShownCongratulations(true);
-      // Reset flag after 24 hours (in case they do 100 again tomorrow)
-      const resetTimer = setTimeout(() => {
-        setHasShownCongratulations(false);
-      }, 24 * 60 * 60 * 1000);
-      return () => clearTimeout(resetTimer);
+      markCongratulationsSeen(); // Save that user saw it today
     }
-  }, [todayRepetitions, hasShownCongratulations]);
+  }, [todayRepetitions, user]);
+
+  // Helper function to mark congratulations as seen (used when closing dialog)
+  const markCongratulationsSeen = () => {
+    if (!user) return;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    localStorage.setItem(`congratulations_seen_${user.id}`, today);
+  };
 
   const loadData = async () => {
     try {
@@ -653,7 +672,10 @@ export default function HomePage() {
                 Continuă înainte așa! 💪
               </p>
               <Button 
-                onClick={() => setShowCongratulationsDialog(false)}
+                onClick={() => {
+                  setShowCongratulationsDialog(false);
+                  markCongratulationsSeen(); // Make sure it's saved when user closes
+                }}
                 className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
               >
                 Continuă Provocarea! 🚀
