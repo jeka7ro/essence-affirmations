@@ -38,6 +38,28 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  const normalizeDate = (value) => {
+    if (!value) return "";
+    // If comes as Date object
+    if (value instanceof Date && !isNaN(value)) {
+      return value.toISOString().slice(0, 10);
+    }
+    const str = String(value);
+    // If comes as ISO string with time zone
+    if (str.includes('T')) {
+      return str.slice(0, 10);
+    }
+    // If comes as dd.mm.yyyy
+    const m = str.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (m) {
+      const [, dd, mm, yyyy] = m;
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    // If already yyyy-mm-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    return str;
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -56,7 +78,7 @@ export default function SettingsPage() {
           first_name: userData.first_name || "",
           last_name: userData.last_name || "",
           phone: userData.phone || "",
-          birth_date: userData.birth_date || "",
+          birth_date: normalizeDate(userData.birth_date),
           avatar: userData.avatar || "👤",
           avatarType: isImageAvatar ? "image" : "emoji"
         });
@@ -113,7 +135,7 @@ export default function SettingsPage() {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
-        birth_date: formData.birth_date,
+        birth_date: normalizeDate(formData.birth_date),
         avatar: formData.avatar
       });
 
@@ -128,7 +150,7 @@ export default function SettingsPage() {
           first_name: updated.first_name || "",
           last_name: updated.last_name || "",
           phone: updated.phone || "",
-          birth_date: updated.birth_date || "",
+          birth_date: normalizeDate(updated.birth_date),
           avatar: updated.avatar || formData.avatar,
           avatarType: isImageAvatar ? "image" : "emoji"
         });
