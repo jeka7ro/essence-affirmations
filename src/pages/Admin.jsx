@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, TrendingUp, Calendar, Target, Shield, UserCheck } from "lucide-react";
+import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -24,6 +24,8 @@ export default function AdminPage() {
   const [updatingRole, setUpdatingRole] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
+  const [sortColumn, setSortColumn] = useState('total_repetitions');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   useEffect(() => {
     loadData();
@@ -57,7 +59,7 @@ export default function AdminPage() {
         individualUsers
       });
       
-      setUsers(allUsers.sort((a, b) => (b.total_repetitions || 0) - (a.total_repetitions || 0)));
+      setUsers(allUsers);
       // Calculate actual member count for each group dynamically
       const groupsWithCount = allGroups.map(group => {
         const members = allUsers.filter(u => u.group_id === group.id);
@@ -112,6 +114,84 @@ export default function AdminPage() {
     } finally {
       setDeletingGroup(null);
     }
+  };
+
+  // Sort function
+  const sortUsers = (usersList, column, direction) => {
+    const sorted = [...usersList].sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (column) {
+        case 'username':
+          aVal = (a.username || '').toLowerCase();
+          bVal = (b.username || '').toLowerCase();
+          break;
+        case 'name':
+          aVal = `${a.first_name || ''} ${a.last_name || ''}`.toLowerCase().trim();
+          bVal = `${b.first_name || ''} ${b.last_name || ''}`.toLowerCase().trim();
+          break;
+        case 'email':
+          aVal = (a.email || '').toLowerCase();
+          bVal = (b.email || '').toLowerCase();
+          break;
+        case 'role':
+          aVal = a.role || 'user';
+          bVal = b.role || 'user';
+          break;
+        case 'total_repetitions':
+          aVal = a.total_repetitions || 0;
+          bVal = b.total_repetitions || 0;
+          break;
+        case 'today_repetitions':
+          aVal = a.today_repetitions || 0;
+          bVal = b.today_repetitions || 0;
+          break;
+        case 'group':
+          const aGroup = groups.find(g => g.id === a.group_id);
+          const bGroup = groups.find(g => g.id === b.group_id);
+          aVal = aGroup ? (aGroup.name || '').toLowerCase() : 'zzz_fara_grup';
+          bVal = bGroup ? (bGroup.name || '').toLowerCase() : 'zzz_fara_grup';
+          break;
+        case 'created_at':
+          aVal = a.created_at ? new Date(a.created_at).getTime() : 0;
+          bVal = b.created_at ? new Date(b.created_at).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (typeof aVal === 'string') {
+        return direction === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      } else {
+        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+    });
+    
+    return sorted;
+  };
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedUsers = () => {
+    return sortUsers(users, sortColumn, sortDirection);
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 opacity-30" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="w-4 h-4 ml-1 text-blue-600" />
+      : <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
   };
 
   const handleDeleteUser = async (userId) => {
@@ -270,18 +350,83 @@ export default function AdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Nume</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Total Repetări</TableHead>
-                    <TableHead>Ziua Curentă</TableHead>
-                    <TableHead>Grup</TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('username')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Username
+                        <SortIcon column="username" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('name')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Nume
+                        <SortIcon column="name" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('email')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Email
+                        <SortIcon column="email" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('role')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Rol
+                        <SortIcon column="role" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('total_repetitions')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Total Repetări
+                        <SortIcon column="total_repetitions" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('today_repetitions')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Ziua Curentă
+                        <SortIcon column="today_repetitions" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('group')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Grup
+                        <SortIcon column="group" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('created_at')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Data Înregistrare
+                        <SortIcon column="created_at" />
+                      </button>
+                    </TableHead>
                     <TableHead>Acțiuni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => {
+                  {getSortedUsers().map((user) => {
                     const userGroup = groups.find(g => g.id === user.group_id);
                     return (
                       <TableRow key={user.id}>
@@ -330,6 +475,16 @@ export default function AdminPage() {
                           ) : (
                             <span className="text-sm text-gray-400 italic">Fără grup</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {user.created_at 
+                            ? new Date(user.created_at).toLocaleDateString('ro-RO', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })
+                            : '-'
+                          }
                         </TableCell>
                         <TableCell>
                           <Button

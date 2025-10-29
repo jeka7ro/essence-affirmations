@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
+.overflow-y-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-scroll::-webkit-scrollbar-track {
+  background: rgb(243 244 246); /* gray-100 */
+  border-radius: 4px;
+}
+
+.dark .overflow-y-scroll::-webkit-scrollbar-track {
+  background: rgb(17 24 39); /* gray-900 */
+}
+
+.overflow-y-scroll::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219); /* gray-300 */
+  border-radius: 4px;
+}
+
+.overflow-y-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175); /* gray-400 */
+}
+
+.dark .overflow-y-scroll::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99); /* gray-600 */
+}
+
+.dark .overflow-y-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128); /* gray-500 */
+}
+
+/* Firefox scrollbar */
+.overflow-y-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(209 213 219) rgb(243 244 246);
+}
+
+.dark .overflow-y-scroll {
+  scrollbar-color: rgb(75 85 99) rgb(17 24 39);
+}
+
 
 /* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;

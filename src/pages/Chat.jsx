@@ -302,7 +302,8 @@ export default function ChatPage() {
                 <div 
                   ref={groupMessagesRef}
                   onScroll={() => handleScroll(true)}
-                  className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
+                  className="flex-1 overflow-y-scroll p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
+                  style={{ maxHeight: 'calc(600px - 140px)' }}
                 >
                   {groupMessages.length === 0 ? (
                     <p className="text-center text-gray-500 dark:text-gray-400 pt-8">Nu există mesaje încă</p>
@@ -394,17 +395,25 @@ export default function ChatPage() {
                 </div>
                 <form onSubmit={handleSendGroupMessage} className="p-3 border-t bg-white dark:bg-gray-900 relative">
                   {showEmojiPicker && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 z-10">
+                    <div 
+                      className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 z-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex flex-wrap gap-2 max-w-xs">
                         {commonEmojis.map((emoji) => (
                           <button
                             key={emoji}
                             type="button"
-                            onClick={() => {
-                              setNewMessage(prev => prev + emoji);
-                              setShowEmojiPicker(false);
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setNewMessage((prev) => {
+                                const newVal = (prev || '') + emoji;
+                                return newVal;
+                              });
+                              setTimeout(() => setShowEmojiPicker(false), 100);
                             }}
-                            className="text-2xl hover:scale-125 transition-transform p-1"
+                            className="text-2xl hover:scale-125 transition-transform p-1 cursor-pointer"
                           >
                             {emoji}
                           </button>
@@ -513,7 +522,8 @@ export default function ChatPage() {
                     <div 
                       ref={directMessagesRef}
                       onScroll={() => handleScroll(false)}
-                      className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
+                      className="flex-1 overflow-y-scroll p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
+                      style={{ maxHeight: 'calc(600px - 140px)' }}
                     >
                       {getDirectMessagesWithUser(selectedUser).map((msg, index) => {
                         const directMsgs = getDirectMessagesWithUser(selectedUser);
@@ -578,24 +588,32 @@ export default function ChatPage() {
                     </div>
                     <form onSubmit={handleSendDirectMessage} className="p-3 border-t bg-white dark:bg-gray-900 relative">
                       {showEmojiPicker && (
-                        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 z-10">
+                        <div 
+                          className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 z-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex flex-wrap gap-2 max-w-xs">
                             {commonEmojis.map((emoji) => (
                               <button
                                 key={emoji}
                                 type="button"
-                                onClick={() => {
-                                  setNewMessage(prev => prev + emoji);
-                                  setShowEmojiPicker(false);
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setNewMessage((prev) => {
+                                    const newVal = (prev || '') + emoji;
+                                    return newVal;
+                                  });
+                                  setTimeout(() => setShowEmojiPicker(false), 100);
                                 }}
-                                className="text-2xl hover:scale-125 transition-transform p-1"
+                                className="text-2xl hover:scale-125 transition-transform p-1 cursor-pointer"
                               >
                                 {emoji}
                               </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="flex gap-2 items-center emoji-container">
                         <Input
                           value={newMessage}
