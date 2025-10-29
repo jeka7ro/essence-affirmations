@@ -142,6 +142,12 @@ async function initializeTables() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='sex') THEN
           ALTER TABLE users ADD COLUMN sex VARCHAR(1);
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='messages' AND column_name='type') THEN
+          ALTER TABLE messages ADD COLUMN type VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='messages' AND column_name='recipient') THEN
+          ALTER TABLE messages ADD COLUMN recipient VARCHAR(255);
+        END IF;
       END $$;
     `);
 
@@ -536,13 +542,16 @@ app.get('/api/messages', async (req, res) => {
 
 app.post('/api/messages', async (req, res) => {
   try {
-    const { username, group_id, message } = req.body;
+    const { sender, username, group_id, message, type, recipient } = req.body;
+    // Support both 'sender' and 'username' for backward compatibility
+    const senderValue = sender || username;
     const { rows } = await pool.query(
-      'INSERT INTO messages (sender, group_id, message) VALUES ($1, $2, $3) RETURNING *',
-      [username, group_id, message]
+      'INSERT INTO messages (sender, group_id, message, type, recipient) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [senderValue, group_id || null, message, type || 'group', recipient || null]
     );
     res.json(rows[0]);
   } catch (err) {
+    console.error('POST /api/messages error:', err);
     res.status(500).json({ error: err.message });
   }
 });

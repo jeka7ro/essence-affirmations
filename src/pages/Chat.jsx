@@ -51,11 +51,14 @@ export default function ChatPage() {
 
     try {
       const allMessages = await base44.entities.Message.list("-created_date");
+      console.log("All messages loaded:", allMessages);
+      console.log("Current user group_id:", currentUser.group_id);
       
       // Group messages
       const groupMsgs = allMessages.filter(
         m => m.type === "group" && m.group_id === currentUser.group_id
       );
+      console.log("Filtered group messages:", groupMsgs);
       setGroupMessages(groupMsgs.reverse());
       
       // Direct messages
@@ -74,12 +77,13 @@ export default function ChatPage() {
     if (!newMessage.trim() || !user) return;
 
     try {
-      await base44.entities.Message.create({
+      const created = await base44.entities.Message.create({
         sender: user.username,
         message: newMessage,
         type: "group",
         group_id: user.group_id
       });
+      console.log("Message created:", created);
 
       await base44.entities.Activity.create({
         username: user.username,
@@ -88,9 +92,11 @@ export default function ChatPage() {
       });
 
       setNewMessage("");
-      loadMessages();
+      // Reload messages with current user data
+      await loadMessages(user);
     } catch (error) {
       console.error("Error sending message:", error);
+      alert(`Eroare la trimiterea mesajului: ${error.message}`);
     }
   };
 
@@ -107,9 +113,11 @@ export default function ChatPage() {
       });
 
       setNewMessage("");
-      loadMessages();
+      // Reload messages with current user data
+      await loadMessages(user);
     } catch (error) {
       console.error("Error sending message:", error);
+      alert(`Eroare la trimiterea mesajului: ${error.message}`);
     }
   };
 
