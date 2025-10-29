@@ -72,22 +72,24 @@ export default function HomePage() {
   }, [todayRepetitions]);
 
 
+  // Helper function to check if user has seen congratulations today
+  const hasSeenCongratulationsToday = () => {
+    if (!user) return false;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const lastSeen = localStorage.getItem(`congratulations_seen_${user.id}`);
+    return lastSeen === today;
+  };
+
+  // Helper function to mark congratulations as seen for today
+  const markCongratulationsSeen = () => {
+    if (!user) return;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    localStorage.setItem(`congratulations_seen_${user.id}`, today);
+  };
+
   // Detect when user reaches 100 repetitions and show congratulations (only once per day)
   useEffect(() => {
     if (!user) return;
-    
-    // Helper function to check if user has seen congratulations today
-    const hasSeenCongratulationsToday = () => {
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const lastSeen = localStorage.getItem(`congratulations_seen_${user.id}`);
-      return lastSeen === today;
-    };
-
-    // Helper function to mark congratulations as seen for today
-    const markCongratulationsSeen = () => {
-      const today = format(new Date(), 'yyyy-MM-dd');
-      localStorage.setItem(`congratulations_seen_${user.id}`, today);
-    };
     
     // Only show if:
     // 1. User reached 100 repetitions today
@@ -97,13 +99,6 @@ export default function HomePage() {
       markCongratulationsSeen(); // Save that user saw it today
     }
   }, [todayRepetitions, user]);
-
-  // Helper function to mark congratulations as seen (used when closing dialog)
-  const markCongratulationsSeen = () => {
-    if (!user) return;
-    const today = format(new Date(), 'yyyy-MM-dd');
-    localStorage.setItem(`congratulations_seen_${user.id}`, today);
-  };
 
   const loadData = async () => {
     try {
