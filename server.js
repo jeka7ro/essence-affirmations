@@ -927,6 +927,32 @@ app.post('/api/backups/create', async (req, res) => {
     const usersResult = await pool.query('SELECT * FROM users');
     const users = usersResult.rows;
     
+    // Verify critical fields are present for each user
+    const usersWithData = users.map(user => {
+      const hasAffirmation = user.affirmation !== null && user.affirmation !== undefined;
+      const hasRepetitionHistory = user.repetition_history !== null && user.repetition_history !== undefined;
+      const hasRepetitions = user.total_repetitions !== null && user.total_repetitions !== undefined;
+      
+      if (!hasAffirmation || !hasRepetitionHistory || !hasRepetitions) {
+        console.warn(`User ${user.username} (ID: ${user.id}) missing critical data:`, {
+          hasAffirmation,
+          hasRepetitionHistory,
+          hasRepetitions,
+          affirmation: hasAffirmation ? 'OK' : 'MISSING',
+          repetition_history: hasRepetitionHistory ? 'OK' : 'MISSING',
+          total_repetitions: hasRepetitions ? user.total_repetitions : 'MISSING'
+        });
+      }
+      
+      return user;
+    });
+    
+    console.log(`Backup: Found ${users.length} users. Critical data check:`, {
+      usersWithAffirmation: usersWithData.filter(u => u.affirmation).length,
+      usersWithRepetitions: usersWithData.filter(u => u.total_repetitions > 0).length,
+      usersWithHistory: usersWithData.filter(u => u.repetition_history && u.repetition_history !== '[]').length
+    });
+    
     // Get all groups
     const groupsResult = await pool.query('SELECT * FROM groups');
     const groups = groupsResult.rows;
@@ -940,12 +966,33 @@ app.post('/api/backups/create', async (req, res) => {
     const activities = activitiesResult.rows;
     
     const backupData = {
-      users,
+      users: usersWithData,
       groups,
       messages,
       activities,
       backup_timestamp: new Date().toISOString()
     };
+    
+    // Log backup summary
+    const backupSummary = {
+      totalUsers: users.length,
+      usersWithAffirmation: users.filter(u => u.affirmation && u.affirmation.trim() !== '').length,
+      usersWithRepetitions: users.filter(u => u.total_repetitions > 0).length,
+      totalRepetitions: users.reduce((sum, u) => sum + (u.total_repetitions || 0), 0),
+      usersWithRepetitionHistory: users.filter(u => {
+        try {
+          const history = JSON.parse(u.repetition_history || '[]');
+          return Array.isArray(history) && history.length > 0;
+        } catch {
+          return false;
+        }
+      }).length,
+      groups: groups.length,
+      messages: messages.length,
+      activities: activities.length
+    };
+    
+    console.log('Backup Summary:', backupSummary);
     
     const now = new Date();
     const roTime = now.toLocaleString('ro-RO', { hour12: false });
@@ -967,7 +1014,15 @@ app.post('/api/backups/create', async (req, res) => {
         users: users.length,
         groups: groups.length,
         messages: messages.length,
-        activities: activities.length
+        activities: activities.length,
+        // Detailed backup stats
+        backupSummary: {
+          totalUsers: backupSummary.totalUsers,
+          usersWithAffirmation: backupSummary.usersWithAffirmation,
+          usersWithRepetitions: backupSummary.usersWithRepetitions,
+          totalRepetitions: backupSummary.totalRepetitions,
+          usersWithRepetitionHistory: backupSummary.usersWithRepetitionHistory
+        }
       }
     });
   } catch (err) {
@@ -1298,17 +1353,54 @@ async function performAutoBackup() {
     
     // Get all data
     const usersResult = await pool.query('SELECT * FROM users');
+    const users = usersResult.rows;
+    
+    // Verify critical fields are present
+    const usersWithData = users.map(user => {
+      const hasAffirmation = user.affirmation !== null && user.affirmation !== undefined;
+      const hasRepetitionHistory = user.repetition_history !== null && user.repetition_history !== undefined;
+      const hasRepetitions = user.total_repetitions !== null && user.total_repetitions !== undefined;
+      
+      if (!hasAffirmation || !hasRepetitionHistory || !hasRepetitions) {
+        console.warn(`Auto-backup: User ${user.username} (ID: ${user.id}) missing critical data:`, {
+          hasAffirmation,
+          hasRepetitionHistory,
+          hasRepetitions
+        });
+      }
+      
+      return user;
+    });
+    
     const groupsResult = await pool.query('SELECT * FROM groups');
     const messagesResult = await pool.query('SELECT * FROM messages ORDER BY created_date DESC LIMIT 1000');
     const activitiesResult = await pool.query('SELECT * FROM activities ORDER BY created_date DESC LIMIT 1000');
     
     const backupData = {
-      users: usersResult.rows,
+      users: usersWithData,
       groups: groupsResult.rows,
       messages: messagesResult.rows,
       activities: activitiesResult.rows,
       backup_timestamp: now.toISOString()
     };
+    
+    // Log backup summary
+    const backupSummary = {
+      totalUsers: users.length,
+      usersWithAffirmation: users.filter(u => u.affirmation && u.affirmation.trim() !== '').length,
+      usersWithRepetitions: users.filter(u => u.total_repetitions > 0).length,
+      totalRepetitions: users.reduce((sum, u) => sum + (u.total_repetitions || 0), 0),
+      usersWithRepetitionHistory: users.filter(u => {
+        try {
+          const history = JSON.parse(u.repetition_history || '[]');
+          return Array.isArray(history) && history.length > 0;
+        } catch {
+          return false;
+        }
+      }).length
+    };
+    
+    console.log(`Auto-backup Summary: ${backupSummary.totalUsers} users, ${backupSummary.usersWithAffirmation} with affirmation, ${backupSummary.totalRepetitions} total repetitions`);
     
     const roTime = now.toLocaleString('ro-RO', { hour12: false });
     const autoName = `Backup automat ${roTime}`;
