@@ -4,6 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 
+function formatBirthDateSafe(value) {
+  if (!value) return '-';
+  try {
+    // If string like YYYY-MM-DD or ISO, avoid timezone by slicing
+    const str = String(value);
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+      const [y, m, d] = str.slice(0, 10).split('-');
+      return `${d}.${m}.${y}`;
+    }
+    // Fallback to Date parsing
+    return format(new Date(value), 'dd.MM.yyyy', { locale: ro });
+  } catch {
+    return '-';
+  }
+}
+
 const zodiacNames = [
   "Berbec","Taur","Gemeni","Rac","Leu","Fecioară","Balanță","Scorpion","Săgetător","Capricorn","Vărsător","Pești"
 ];
@@ -100,7 +116,7 @@ export default function ZodiiPage() {
                     <ul className="space-y-1 list-disc list-inside">
                       {list.map(u => {
                         const fullName = (`${u.first_name||''} ${u.last_name||''}`).trim() || u.username;
-                        const dateStr = u.birth_date ? format(new Date(u.birth_date), 'dd.MM.yyyy', { locale: ro }) : '-';
+                        const dateStr = formatBirthDateSafe(u.birth_date);
                         return (
                           <li key={u.id}>
                             {fullName} — <span className="text-gray-600 dark:text-gray-400">{dateStr}</span>
