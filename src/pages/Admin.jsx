@@ -321,7 +321,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>
                           <span className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-sm">
-                            {user.current_day}/30
+                            {(user.today_repetitions || 0)}/100
                           </span>
                         </TableCell>
                         <TableCell>
