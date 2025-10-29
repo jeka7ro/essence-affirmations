@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,34 +16,6 @@ export default function AffirmationBox({
   onAddRepetition
 }) {
   const navigate = useNavigate();
-  const [pumpkins, setPumpkins] = useState([]);
-
-  const createPumpkins = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    const newPumpkins = Array.from({ length: 8 }, (_, i) => {
-      const angle = (i * 45) * (Math.PI / 180);
-      const distance = 80 + Math.random() * 40;
-      const deltaX = Math.cos(angle) * distance;
-      const deltaY = Math.sin(angle) * distance - 50; // -50 pentru efect "săritură"
-      
-      return {
-        id: Date.now() + i,
-        x: centerX,
-        y: centerY,
-        deltaX,
-        deltaY,
-      };
-    });
-    
-    setPumpkins(newPumpkins);
-    
-    setTimeout(() => {
-      setPumpkins([]);
-    }, 2000);
-  };
   
   return (
     <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
@@ -55,13 +27,8 @@ export default function AffirmationBox({
               if (isHalloween) {
                 return (
                   <div
-                    className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl cursor-pointer hover:opacity-90 transition-opacity relative"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      createPumpkins(e);
-                    }}
-                    title="Click pentru animație Halloween! 🎃"
+                    className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl"
+                    title="Halloween"
                   >
                     🎃
                   </div>
@@ -128,7 +95,10 @@ export default function AffirmationBox({
               <div className="flex justify-end mt-2">
                 {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
                   <Button
-                    onClick={onAddRepetition}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddRepetition();
+                    }}
                     size="icon"
                     className={`h-12 w-12 rounded-full text-white shadow-lg ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                     aria-label="Adaugă repetare"
@@ -142,49 +112,6 @@ export default function AffirmationBox({
           </div>
         )}
       </CardContent>
-      {/* Animated pumpkins container */}
-      {pumpkins.length > 0 && (
-        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
-          {pumpkins.map((pumpkin) => {
-            const midX = pumpkin.deltaX * 0.6;
-            const midY = pumpkin.deltaY * 0.6;
-            const endX = pumpkin.deltaX;
-            const endY = pumpkin.deltaY;
-            
-            return (
-              <div key={pumpkin.id}>
-                <style>{`
-                  @keyframes pumpkinJump${pumpkin.id} {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(1) rotate(0deg);
-                      opacity: 1;
-                    }
-                    50% {
-                      transform: translate(-50%, -50%) translate(${midX}px, ${midY}px) scale(0.9) rotate(180deg);
-                      opacity: 0.9;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${endX}px, ${endY}px) scale(0.4) rotate(360deg);
-                      opacity: 0;
-                    }
-                  }
-                `}</style>
-                <div
-                  className="absolute text-2xl"
-                  style={{
-                    left: `${pumpkin.x}px`,
-                    top: `${pumpkin.y}px`,
-                    animation: `pumpkinJump${pumpkin.id} 2s ease-out forwards`,
-                    willChange: 'transform, opacity',
-                  }}
-                >
-                  🎃
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </Card>
   );
 }
