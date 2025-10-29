@@ -767,6 +767,8 @@ export default function HomePage() {
             </div>
           </DialogContent>
         </Dialog>
+          );
+        })()}
 
 
         <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-6">
