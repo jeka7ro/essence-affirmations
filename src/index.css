@@ -187,6 +187,21 @@ button:focus-visible {
   }
 }
 
+/* Seasonal theme: Halloween (activată prin clasa .halloween pe <html>) */
+.halloween :root, .halloween {
+  /* suprascrie doar culorile primare pentru butoane/accente */
+  --primary: 24 94% 50%; /* portocaliu */
+  --primary-foreground: 0 0% 98%;
+  --accent: 24 94% 95%;
+  --accent-foreground: 24 90% 20%;
+}
+
+/* Fundal cu dovleci discreți (SVG pattern) */
+.halloween body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 30c-6 0-8-4-8-8s2-8 8-8 8 4 8 8-2 8-8 8z'/%3E%3Cpath d='M32 30c-6 0-8-4-8-8s2-8 8-8 8 4 8 8-2 8-8 8z'/%3E%3Cpath d='M24 14c1-3 3-4 4-5'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 48px 48px;
+}
+
 
 
 @layer base {

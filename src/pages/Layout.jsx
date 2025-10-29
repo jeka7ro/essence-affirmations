@@ -62,6 +62,22 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [shouldShowLayout, currentPageName]);
 
+  // Seasonal: activate Halloween for user Eugen now, and globally on Oct 30-31
+  useEffect(() => {
+    const applySeasonal = () => {
+      try {
+        const now = new Date();
+        const isOct = now.getMonth() === 9; // October (0-indexed)
+        const day = now.getDate();
+        const isGlobalHalloween = isOct && (day === 30 || day === 31);
+        const isUserPreview = user && (user.username === 'Eugen' || user.first_name === 'Eugen');
+        const active = isGlobalHalloween || isUserPreview;
+        document.documentElement.classList.toggle('halloween', !!active);
+      } catch {}
+    };
+    applySeasonal();
+  }, [user]);
+
   // Check for unread messages periodically
   useEffect(() => {
     if (!user) return;

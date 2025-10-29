@@ -22,12 +22,28 @@ export default function AffirmationBox({
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <img 
-              src="/favicon_essence.png" 
-              alt="Essence Logo" 
-              className="w-12 h-12 object-contain cursor-pointer hover:opacity-80 transition-opacity" 
-              onClick={() => navigate(createPageUrl("Home"))}
-            />
+            {(() => {
+              const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
+              if (isHalloween) {
+                return (
+                  <div
+                    className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => navigate(createPageUrl("Home"))}
+                    title="Halloween"
+                  >
+                    🎃
+                  </div>
+                );
+              }
+              return (
+                <img 
+                  src="/favicon_essence.png" 
+                  alt="Essence Logo" 
+                  className="w-12 h-12 object-contain cursor-pointer hover:opacity-80 transition-opacity" 
+                  onClick={() => navigate(createPageUrl("Home"))}
+                />
+              );
+            })()}
             <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               Afirmația Mea Essence
             </CardTitle>
