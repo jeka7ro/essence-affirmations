@@ -202,11 +202,11 @@ export default function Layout({ children, currentPageName }) {
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
                     theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
+                  } flex items-center justify-center text-[8px] font-bold ${
+                    theme === 'auto' ? 'text-green-600' : 'text-gray-600'
                   }`}
                 >
-                  {theme === 'dark' && '🌙'}
-                  {theme === 'light' && '☀️'}
-                  {theme === 'auto' && '🔄'}
+                  {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
                 </span>
               </button>
             </div>
@@ -252,13 +252,13 @@ export default function Layout({ children, currentPageName }) {
                   aria-label="Cycle theme"
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform text-[10px] ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform flex items-center justify-center text-[8px] font-bold ${
                       theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
+                    } ${
+                      theme === 'auto' ? 'text-green-600' : 'text-gray-600'
                     }`}
                   >
-                    {theme === 'dark' && '🌙'}
-                    {theme === 'light' && '☀️'}
-                    {theme === 'auto' && '🔄'}
+                    {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
                   </span>
                 </button>
                 {user.role === "admin" && (
