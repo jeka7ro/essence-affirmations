@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Users, TrendingUp, Calendar, Target, Shield, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
+import { ro } from 'date-fns/locale';
 
 export default function AdminPage() {
   const [stats, setStats] = useState({
@@ -156,6 +159,14 @@ export default function AdminPage() {
           aVal = a.created_at ? new Date(a.created_at).getTime() : 0;
           bVal = b.created_at ? new Date(b.created_at).getTime() : 0;
           break;
+        case 'sex':
+          aVal = (a.sex || '').toLowerCase();
+          bVal = (b.sex || '').toLowerCase();
+          break;
+        case 'birth_date':
+          aVal = a.birth_date ? new Date(a.birth_date).getTime() : 0;
+          bVal = b.birth_date ? new Date(b.birth_date).getTime() : 0;
+          break;
         default:
           return 0;
       }
@@ -192,6 +203,51 @@ export default function AdminPage() {
     return sortDirection === 'asc' 
       ? <ArrowUp className="w-4 h-4 ml-1 text-blue-600" />
       : <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
+  };
+
+  const handleExportToExcel = () => {
+    const sortedUsersList = getSortedUsers();
+    const exportData = sortedUsersList.map(user => {
+      const userGroup = groups.find(g => g.id === user.group_id);
+      return {
+        'Username': user.username || '',
+        'Nume': `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        'Email': user.email || '',
+        'Rol': user.role || 'user',
+        'Sex': user.sex || '',
+        'Data de naștere': user.birth_date 
+          ? format(new Date(user.birth_date), 'dd.MM.yyyy', { locale: ro })
+          : '',
+        'Total Repetări': user.total_repetitions || 0,
+        'Ziua Curentă': `${user.today_repetitions || 0}/100`,
+        'Grup': userGroup ? userGroup.name : 'Fără grup',
+        'Data și Ora Înregistrare': user.created_at 
+          ? format(new Date(user.created_at), 'dd.MM.yyyy HH:mm', { locale: ro })
+          : ''
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Utilizatori');
+    
+    // Auto-size columns
+    const colWidths = [
+      { wch: 15 }, // Username
+      { wch: 20 }, // Nume
+      { wch: 30 }, // Email
+      { wch: 10 }, // Rol
+      { wch: 5 },  // Sex
+      { wch: 15 }, // Data de naștere
+      { wch: 15 }, // Total Repetări
+      { wch: 15 }, // Ziua Curentă
+      { wch: 20 }, // Grup
+      { wch: 25 }  // Data și Ora Înregistrare
+    ];
+    ws['!cols'] = colWidths;
+
+    const fileName = `utilizatori_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
   };
 
   const handleDeleteUser = async (userId) => {
@@ -343,7 +399,16 @@ export default function AdminPage() {
         {/* Users Table */}
         <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <CardHeader>
-            <CardTitle className="text-gray-900 dark:text-gray-100">Toți Utilizatorii</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-gray-900 dark:text-gray-100">Toți Utilizatorii</CardTitle>
+              <Button
+                onClick={handleExportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white rounded-xl"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export Excel
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -384,6 +449,24 @@ export default function AdminPage() {
                       >
                         Rol
                         <SortIcon column="role" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('sex')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Sex
+                        <SortIcon column="sex" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        onClick={() => handleSort('birth_date')}
+                        className="flex items-center hover:text-blue-600 transition-colors"
+                      >
+                        Data de naștere
+                        <SortIcon column="birth_date" />
                       </button>
                     </TableHead>
                     <TableHead>
@@ -461,6 +544,15 @@ export default function AdminPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        <TableCell>
+                          {user.sex === 'M' ? 'M' : user.sex === 'F' ? 'F' : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {user.birth_date 
+                            ? format(new Date(user.birth_date), 'dd.MM.yyyy', { locale: ro })
+                            : '-'
+                          }
+                        </TableCell>
                         <TableCell className="font-bold text-blue-600">
                           {(user.total_repetitions || 0).toLocaleString('ro-RO')}
                         </TableCell>
@@ -478,11 +570,7 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>
                           {user.created_at 
-                            ? new Date(user.created_at).toLocaleDateString('ro-RO', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })
+                            ? format(new Date(user.created_at), 'dd.MM.yyyy HH:mm', { locale: ro })
                             : '-'
                           }
                         </TableCell>
