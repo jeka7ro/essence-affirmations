@@ -190,13 +190,25 @@ export default function Layout({ children, currentPageName }) {
                 <span className="font-semibold text-base">{item.title}</span>
               </Link>
             ))}
-            <button
-              onClick={cycleTheme}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-            >
-              <span className="w-5 h-5 inline-block">{theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🔄'}</span>
-              <span className="font-semibold text-base">{theme === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}</span>
-            </button>
+            <div className="flex items-center gap-2 px-4 py-3">
+              <span className="font-semibold text-base flex-1">Temă</span>
+              <button
+                onClick={cycleTheme}
+                className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  theme === 'dark' ? 'bg-gray-800' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
+                    theme === 'dark' ? 'translate-x-9' : theme === 'light' ? 'translate-x-1' : 'translate-x-5'
+                  }`}
+                >
+                  {theme === 'dark' && '🌙'}
+                  {theme === 'light' && '☀️'}
+                  {theme === 'auto' && '🔄'}
+                </span>
+              </button>
+            </div>
             
             <button
               onClick={handleLogout}
@@ -231,8 +243,22 @@ export default function Layout({ children, currentPageName }) {
             {user && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-blue-600">{user.username || user.email}</span>
-                <button onClick={cycleTheme} className="text-xl" aria-label="Cycle theme">
-                  {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🔄'}
+                <button 
+                  onClick={cycleTheme} 
+                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    theme === 'dark' ? 'bg-gray-800' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
+                  }`}
+                  aria-label="Cycle theme"
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform text-xs ${
+                      theme === 'dark' ? 'translate-x-9' : theme === 'light' ? 'translate-x-1' : 'translate-x-5'
+                    }`}
+                  >
+                    {theme === 'dark' && '🌙'}
+                    {theme === 'light' && '☀️'}
+                    {theme === 'auto' && '🔄'}
+                  </span>
                 </button>
                 {user.role === "admin" && (
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">ADMIN</span>
