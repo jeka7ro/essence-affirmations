@@ -696,17 +696,10 @@ export default function HomePage() {
                       }
                     </p>
                     {todayRepetitions < 100 && (
-                      <>
-                        <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 dark:border-orange-400 rounded-r-lg p-3">
-                          <p className="text-xs text-orange-800 dark:text-orange-200 font-medium text-center leading-relaxed">
-                            Vă reamintim regula de bază: dacă într-o zi nu se îndeplinesc cele 100 de repetiții, ciclul de 30 de zile se resetează și se reia de la început.
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-orange-600 dark:text-orange-400">
-                          <span>⏰ Mai sunt:</span>
-                          <span className="text-lg font-bold">{timeUntilMidnight}</span>
-                        </div>
-                      </>
+                      <div className="flex items-center justify-center gap-2 text-xs font-semibold text-orange-600 dark:text-orange-400">
+                        <span>⏰ Mai sunt:</span>
+                        <span className="text-lg font-bold">{timeUntilMidnight}</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -761,6 +754,13 @@ export default function HomePage() {
                       <p className="text-xs text-gray-600 dark:text-gray-300">Total Repetări</p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
                     </div>
+                  </div>
+
+                  {/* Text de atenționare - mutat sub cardurile de statistici */}
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 dark:border-orange-400 rounded-r-lg p-3 mt-3">
+                    <p className="text-xs text-orange-800 dark:text-orange-200 font-medium text-center leading-relaxed">
+                      Vă reamintim regula de bază: dacă într-o zi nu se îndeplinesc cele 100 de repetiții, ciclul de 30 de zile se resetează și se reia de la început.
+                    </p>
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-2 pt-3">
