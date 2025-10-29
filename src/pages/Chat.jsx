@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Users as UsersIcon } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Send, Users as UsersIcon, Trash2 } from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
 import { ro } from "date-fns/locale";
 
 export default function ChatPage() {
@@ -14,9 +14,23 @@ export default function ChatPage() {
   const [groupMessages, setGroupMessages] = useState([]);
   const [directMessages, setDirectMessages] = useState([]);
   const [groupMembers, setGroupMembers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Helper to get avatar display
+  const getAvatarDisplay = (userData) => {
+    if (userData?.avatar) return userData.avatar;
+    if (userData?.sex === 'M') return '👨';
+    if (userData?.sex === 'F') return '👩';
+    return '👤';
+  };
+  
+  // Helper to get user data by username
+  const getUserByUsername = (username) => {
+    return allUsers.find(u => u.username === username);
+  };
 
   useEffect(() => {
     loadData();
@@ -30,6 +44,7 @@ export default function ChatPage() {
     try {
       const currentUser = await base44.auth.me();
       const users = await base44.entities.User.list();
+      setAllUsers(users);
       const userData = users.find(u => u.email === currentUser.email);
       setUser(userData);
 
@@ -51,14 +66,22 @@ export default function ChatPage() {
 
     try {
       const allMessages = await base44.entities.Message.list("-created_date");
-      console.log("All messages loaded:", allMessages);
-      console.log("Current user group_id:", currentUser.group_id);
       
-      // Group messages
-      const groupMsgs = allMessages.filter(
+      // Filter group messages: only show messages from after user joined the group
+      let groupMsgs = allMessages.filter(
         m => m.type === "group" && m.group_id === currentUser.group_id
       );
-      console.log("Filtered group messages:", groupMsgs);
+      
+      // If user has a group_joined_at timestamp, filter messages
+      if (currentUser.group_joined_at) {
+        const joinedDate = new Date(currentUser.group_joined_at);
+        groupMsgs = groupMsgs.filter(m => {
+          if (!m.created_date) return false;
+          const msgDate = new Date(m.created_date);
+          return msgDate >= joinedDate;
+        });
+      }
+      
       setGroupMessages(groupMsgs.reverse());
       
       // Direct messages
@@ -191,43 +214,80 @@ export default function ChatPage() {
               <CardContent className="flex-1 flex flex-col p-0">
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {groupMessages.length === 0 ? (
-                    <p className="text-center text-gray-500">Nu există mesaje încă</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400">Nu există mesaje încă</p>
                   ) : (
-                    groupMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.sender === user.username ? 'justify-end' : 'justify-start'}`}
-                      >
+                    groupMessages.map((msg) => {
+                      const senderData = getUserByUsername(msg.sender);
+                      const avatarDisplay = getAvatarDisplay(senderData);
+                      const senderName = senderData ? `${senderData.first_name || ''} ${senderData.last_name || ''}`.trim() || senderData.username : msg.sender;
+                      const isOwnMessage = msg.sender === user.username;
+                      const msgDate = msg.created_date ? new Date(msg.created_date) : new Date();
+                      
+                      return (
                         <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            msg.sender === user.username
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-900'
-                          }`}
+                          key={msg.id}
+                          className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p className="text-xs font-semibold mb-1 opacity-75">
-                            {msg.sender}
-                          </p>
-                          <p>{msg.message}</p>
-                          <p className="text-xs mt-1 opacity-75">
-                            {msg.created_date ? (
-                              (() => {
-                                try {
-                                  const date = new Date(msg.created_date);
-                                  if (isNaN(date.getTime())) return 'Acum';
-                                  return formatDistanceToNow(date, {
-                                    addSuffix: true,
-                                    locale: ro
-                                  });
-                                } catch (e) {
-                                  return 'Acum';
-                                }
-                              })()
-                            ) : 'Acum'}
-                          </p>
+                          {!isOwnMessage && (
+                            <div className="flex-shrink-0">
+                              {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                                <img src={avatarDisplay} alt="Avatar" className="w-10 h-10 rounded-full border object-cover" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 border flex items-center justify-center text-xl">
+                                  {avatarDisplay}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                            {!isOwnMessage && (
+                              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                {senderName}
+                              </p>
+                            )}
+                            <div
+                              className={`rounded-lg p-3 ${
+                                isOwnMessage
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                              }`}
+                            >
+                              <p className="mb-1">{msg.message}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                  {format(msgDate, 'HH:mm', { locale: ro })}
+                                </p>
+                                <span className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>•</span>
+                                <p className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                  {format(msgDate, 'd MMM yyyy', { locale: ro })}
+                                </p>
+                              </div>
+                            </div>
+                            {isOwnMessage && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async () => {
+                                  if (confirm('Ești sigur că vrei să ștergi acest mesaj?')) {
+                                    try {
+                                      await base44.entities.Message.delete(msg.id);
+                                      await loadMessages(user);
+                                    } catch (error) {
+                                      console.error("Error deleting message:", error);
+                                      alert('Eroare la ștergerea mesajului');
+                                    }
+                                  }
+                                }}
+                                className="mt-1 h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Șterge
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
                 <form onSubmit={handleSendGroupMessage} className="p-4 border-t">

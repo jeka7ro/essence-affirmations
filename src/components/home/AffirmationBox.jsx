@@ -1,8 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, Save } from "lucide-react";
+import { createPageUrl } from "@/utils";
 
 export default function AffirmationBox({ 
   affirmation, 
@@ -13,12 +15,19 @@ export default function AffirmationBox({
   saving,
   onAddRepetition
 }) {
+  const navigate = useNavigate();
+  
   return (
     <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <img src="/favicon_essence.png" alt="Essence Logo" className="w-12 h-12 object-contain" />
+            <img 
+              src="/favicon_essence.png" 
+              alt="Essence Logo" 
+              className="w-12 h-12 object-contain cursor-pointer hover:opacity-80 transition-opacity" 
+              onClick={() => navigate(createPageUrl("Home"))}
+            />
             <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               Afirmația Mea Essence
             </CardTitle>

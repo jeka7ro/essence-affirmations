@@ -14,11 +14,24 @@ export default function TopMembriPage() {
 
   const loadData = async () => {
     try {
+      const currentUser = await base44.auth.me();
       const allUsers = await base44.entities.User.list();
+      const userData = allUsers.find(u => u.email === currentUser.email);
+      
+      // Filter users: if user is in a group, show only group members; if admin, show all
+      let filteredUsers = allUsers;
+      if (userData?.group_id && userData?.role !== 'admin') {
+        // Show only group members
+        filteredUsers = allUsers.filter(u => u.group_id === userData.group_id);
+      } else if (!userData?.group_id && userData?.role !== 'admin') {
+        // Show only current user if not in group
+        filteredUsers = [userData];
+      }
+      // If admin, show all users (already set)
       
       // Calculate today's repetitions for each user
       const today = new Date().toISOString().split('T')[0];
-      const usersWithStats = allUsers.map(user => {
+      const usersWithStats = filteredUsers.map(user => {
         let todayCount = 0;
         try {
           const history = JSON.parse(user.repetition_history || '[]');

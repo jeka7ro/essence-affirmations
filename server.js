@@ -148,6 +148,9 @@ async function initializeTables() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='messages' AND column_name='recipient') THEN
           ALTER TABLE messages ADD COLUMN recipient VARCHAR(255);
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='group_joined_at') THEN
+          ALTER TABLE users ADD COLUMN group_joined_at TIMESTAMP;
+        END IF;
       END $$;
     `);
 

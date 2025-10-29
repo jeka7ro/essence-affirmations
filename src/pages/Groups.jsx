@@ -140,7 +140,10 @@ export default function GroupsPage() {
         setError('Utilizatorul nu a fost găsit după username/email.');
         return;
       }
-      await base44.entities.User.update(candidate.id, { group_id: editingGroup.id });
+      await base44.entities.User.update(candidate.id, { 
+        group_id: editingGroup.id,
+        group_joined_at: new Date().toISOString()
+      });
       setMemberSearch('');
       const members = allUsers.filter(u => u.group_id === editingGroup.id || u.id === candidate.id);
       setMembersForDialog(members);
@@ -220,7 +223,8 @@ export default function GroupsPage() {
 
       // Add creator as group member
       await base44.entities.User.update(user.id, {
-        group_id: createdGroup.id
+        group_id: createdGroup.id,
+        group_joined_at: new Date().toISOString()
       });
 
       // Refresh group data after user update to ensure member_count is accurate
@@ -295,7 +299,10 @@ export default function GroupsPage() {
       return;
     }
     try {
-      await base44.entities.User.update(user.id, { group_id: match.id });
+      await base44.entities.User.update(user.id, { 
+        group_id: match.id,
+        group_joined_at: new Date().toISOString()
+      });
       await base44.entities.Group.update(match.id, { member_count: (match.member_count || 0) + 1 });
       setSecretCode("");
       await loadData(); // refresh and hide the join section next render

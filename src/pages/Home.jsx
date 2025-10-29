@@ -337,16 +337,43 @@ export default function HomePage() {
   const handleRepetition = async (count) => {
     if (!user) return;
     
+    // First, reload user data to get the latest repetition_history from server
+    // This prevents duplicate repetitions when logged in on multiple devices
+    const latestUserData = await base44.entities.User.get(user.id);
+    const latestHistory = JSON.parse(latestUserData.repetition_history || '[]');
+    
     const newTodayReps = Math.max(0, todayRepetitions + count);
     const newTotalReps = Math.max(0, totalRepetitions + count);
     const today = format(new Date(), 'yyyy-MM-dd');
+    const now = new Date();
     
-    const newHistory = [...repetitionHistory];
+    // Check for recent repetitions (within last 2 seconds) to prevent duplicates
+    const recentThreshold = now.getTime() - 2000; // 2 seconds ago
+    const recentReps = latestHistory.filter(r => {
+      if (!r.timestamp) return false;
+      const repTime = new Date(r.timestamp).getTime();
+      return repTime > recentThreshold && r.date === today;
+    });
+    
+    // If we're adding repetitions and there are recent ones, it might be a duplicate
+    // Check if we're trying to add more than what's on the server
+    if (count > 0 && recentReps.length > 0) {
+      const serverTodayReps = latestHistory.filter(r => r.date === today).length;
+      const clientTodayReps = todayRepetitions;
+      if (serverTodayReps > clientTodayReps) {
+        // Server has more recent data, sync from server
+        console.log("Sync from server - detected newer data");
+        loadData();
+        return;
+      }
+    }
+    
+    const newHistory = [...latestHistory]; // Use latest history from server
     for (let i = 0; i < Math.abs(count); i++) {
       if (count > 0) {
         newHistory.push({
           date: today,
-          timestamp: new Date().toISOString()
+          timestamp: now.toISOString()
         });
       } else if (newHistory.length > 0) {
         const todayIndex = newHistory.map(r => r.date).lastIndexOf(today);
@@ -356,14 +383,18 @@ export default function HomePage() {
       }
     }
     
-    setTodayRepetitions(newTodayReps);
-    setTotalRepetitions(newTotalReps);
+    // Recalculate from history
+    const calculatedTodayReps = newHistory.filter(r => r.date === today).length;
+    const calculatedTotal = newHistory.length;
+    
+    setTodayRepetitions(calculatedTodayReps);
+    setTotalRepetitions(calculatedTotal);
     setRepetitionHistory(newHistory);
     
     try {
       await base44.entities.User.update(user.id, {
-        today_repetitions: newTodayReps,
-        total_repetitions: newTotalReps,
+        today_repetitions: calculatedTodayReps,
+        total_repetitions: calculatedTotal,
         repetition_history: JSON.stringify(newHistory),
         last_date: today
       });
