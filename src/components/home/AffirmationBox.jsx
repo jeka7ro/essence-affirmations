@@ -57,10 +57,11 @@ export default function AffirmationBox({
                   <div
                     className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl cursor-pointer hover:opacity-90 transition-opacity relative"
                     onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
                       createPumpkins(e);
-                      navigate(createPageUrl("Home"));
                     }}
-                    title="Halloween"
+                    title="Click pentru animație Halloween! 🎃"
                   >
                     🎃
                   </div>
@@ -143,39 +144,46 @@ export default function AffirmationBox({
       </CardContent>
       {/* Animated pumpkins container */}
       {pumpkins.length > 0 && (
-        <>
-          <div className="fixed inset-0 pointer-events-none z-50">
-            {pumpkins.map((pumpkin) => (
-              <div
-                key={pumpkin.id}
-                className="absolute text-2xl"
-                style={{
-                  left: `${pumpkin.x}px`,
-                  top: `${pumpkin.y}px`,
-                  animation: `pumpkinJump${pumpkin.id} 2s ease-out forwards`,
-                }}
-              >
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
+          {pumpkins.map((pumpkin) => {
+            const midX = pumpkin.deltaX * 0.6;
+            const midY = pumpkin.deltaY * 0.6;
+            const endX = pumpkin.deltaX;
+            const endY = pumpkin.deltaY;
+            
+            return (
+              <div key={pumpkin.id}>
                 <style>{`
                   @keyframes pumpkinJump${pumpkin.id} {
                     0% {
-                      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                      transform: translate(-50%, -50%) translate(0, 0) scale(1) rotate(0deg);
                       opacity: 1;
                     }
                     50% {
-                      transform: translate(calc(-50% + ${pumpkin.deltaX * 0.6}px), calc(-50% + ${pumpkin.deltaY * 0.6}px)) scale(0.9) rotate(180deg);
+                      transform: translate(-50%, -50%) translate(${midX}px, ${midY}px) scale(0.9) rotate(180deg);
                       opacity: 0.9;
                     }
                     100% {
-                      transform: translate(calc(-50% + ${pumpkin.deltaX}px), calc(-50% + ${pumpkin.deltaY}px)) scale(0.4) rotate(360deg);
+                      transform: translate(-50%, -50%) translate(${endX}px, ${endY}px) scale(0.4) rotate(360deg);
                       opacity: 0;
                     }
                   }
                 `}</style>
-                🎃
+                <div
+                  className="absolute text-2xl"
+                  style={{
+                    left: `${pumpkin.x}px`,
+                    top: `${pumpkin.y}px`,
+                    animation: `pumpkinJump${pumpkin.id} 2s ease-out forwards`,
+                    willChange: 'transform, opacity',
+                  }}
+                >
+                  🎃
+                </div>
               </div>
-            ))}
-          </div>
-        </>
+            );
+          })}
+        </div>
       )}
     </Card>
   );
