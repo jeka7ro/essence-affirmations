@@ -6,7 +6,7 @@ import { Trophy, Medal, Award, Users } from "lucide-react";
 export default function TopMembriPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('total'); // 'total' or 'today'
+  const [sortBy, setSortBy] = useState('today'); // 'total' or 'today'
 
   useEffect(() => {
     loadData();
