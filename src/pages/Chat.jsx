@@ -371,13 +371,22 @@ export default function ChatPage() {
               </Card>
 
               {/* Chat Area */}
-              <Card className="md:col-span-2 h-[600px] flex flex-col">
-                <CardHeader>
-                  <CardTitle>
+              <Card className="md:col-span-2 h-[600px] flex flex-col shadow-lg rounded-2xl overflow-hidden">
+                <CardHeader className="bg-white dark:bg-gray-900 border-b">
+                  <CardTitle className="text-gray-900 dark:text-gray-100">
                     {selectedUser ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl">{selectedUser.avatar}</span>
-                        <span>{selectedUser.username}</span>
+                        {(() => {
+                          const avatarDisplay = getAvatarDisplay(selectedUser);
+                          return avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                            <img src={avatarDisplay} alt="Avatar" className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg">
+                              {avatarDisplay}
+                            </div>
+                          );
+                        })()}
+                        <span>{selectedUser.username || selectedUser.email}</span>
                       </div>
                     ) : (
                       "Selectează un utilizator"
