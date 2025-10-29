@@ -71,7 +71,8 @@ export const base44 = {
     User: createEntityApi('users'),
     Group: createEntityApi('groups'),
     Activity: createEntityApi('activities'),
-    Message: createEntityApi('messages')
+    Message: createEntityApi('messages'),
+    Course: createEntityApi('courses')
   },
   integrations: {
     Core: {

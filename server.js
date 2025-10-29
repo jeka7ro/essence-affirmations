@@ -188,6 +188,21 @@ async function initializeTables() {
       )
     `);
 
+    // Courses table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS courses (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        city VARCHAR(255),
+        start_date DATE,
+        end_date DATE,
+        link TEXT,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('Tables initialized');
   } catch (err) {
     console.error('Error initializing tables:', err);
@@ -390,8 +405,108 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Courses endpoint (scrape Essence courses)
+// Courses endpoints - Get all courses from database
 app.get('/api/courses', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM courses ORDER BY start_date ASC, created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/courses error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create course (admin only)
+app.post('/api/courses', async (req, res) => {
+  try {
+    const { title, city, start_date, end_date, link, description } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+    const { rows } = await pool.query(
+      'INSERT INTO courses (title, city, start_date, end_date, link, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, city || null, start_date || null, end_date || null, link || null, description || null]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('POST /api/courses error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update course (admin only)
+app.put('/api/courses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, city, start_date, end_date, link, description } = req.body;
+    
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (title !== undefined) {
+      updates.push(`title = $${paramIndex++}`);
+      values.push(title);
+    }
+    if (city !== undefined) {
+      updates.push(`city = $${paramIndex++}`);
+      values.push(city || null);
+    }
+    if (start_date !== undefined) {
+      updates.push(`start_date = $${paramIndex++}`);
+      values.push(start_date || null);
+    }
+    if (end_date !== undefined) {
+      updates.push(`end_date = $${paramIndex++}`);
+      values.push(end_date || null);
+    }
+    if (link !== undefined) {
+      updates.push(`link = $${paramIndex++}`);
+      values.push(link || null);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(description || null);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id);
+
+    const sql = `UPDATE courses SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+    const { rows } = await pool.query(sql, values);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('PUT /api/courses/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete course (admin only)
+app.delete('/api/courses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query('DELETE FROM courses WHERE id = $1 RETURNING *', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    res.json({ success: true, deleted: rows[0] });
+  } catch (err) {
+    console.error('DELETE /api/courses/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Old scraping endpoint - kept for migration
+app.get('/api/courses-scrape', async (req, res) => {
   try {
     const response = await fetch('https://essence-process.com/ro/cursuri/');
     const html = await response.text();
@@ -563,7 +678,7 @@ app.use((req, res) => {
     error: 'Route not found', 
     method: req.method, 
     url: req.originalUrl,
-    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses']
+    availableRoutes: ['/api/health', '/api/users', '/api/groups', '/api/activities', '/api/messages', '/api/courses', '/api/courses-scrape']
   });
 });
 
