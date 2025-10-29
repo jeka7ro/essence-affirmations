@@ -167,9 +167,7 @@ export default function Layout({ children, currentPageName }) {
                 </div>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-200">Utilizator:</p>
                 <p className="text-lg font-bold text-blue-600">{user.username || user.email}</p>
-                {user.role === "admin" && (
-                  <p className="text-xs text-green-600 font-semibold mt-1">ADMIN</p>
-                )}
+                
               </div>
             )}
           </div>
@@ -225,7 +223,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Main content with margin for sidebar */}
       <div className="flex-1 flex flex-col md:ml-64">
         {/* Mobile Header */}
-        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 md:hidden sticky top-0 z-50">
+        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-4 md:hidden sticky top-0 z-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -242,8 +240,24 @@ export default function Layout({ children, currentPageName }) {
               />
             </div>
             {user && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-blue-600">{user.username || user.email}</span>
+              <div className="flex flex-col items-center gap-1">
+                {/* Avatar above username on mobile */}
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    className="w-8 h-8 rounded-full border-2 border-blue-600 object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-lg">
+                    {(() => {
+                      const emojis = ['👤','👨','👩','🧑','👴','👵','🧔','👨\u200d💼','👩\u200d💼','🧑\u200d💻'];
+                      const idx = (user?.id || 0) % emojis.length;
+                      return emojis[idx];
+                    })()}
+                  </div>
+                )}
+                <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>
                 <button 
                   onClick={cycleTheme} 
                   className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
@@ -261,9 +275,7 @@ export default function Layout({ children, currentPageName }) {
                     {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
                   </span>
                 </button>
-                {user.role === "admin" && (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">ADMIN</span>
-                )}
+                
               </div>
             )}
           </div>

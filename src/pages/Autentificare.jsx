@@ -175,7 +175,7 @@ export default function AutentificarePage() {
                 placeholder="Introdu username-ul"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="h-12 text-lg rounded-2xl bg-neutral-800 border-neutral-700 text-gray-100 placeholder:text-gray-400"
+                className="h-12 text-lg rounded-2xl bg-neutral-800 border-neutral-700 text-gray-100 placeholder:text-gray-400 text-center"
                 required
               />
             </div>

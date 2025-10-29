@@ -409,48 +409,90 @@ export default function GroupsPage() {
           </Card>
         )}
 
-        {!currentGroup && availableGroups.length > 0 && (
-          <>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Grupuri Disponibile</h2>
-              <p className="text-gray-600 mb-6">Alege un grup și introdu codul secret pentru a te alătura</p>
-            </div>
+        {/* Join by code */}
+        {!currentGroup && (
+          <Card className="rounded-3xl">
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-xl font-bold text-gray-900">Intră într-un grup cu cod</h2>
+              <p className="text-gray-600 text-sm">Accesul la grupuri se face exclusiv pe baza unui cod secret primit de la organizator.</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="CODUL SECRET (8 caractere)"
+                  maxLength={8}
+                  value={secretCode}
+                  onChange={(e) => setSecretCode(e.target.value.toUpperCase())}
+                  className="font-mono tracking-wider text-center rounded-2xl sm:flex-1"
+                />
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 rounded-2xl"
+                  disabled={secretCode.length !== 8}
+                  onClick={() => {
+                    const byCode = groups.find(g => (g.secret_code || '').toUpperCase() === secretCode);
+                    if (!byCode) {
+                      setError('Cod invalid sau grup inexistent.');
+                      return;
+                    }
+                    setSelectedGroup(byCode);
+                    setShowJoinDialog(true);
+                  }}
+                >
+                  Continuă
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
+        {/* Public details about groups (read-only) */}
+        {!currentGroup && availableGroups.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900">Detalii despre grupuri</h2>
+            <p className="text-gray-600">Utilizatorii noi pot vedea informații generale. Pentru a te alătura, ai nevoie de codul secret.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableGroups.map((group) => (
-                <Card key={group.id} className="hover:shadow-lg transition-shadow rounded-3xl">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{group.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600">{group.description}</p>
-                    <div className="flex gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        <span>{group.member_count || 0}</span>
+              {availableGroups.map(group => {
+                const cities = (() => {
+                  try { return group.cities ? JSON.parse(group.cities) : []; } catch { return []; }
+                })();
+                return (
+                  <Card key={`info-${group.id}`} className="rounded-3xl">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-blue-600" />
+                        {group.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      {group.description && (
+                        <p className="text-gray-700">{group.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Users className="w-4 h-4" />
+                        <span>{group.member_count || 0} membri</span>
                       </div>
-                      {group.start_date && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{new Date(group.start_date).toLocaleDateString('ro-RO')}</span>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          Perioadă: {group.start_date ? new Date(group.start_date).toLocaleDateString('ro-RO') : '-'}
+                          {group.end_date ? ` – ${new Date(group.end_date).toLocaleDateString('ro-RO')}` : ''}
+                        </span>
+                      </div>
+                      {cities.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {cities.slice(0, 5).map((c) => (
+                            <span key={c} className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-xs">{c}</span>
+                          ))}
+                          {cities.length > 5 && (
+                            <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs">+{cities.length - 5} orașe</span>
+                          )}
                         </div>
                       )}
-                    </div>
-                    <Button
-                      onClick={() => {
-                        setSelectedGroup(group);
-                        setShowJoinDialog(true);
-                      }}
-                      className="w-full bg-blue-600 hover:bg-blue-700 rounded-2xl"
-                    >
-                      <Lock className="w-4 h-4 mr-2" />
-                      Alătură-te
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      <p className="text-xs text-gray-500">Acces: doar cu cod secret de la organizator.</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          </>
+          </div>
         )}
 
         {!currentGroup && availableGroups.length === 0 && (

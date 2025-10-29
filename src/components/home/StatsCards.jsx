@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function StatsCards({ icon: Icon, title, value, subtitle, color }) {
+export default function StatsCards({ icon: Icon, title, value, subtitle, color, className = "" }) {
   const colorClasses = {
     blue: "bg-blue-500",
     green: "bg-green-500",
@@ -9,7 +9,7 @@ export default function StatsCards({ icon: Icon, title, value, subtitle, color }
   };
 
   return (
-    <Card className="border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-2xl bg-white dark:bg-gray-900">
+    <Card className={`border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-2xl bg-white dark:bg-gray-900 ${className}`}>
       <CardContent className="p-3 md:p-6">
         <div className="flex flex-col md:flex-row items-start md:justify-between gap-2">
           <div className="flex-1 w-full">

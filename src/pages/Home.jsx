@@ -23,7 +23,8 @@ export default function HomePage() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
-    totalRepetitionsToday: 0
+    totalRepetitionsToday: 0,
+    isInGroup: false
   });
   const [affirmation, setAffirmation] = useState("");
   const [isEditingAffirmation, setIsEditingAffirmation] = useState(false);
@@ -139,16 +140,41 @@ export default function HomePage() {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const activeUsers = allUsers.filter(u => u.last_login && u.last_login > oneDayAgo);
       const today = format(new Date(), 'yyyy-MM-dd');
-      const totalRepsToday = allUsers.reduce((sum, u) => {
-        const history = JSON.parse(u.repetition_history || '[]');
-        const todayCount = history.filter(r => r.date === today).length;
-        return sum + todayCount;
-      }, 0);
+      
+      // Calculate total reps - if user is in a group, calculate only for group members
+      let totalRepsToday = 0;
+      const isInGroup = !!userData?.group_id;
+      
+      if (isInGroup) {
+        // Calculate only for group members
+        const groupMembers = allUsers.filter(u => u.group_id === userData.group_id);
+        totalRepsToday = groupMembers.reduce((sum, u) => {
+          try {
+            const history = JSON.parse(u.repetition_history || '[]');
+            const todayCount = history.filter(r => r.date === today).length;
+            return sum + todayCount;
+          } catch {
+            return sum;
+          }
+        }, 0);
+      } else {
+        // Calculate for all users
+        totalRepsToday = allUsers.reduce((sum, u) => {
+          try {
+            const history = JSON.parse(u.repetition_history || '[]');
+            const todayCount = history.filter(r => r.date === today).length;
+            return sum + todayCount;
+          } catch {
+            return sum;
+          }
+        }, 0);
+      }
       
       setStats({
         totalUsers: allUsers.length,
         activeUsers: activeUsers.length,
-        totalRepetitionsToday: totalRepsToday
+        totalRepetitionsToday: totalRepsToday,
+        isInGroup: isInGroup
       });
       
     } catch (error) {
@@ -485,10 +511,10 @@ export default function HomePage() {
           </DialogContent>
         </Dialog>
 
-        <div className="grid grid-cols-3 gap-2 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
           <StatsCards
             icon={Users}
-            title="Total Comunitate"
+            title="Total membri"
             value={stats.totalUsers}
             color="blue"
           />
@@ -498,14 +524,34 @@ export default function HomePage() {
             value={stats.activeUsers}
             subtitle="ultimele 24h"
             color="green"
+            className="hidden md:block"
           />
           <StatsCards
             icon={Calendar}
-            title="Total Azi"
+            title={stats.isInGroup ? "Total grup" : "Total Azi"}
             value={stats.totalRepetitionsToday.toLocaleString('ro-RO')}
             subtitle="repetări"
             color="blue"
           />
+        </div>
+
+        {/* Avatar under stats on mobile */}
+        <div className="md:hidden flex justify-center">
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt="Avatar"
+              className="w-16 h-16 rounded-full border-2 border-blue-600 object-cover"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-blue-600 flex items-center justify-center text-2xl">
+              {(() => {
+                const emojis = ['👤','👨','👩','🧑','👴','👵','🧔','👨\u200d💼','👩\u200d💼','🧑\u200d💻'];
+                const idx = (user?.id || 0) % emojis.length;
+                return emojis[idx];
+              })()}
+            </div>
+          )}
         </div>
 
         <AffirmationBox
