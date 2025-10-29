@@ -647,16 +647,16 @@ export default function HomePage() {
             </DialogHeader>
             <div className="space-y-4 py-4 text-center">
               <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                Ai terminat cele 100 repetări și ești cel mai tare!
+                Ai terminat cele 100 repetări și ești {user?.sex === 'F' ? 'cea mai tare' : 'cel mai tare'}!
               </p>
               <p className="text-lg text-gray-600 dark:text-gray-400">
-                Contină înainte așa! 💪
+                Continuă înainte așa! 💪
               </p>
               <Button 
                 onClick={() => setShowCongratulationsDialog(false)}
                 className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
               >
-                Contină Provocarea! 🚀
+                Continuă Provocarea! 🚀
               </Button>
             </div>
           </DialogContent>
