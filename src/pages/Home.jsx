@@ -644,8 +644,48 @@ export default function HomePage() {
   const shouldShowCongratulationsDialog = !!user && !seenTodayCongrats && showCongratulationsDialog && !disableCongrats;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8 relative">
+      {/* Floating pumpkins background animation - only for Halloween */}
+      {(() => { 
+        const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
+        if (!isHalloween) return null;
+        
+        return (
+          <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute text-4xl opacity-30"
+                style={{
+                  left: `${15 + i * 15}%`,
+                  bottom: '-100px',
+                  animation: `floatUp${i} ${15 + i * 3}s infinite ease-in`,
+                  animationDelay: `${i * 2}s`,
+                }}
+              >
+                <style>{`
+                  @keyframes floatUp${i} {
+                    0% {
+                      transform: translateY(0) translateX(0) rotate(0deg);
+                      opacity: 0.3;
+                    }
+                    50% {
+                      transform: translateY(calc(-50vh - 200px)) translateX(${(Math.random() - 0.5) * 100}px) rotate(${Math.random() * 360}deg);
+                      opacity: 0.2;
+                    }
+                    100% {
+                      transform: translateY(calc(-100vh - 400px)) translateX(${(Math.random() - 0.5) * 150}px) rotate(${Math.random() * 720}deg);
+                      opacity: 0;
+                    }
+                  }
+                `}</style>
+                🎃
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+      <div className="max-w-6xl mx-auto space-y-8 relative" style={{ zIndex: 1 }}>
         
         <Dialog open={showStartDialog} onOpenChange={(open) => {
           if (!challengeStartDate) return;
