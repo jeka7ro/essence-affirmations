@@ -1021,27 +1021,49 @@ app.post('/api/backups/:id/restore', async (req, res) => {
         return res.status(404).json({ error: 'User not found in backup' });
       }
       
-      // Update user with backup data (exclude id and created_at)
+      // Check if user exists
+      const existingUser = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+      
       const { id: _, created_at: __, ...userData } = userBackup;
       
       const allowedFields = ['username','email','full_name','first_name','last_name','phone','birth_date','sex','pin','avatar','affirmation','preferences','role',
         'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id','group_joined_at'];
       
-      const updates = Object.entries(userData)
-        .filter(([k]) => allowedFields.has(k))
-        .map(([k, v]) => `${k} = $${Object.keys(userData).indexOf(k) + 2}`)
-        .join(', ');
-      
-      const values = Object.entries(userData)
-        .filter(([k]) => allowedFields.has(k))
-        .map(([_, v]) => v === '' ? null : v);
-      
-      await pool.query(
-        `UPDATE users SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
-        [userId, ...values]
-      );
-      
-      restored.push({ type: 'user', id: userId });
+      if (existingUser.rows.length > 0) {
+        // Update existing user
+        const updateFields = Object.entries(userData)
+          .filter(([k]) => allowedFields.includes(k))
+          .map(([k, v], idx) => `${k} = $${idx + 2}`)
+          .join(', ');
+        
+        const updateValues = Object.entries(userData)
+          .filter(([k]) => allowedFields.includes(k))
+          .map(([_, v]) => v === '' ? null : v);
+        
+        await pool.query(
+          `UPDATE users SET ${updateFields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+          [userId, ...updateValues]
+        );
+        
+        restored.push({ type: 'user', id: userId, action: 'updated' });
+      } else {
+        // Create new user (restore deleted user)
+        const insertFields = allowedFields.filter(f => userData.hasOwnProperty(f));
+        const insertPlaceholders = insertFields.map((_, idx) => `$${idx + 1}`).join(', ');
+        const insertValues = insertFields.map(f => {
+          const val = userData[f];
+          return val === '' ? null : val;
+        });
+        
+        const insertResult = await pool.query(
+          `INSERT INTO users (${insertFields.join(', ')}, created_at, updated_at) 
+           VALUES (${insertPlaceholders}, COALESCE($${insertFields.length + 1}::timestamp, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP) 
+           RETURNING *`,
+          [...insertValues, userBackup.created_at || null]
+        );
+        
+        restored.push({ type: 'user', id: insertResult.rows[0].id, action: 'created' });
+      }
     } else {
       // Restore all users
       for (const userBackup of backupData.users) {
@@ -1050,25 +1072,42 @@ app.post('/api/backups/:id/restore', async (req, res) => {
         // Check if user exists
         const existingUser = await pool.query('SELECT id FROM users WHERE id = $1', [backupUserId]);
         
+        const allowedFields = ['username','email','full_name','first_name','last_name','phone','birth_date','sex','pin','avatar','affirmation','preferences','role',
+          'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id','group_joined_at'];
+        
         if (existingUser.rows.length > 0) {
           // Update existing user
-          const allowedFields = ['username','email','full_name','first_name','last_name','phone','birth_date','sex','pin','avatar','affirmation','preferences','role',
-            'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id','group_joined_at'];
-          
-          const updates = Object.entries(userData)
-            .filter(([k]) => allowedFields.has(k))
-            .map(([k, v]) => `${k} = $${Object.keys(userData).indexOf(k) + 2}`)
+          const updateFields = Object.entries(userData)
+            .filter(([k]) => allowedFields.includes(k))
+            .map(([k, v], idx) => `${k} = $${idx + 2}`)
             .join(', ');
           
-          const values = Object.entries(userData)
-            .filter(([k]) => allowedFields.has(k))
+          const updateValues = Object.entries(userData)
+            .filter(([k]) => allowedFields.includes(k))
             .map(([_, v]) => v === '' ? null : v);
           
           await pool.query(
-            `UPDATE users SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-            [backupUserId, ...values]
+            `UPDATE users SET ${updateFields}, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [backupUserId, ...updateValues]
           );
           restored.push({ type: 'user', id: backupUserId, action: 'updated' });
+        } else {
+          // Create new user (restore deleted user)
+          const insertFields = allowedFields.filter(f => userData.hasOwnProperty(f));
+          const insertPlaceholders = insertFields.map((_, idx) => `$${idx + 1}`).join(', ');
+          const insertValues = insertFields.map(f => {
+            const val = userData[f];
+            return val === '' ? null : val;
+          });
+          
+          const insertResult = await pool.query(
+            `INSERT INTO users (${insertFields.join(', ')}, created_at, updated_at) 
+             VALUES (${insertPlaceholders}, COALESCE($${insertFields.length + 1}::timestamp, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP) 
+             RETURNING *`,
+            [...insertValues, userBackup.created_at || null]
+          );
+          
+          restored.push({ type: 'user', id: insertResult.rows[0].id, action: 'created' });
         }
       }
     }
@@ -1242,7 +1281,6 @@ async function performAutoBackup() {
       backup_timestamp: now.toISOString()
     };
     
-    const now = new Date();
     const roTime = now.toLocaleString('ro-RO', { hour12: false });
     const autoName = `Backup automat ${roTime}`;
 
