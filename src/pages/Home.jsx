@@ -133,9 +133,11 @@ export default function HomePage() {
     const seenDate = normalizeDate(user.congratulations_seen_date);
     const hasSeenToday = seenDate === today;
     
-    // CRITICAL: If already seen today, DO NOT SHOW POPUP
+    // CRITICAL: If already seen today, NEVER SHOW POPUP - force hide immediately
     if (hasSeenToday) {
-      setShowCongratulationsDialog(false);
+      if (showCongratulationsDialog) {
+        setShowCongratulationsDialog(false);
+      }
       return;
     }
     
@@ -144,12 +146,15 @@ export default function HomePage() {
     // 2. Hasn't seen the popup today (checked from database - works across all devices)
     // 3. Dialog is not already shown (to prevent multiple triggers)
     if (todayRepetitions >= 100 && !hasSeenToday && !showCongratulationsDialog) {
-      // Mark as seen FIRST, then show dialog to prevent race conditions
-      markCongratulationsSeen();
+      // Mark as seen IMMEDIATELY and synchronously in state BEFORE showing
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      setUser(prev => prev ? { ...prev, congratulations_seen_date: todayStr } : prev);
       setShowCongratulationsDialog(true);
+      // Then save to DB async (but state is already updated)
+      markCongratulationsSeen();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayRepetitions, user?.id, user?.congratulations_seen_date, loading]);
+  }, [todayRepetitions, user?.id, user?.congratulations_seen_date, loading, showCongratulationsDialog]);
 
   const loadData = async () => {
     try {
@@ -170,7 +175,9 @@ export default function HomePage() {
         const seenDateFromDB = normalizeDate(userData.congratulations_seen_date);
         if (seenDateFromDB === today) {
           setShowCongratulationsDialog(false); // Explicitly hide if already seen today
-          console.log(`User ${userData.id} already saw congratulations on ${seenDateFromDB}, not showing popup`);
+          console.log(`[loadData] User ${userData.id} already saw congratulations on ${seenDateFromDB} (today is ${today}), NOT showing popup`);
+        } else {
+          console.log(`[loadData] User ${userData.id} has NOT seen congratulations today. seenDate=${seenDateFromDB}, today=${today}`);
         }
         
         try {
@@ -711,17 +718,29 @@ export default function HomePage() {
         </Dialog>
 
         {/* Congratulations Dialog - shown when user reaches 100 repetitions */}
-        <Dialog 
-          open={showCongratulationsDialog} 
-          onOpenChange={async (open) => {
-            if (!open) {
-              // When dialog is closing (by any means - X button, click outside, or button click)
-              // Mark as seen in database to prevent showing again today
-              await markCongratulationsSeen();
-              setShowCongratulationsDialog(false);
-            }
-          }}
-        >
+        {/* CRITICAL: Only render if NOT already seen today - double check before rendering */}
+        {(() => {
+          const today = format(new Date(), 'yyyy-MM-dd');
+          const seenDate = normalizeDate(user?.congratulations_seen_date);
+          const hasSeenToday = seenDate === today;
+          
+          // If already seen today, DO NOT RENDER DIALOG AT ALL
+          if (hasSeenToday) {
+            return null;
+          }
+          
+          return (
+            <Dialog 
+              open={showCongratulationsDialog && !hasSeenToday} 
+              onOpenChange={async (open) => {
+                if (!open) {
+                  // When dialog is closing (by any means - X button, click outside, or button click)
+                  // Mark as seen in database to prevent showing again today
+                  await markCongratulationsSeen();
+                  setShowCongratulationsDialog(false);
+                }
+              }}
+            >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-3xl font-bold text-center text-green-600">
