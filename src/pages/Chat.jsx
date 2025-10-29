@@ -22,6 +22,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const groupMessagesRef = useRef(null);
   const directMessagesRef = useRef(null);
+  const [isAtBottomGroup, setIsAtBottomGroup] = useState(true);
+  const [isAtBottomDirect, setIsAtBottomDirect] = useState(true);
   
   // Helper to get avatar display
   const getAvatarDisplay = (userData) => {
@@ -44,6 +46,18 @@ export default function ChatPage() {
     }
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleScroll = (isGroup = true) => {
+    const ref = isGroup ? groupMessagesRef : directMessagesRef;
+    if (!ref.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = ref.current;
+    const atBottom = scrollHeight - (scrollTop + clientHeight) < 40; // within 40px of bottom
+    if (isGroup) {
+      setIsAtBottomGroup(atBottom);
+    } else {
+      setIsAtBottomDirect(atBottom);
     }
   };
   
@@ -76,8 +90,10 @@ export default function ChatPage() {
     // Refresh messages every 5 seconds
     const interval = setInterval(() => {
       loadMessages(user).then(() => {
-        // Auto-scroll if user is at bottom
-        setTimeout(() => scrollToBottom(true), 100);
+        // Auto-scroll only if user is near bottom
+        if (isAtBottomGroup) {
+          setTimeout(() => scrollToBottom(true), 100);
+        }
       });
     }, 5000);
     return () => clearInterval(interval);
@@ -115,7 +131,7 @@ export default function ChatPage() {
       }
 
       await loadMessages(userData);
-      // Auto-scroll after loading messages
+      // Auto-scroll after initial load
       setTimeout(() => scrollToBottom(true), 100);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -180,8 +196,10 @@ export default function ChatPage() {
       setNewMessage("");
       // Reload messages with current user data
       await loadMessages(user);
-      // Auto-scroll to new message
-      setTimeout(() => scrollToBottom(true), 100);
+      // Auto-scroll to new message if user is near bottom
+      if (isAtBottomGroup) {
+        setTimeout(() => scrollToBottom(true), 100);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       alert(`Eroare la trimiterea mesajului: ${error.message}`);
@@ -203,8 +221,10 @@ export default function ChatPage() {
       setNewMessage("");
       // Reload messages with current user data
       await loadMessages(user);
-      // Auto-scroll to new message
-      setTimeout(() => scrollToBottom(false), 100);
+      // Auto-scroll to new message if user is near bottom
+      if (isAtBottomDirect) {
+        setTimeout(() => scrollToBottom(false), 100);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       alert(`Eroare la trimiterea mesajului: ${error.message}`);
@@ -281,6 +301,7 @@ export default function ChatPage() {
               <CardContent className="flex-1 flex flex-col p-0">
                 <div 
                   ref={groupMessagesRef}
+                  onScroll={() => handleScroll(true)}
                   className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
                 >
                   {groupMessages.length === 0 ? (
@@ -491,6 +512,7 @@ export default function ChatPage() {
                   <CardContent className="flex-1 flex flex-col p-0">
                     <div 
                       ref={directMessagesRef}
+                      onScroll={() => handleScroll(false)}
                       className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
                     >
                       {getDirectMessagesWithUser(selectedUser).map((msg, index) => {
