@@ -267,24 +267,47 @@ app.post('/api/users', async (req, res) => {
 app.put('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-    
+    const updates = req.body || {};
+
     console.log('DEBUG PUT /api/users/:id:', { id, updates });
-    
-    // Validate that user exists
+
+    // Validate user exists
     const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
-    const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
-    console.log('DEBUG SQL:', `UPDATE users SET ${setClause} WHERE id = $1`);
-    
-    const result = await pool.query(
-      `UPDATE users SET ${setClause} WHERE id = $1 RETURNING *`,
-      [id, ...Object.values(updates)]
-    );
-    
+
+    // Whitelist of updatable columns
+    const allowedFields = new Set([
+      'username','email','full_name','first_name','last_name','phone','birth_date','pin','avatar','affirmation','role',
+      'total_repetitions','current_day','today_repetitions','last_date','repetition_history','completed_days','challenge_start_date','last_login','group_id'
+    ]);
+
+    // Sanitize values: empty strings -> null for date/timestamp/text fields
+    const dateFields = new Set(['birth_date','last_date','challenge_start_date','last_login']);
+    const numericFields = new Set(['total_repetitions','current_day','today_repetitions','group_id']);
+
+    const sanitizedEntries = Object.entries(updates)
+      .filter(([k]) => allowedFields.has(k))
+      .map(([k, v]) => {
+        if (v === '') return [k, null];
+        if (dateFields.has(k)) return [k, v || null];
+        if (numericFields.has(k)) return [k, v === '' || v === null || v === undefined ? null : Number(v)];
+        return [k, v];
+      });
+
+    if (sanitizedEntries.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const columns = sanitizedEntries.map(([k]) => k);
+    const values = sanitizedEntries.map(([_, v]) => v);
+    const setClause = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+    const sql = `UPDATE users SET ${setClause} WHERE id = $1 RETURNING *`;
+
+    console.log('DEBUG SQL:', sql, { columns });
+
+    const result = await pool.query(sql, [id, ...values]);
     console.log('DEBUG Update result:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (err) {
