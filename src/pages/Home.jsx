@@ -776,12 +776,19 @@ export default function HomePage() {
         
 
 
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-2 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-6">
           <StatsCards
-            icon={Users}
-            title="Total membri"
-            value={stats.totalUsers}
-            subtitle={stats.isInGroup ? "în grup" : "membri"}
+            icon={TrendingUp}
+            title="Afirmatii azi"
+            value={todayRepetitions}
+            subtitle="repetări azi"
+            color="green"
+          />
+          <StatsCards
+            icon={Calendar}
+            title="Afirmatii totale"
+            value={totalRepetitions.toLocaleString('ro-RO')}
+            subtitle="ale tale"
             color="blue"
           />
         </div>
