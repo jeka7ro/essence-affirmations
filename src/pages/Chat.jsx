@@ -219,14 +219,14 @@ export default function ChatPage() {
 
           {/* Group Chat */}
           <TabsContent value="group">
-            <Card className="h-[600px] flex flex-col">
-              <CardHeader>
-                <CardTitle>Chat de Grup</CardTitle>
+            <Card className="h-[600px] flex flex-col shadow-lg rounded-2xl overflow-hidden">
+              <CardHeader className="bg-white dark:bg-gray-900 border-b">
+                <CardTitle className="text-gray-900 dark:text-gray-100">Chat de Grup</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-0">
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50">
                   {groupMessages.length === 0 ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400">Nu există mesaje încă</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 pt-8">Nu există mesaje încă</p>
                   ) : (
                     groupMessages.map((msg) => {
                       const senderData = getUserByUsername(msg.sender);
@@ -238,40 +238,36 @@ export default function ChatPage() {
                       return (
                         <div
                           key={msg.id}
-                          className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                          className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'} items-end mb-2`}
                         >
                           {!isOwnMessage && (
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 mb-1">
                               {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
-                                <img src={avatarDisplay} alt="Avatar" className="w-10 h-10 rounded-full border object-cover" />
+                                <img src={avatarDisplay} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm" />
                               ) : (
-                                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 border flex items-center justify-center text-xl">
+                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg shadow-sm">
                                   {avatarDisplay}
                                 </div>
                               )}
                             </div>
                           )}
-                          <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                          <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%] sm:max-w-[65%]`}>
                             {!isOwnMessage && (
-                              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 px-1">
                                 {senderName}
                               </p>
                             )}
                             <div
-                              className={`rounded-lg p-3 ${
+                              className={`rounded-3xl px-4 py-2.5 shadow-sm ${
                                 isOwnMessage
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                                  ? 'bg-blue-500 text-white rounded-br-md'
+                                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-700'
                               }`}
                             >
-                              <p className="mb-1">{msg.message}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <p className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                              <p className="text-[15px] leading-snug whitespace-pre-wrap break-words">{msg.message}</p>
+                              <div className="flex items-center justify-end gap-1 mt-1.5">
+                                <p className={`text-[11px] ${isOwnMessage ? 'text-blue-50' : 'text-gray-500 dark:text-gray-400'}`}>
                                   {format(msgDate, 'HH:mm', { locale: ro })}
-                                </p>
-                                <span className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>•</span>
-                                <p className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                                  {format(msgDate, 'd MMM yyyy', { locale: ro })}
                                 </p>
                               </div>
                             </div>
@@ -290,28 +286,36 @@ export default function ChatPage() {
                                     }
                                   }
                                 }}
-                                className="mt-1 h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                className="mt-0.5 h-5 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Trash2 className="w-3 h-3 mr-1" />
                                 Șterge
                               </Button>
                             )}
                           </div>
+                          {isOwnMessage && (
+                            <div className="flex-shrink-0 mb-1 opacity-0">
+                              <div className="w-8 h-8 rounded-full"></div>
+                            </div>
+                          )}
                         </div>
                       );
                     })
                   )}
                 </div>
-                <form onSubmit={handleSendGroupMessage} className="p-4 border-t">
-                  <div className="flex gap-2">
+                <form onSubmit={handleSendGroupMessage} className="p-3 border-t bg-white dark:bg-gray-900">
+                  <div className="flex gap-2 items-center">
                     <Input
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       placeholder="Scrie un mesaj..."
-                      className="flex-1"
+                      className="flex-1 rounded-full px-4 py-2.5 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500"
                     />
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                      <Send className="w-4 h-4" />
+                    <Button 
+                      type="submit" 
+                      className="bg-blue-500 hover:bg-blue-600 rounded-full w-10 h-10 p-0 shadow-md"
+                    >
+                      <Send className="w-5 h-5" />
                     </Button>
                   </div>
                 </form>
@@ -382,40 +386,70 @@ export default function ChatPage() {
                 </CardHeader>
                 {selectedUser ? (
                   <CardContent className="flex-1 flex flex-col p-0">
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                      {getDirectMessagesWithUser(selectedUser).map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.sender === user.username ? 'justify-end' : 'justify-start'}`}
-                        >
+                    <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50">
+                      {getDirectMessagesWithUser(selectedUser).map((msg) => {
+                        const isOwnMessage = msg.sender === user.username;
+                        const msgDate = msg.created_date ? new Date(msg.created_date) : new Date();
+                        return (
                           <div
-                            className={`max-w-[70%] rounded-lg p-3 ${
-                              msg.sender === user.username
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-900'
-                            }`}
+                            key={msg.id}
+                            className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'} items-end mb-2`}
                           >
-                            <p>{msg.message}</p>
-                            <p className="text-xs mt-1 opacity-75">
-                              {formatDistanceToNow(new Date(msg.created_date), {
-                                addSuffix: true,
-                                locale: ro
-                              })}
-                            </p>
+                            {!isOwnMessage && (
+                              <div className="flex-shrink-0 mb-1">
+                                {(() => {
+                                  const avatarDisplay = getAvatarDisplay(selectedUser);
+                                  return avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                                    <img src={avatarDisplay} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg shadow-sm">
+                                      {avatarDisplay}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                            <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%] sm:max-w-[65%]`}>
+                              <div
+                                className={`rounded-3xl px-4 py-2.5 shadow-sm ${
+                                  isOwnMessage
+                                    ? 'bg-blue-500 text-white rounded-br-md'
+                                    : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-700'
+                                }`}
+                              >
+                                <p className="text-[15px] leading-snug whitespace-pre-wrap break-words">{msg.message}</p>
+                                <div className="flex items-center justify-end gap-1 mt-1.5">
+                                  <p className={`text-[11px] ${isOwnMessage ? 'text-blue-50' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    {format(msgDate, 'HH:mm', { locale: ro })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            {isOwnMessage && (
+                              <div className="flex-shrink-0 mb-1 opacity-0">
+                                <div className="w-8 h-8 rounded-full"></div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+                      {getDirectMessagesWithUser(selectedUser).length === 0 && (
+                        <p className="text-center text-gray-500 dark:text-gray-400 pt-8">Nu există mesaje încă</p>
+                      )}
                     </div>
-                    <form onSubmit={handleSendDirectMessage} className="p-4 border-t">
-                      <div className="flex gap-2">
+                    <form onSubmit={handleSendDirectMessage} className="p-3 border-t bg-white dark:bg-gray-900">
+                      <div className="flex gap-2 items-center">
                         <Input
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           placeholder="Scrie un mesaj..."
-                          className="flex-1"
+                          className="flex-1 rounded-full px-4 py-2.5 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500"
                         />
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                          <Send className="w-4 h-4" />
+                        <Button 
+                          type="submit" 
+                          className="bg-blue-500 hover:bg-blue-600 rounded-full w-10 h-10 p-0 shadow-md"
+                        >
+                          <Send className="w-5 h-5" />
                         </Button>
                       </div>
                     </form>
