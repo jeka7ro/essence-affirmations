@@ -43,6 +43,8 @@ export default function HomePage() {
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
   const [hasShownCongratulations, setHasShownCongratulations] = useState(false);
+  const [showThemeTip, setShowThemeTip] = useState(false);
+  const [showAffirmationTip, setShowAffirmationTip] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -72,6 +74,22 @@ export default function HomePage() {
     
     return () => clearInterval(interval);
   }, [todayRepetitions]);
+
+  // One-time onboarding popups after first registration/login
+  useEffect(() => {
+    const flag = localStorage.getItem('onboarding_shown_v1');
+    if (!flag) {
+      setShowThemeTip(true);
+      setShowAffirmationTip(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    // When both popups dismissed, set flag
+    if (!showThemeTip && !showAffirmationTip) {
+      localStorage.setItem('onboarding_shown_v1', '1');
+    }
+  }, [showThemeTip, showAffirmationTip]);
 
   // Detect when user reaches 100 repetitions and show congratulations
   useEffect(() => {
@@ -589,6 +607,55 @@ export default function HomePage() {
               >
                 Contină Provocarea! 🚀
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Theme tip dialog */}
+        <Dialog open={showThemeTip} onOpenChange={(v) => {
+          setShowThemeTip(v);
+          if (!v && user?.id) {
+            try {
+              const prefs = (() => { try { return user.preferences ? JSON.parse(user.preferences) : {}; } catch { return {}; } })();
+              prefs.dismissedThemeTip = true;
+              base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
+            } catch {}
+          }
+        }}>
+          <DialogContent className="sm:max-w-md bg-green-600 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-white">Tema aplicației</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p>Implicit folosim modul „Auto” (după sistem).</p>
+              <p>Poți schimba rapid tema din comutatorul din header.</p>
+              <div className="text-right">
+                <Button onClick={() => setShowThemeTip(false)} className="bg-white text-green-700 hover:bg-gray-100">Am înțeles</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Affirmation copy tip dialog */}
+        <Dialog open={showAffirmationTip} onOpenChange={(v) => {
+          setShowAffirmationTip(v);
+          if (!v && user?.id) {
+            try {
+              const prefs = (() => { try { return user.preferences ? JSON.parse(user.preferences) : {}; } catch { return {}; } })();
+              prefs.dismissedAffirmationTip = true;
+              base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
+            } catch {}
+          }
+        }}>
+          <DialogContent className="sm:max-w-md bg-green-600 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-white">Afirmația ta</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p>Scrie-ți afirmația și păstreaz-o în siguranță. Îți recomandăm să o copiezi pentru backup.</p>
+              <div className="text-right">
+                <Button onClick={() => setShowAffirmationTip(false)} className="bg-white text-green-700 hover:bg-gray-100">Ok</Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

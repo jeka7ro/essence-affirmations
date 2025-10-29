@@ -52,7 +52,11 @@ export default function Layout({ children, currentPageName }) {
 
   // Theme init
   useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'auto';
+    let saved = localStorage.getItem('theme');
+    if (!saved) {
+      saved = 'auto';
+      localStorage.setItem('theme', 'auto');
+    }
     setTheme(saved);
     applyTheme(saved);
   }, []);
@@ -74,6 +78,13 @@ export default function Layout({ children, currentPageName }) {
     setTheme(next);
     applyTheme(next);
     localStorage.setItem('theme', next);
+    if (user?.id) {
+      try {
+        const prefs = (() => { try { return user.preferences ? JSON.parse(user.preferences) : {}; } catch { return {}; } })();
+        prefs.theme = next;
+        base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
+      } catch {}
+    }
   };
 
   const loadUser = async () => {
@@ -99,6 +110,14 @@ export default function Layout({ children, currentPageName }) {
       }
       
       console.log('User loaded in Layout:', { username: userData.username, email: userData.email, role: userData.role });
+      try {
+        const prefs = userData.preferences ? JSON.parse(userData.preferences) : {};
+        if (prefs.theme) {
+          setTheme(prefs.theme);
+          localStorage.setItem('theme', prefs.theme);
+          applyTheme(prefs.theme);
+        }
+      } catch {}
       setUser(userData);
     } catch (error) {
       console.error("Error loading user in layout:", error);
