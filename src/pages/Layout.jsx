@@ -64,7 +64,7 @@ export default function Layout({ children, currentPageName }) {
   const loadUser = async () => {
     try {
       // Small delay to prevent race condition with localStorage
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       const userId = localStorage.getItem('essence_user_id');
       
@@ -83,6 +83,7 @@ export default function Layout({ children, currentPageName }) {
         return;
       }
       
+      console.log('User loaded in Layout:', { username: userData.username, email: userData.email, role: userData.role });
       setUser(userData);
     } catch (error) {
       console.error("Error loading user in layout:", error);

@@ -152,8 +152,8 @@ export default function AutentificarePage() {
             </Alert>
           )}
           
-          {/* Debug Panel */}
-          {debugInfo.length > 0 && (
+          {/* Debug Panel - Hidden in production */}
+          {false && debugInfo.length > 0 && (
             <div className="bg-gray-800 rounded-lg p-3 max-h-40 overflow-y-auto">
               <p className="text-xs text-gray-400 mb-2">Debug Info:</p>
               {debugInfo.map((log, idx) => (

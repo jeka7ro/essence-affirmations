@@ -385,6 +385,24 @@ app.post('/api/groups', async (req, res) => {
   }
 });
 
+app.put('/api/groups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, start_date, end_date, cities } = req.body;
+    const { rows } = await pool.query(
+      'UPDATE groups SET name = $1, description = $2, start_date = $3, end_date = $4, cities = $5 WHERE id = $6 RETURNING *',
+      [name, description, start_date, end_date, cities, id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('PUT /api/groups/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Activities endpoint
 app.get('/api/activities', async (req, res) => {
   try {
