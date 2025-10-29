@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { ro } from "date-fns/locale";
 
 const zodiacNames = [
   "Berbec","Taur","Gemeni","Rac","Leu","Fecioară","Balanță","Scorpion","Săgetător","Capricorn","Vărsător","Pești"
@@ -96,9 +98,15 @@ export default function ZodiiPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1 list-disc list-inside">
-                      {list.map(u => (
-                        <li key={u.id}>{(u.first_name||'') + ' ' + (u.last_name||'') || u.username}</li>
-                      ))}
+                      {list.map(u => {
+                        const fullName = (`${u.first_name||''} ${u.last_name||''}`).trim() || u.username;
+                        const dateStr = u.birth_date ? format(new Date(u.birth_date), 'dd.MM.yyyy', { locale: ro }) : '-';
+                        return (
+                          <li key={u.id}>
+                            {fullName} — <span className="text-gray-600 dark:text-gray-400">{dateStr}</span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </CardContent>
                 </Card>

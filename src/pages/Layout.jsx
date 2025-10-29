@@ -30,6 +30,11 @@ export default function Layout({ children, currentPageName }) {
   const [birthdayUsers, setBirthdayUsers] = useState([]);
   const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
 
+  // Minimal custom zodiac icon for sidebar (emoji-based to suggest zodiac wheel)
+  const ZodiacIcon = () => (
+    <span className="text-xl leading-none">♏︎♎︎</span>
+  );
+
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
   const shouldShowLayout = !noLayoutPages.includes(currentPageName);
 
@@ -125,6 +130,7 @@ export default function Layout({ children, currentPageName }) {
     (async () => {
       try {
         if (!user) return;
+        if (import.meta.env.VITE_DISABLE_BIRTHDAY_NOTICE === 'true') return;
         const now = new Date();
         if (now.getHours() < 10) return;
         const today = now.toISOString().slice(0,10);
@@ -251,7 +257,7 @@ export default function Layout({ children, currentPageName }) {
     navigationItems.splice(4, 0, {
       title: "Zodii",
       url: createPageUrl("Zodii"),
-      icon: Trophy,
+      icon: ZodiacIcon,
     });
   }
 

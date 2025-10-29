@@ -380,24 +380,22 @@ app.get('/api/test', (req, res) => {
 app.get('/api/birthdays/today', async (req, res) => {
   try {
     const { groupId } = req.query;
-    const today = new Date();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    // Match month-day regardless of year
-    let sql = `SELECT id, username, first_name, last_name, birth_date, group_id FROM users WHERE birth_date IS NOT NULL`;
+    // Filter in SQL to avoid timezone issues
+    let sql = `
+      SELECT id, username, first_name, last_name, birth_date, group_id
+      FROM users
+      WHERE birth_date IS NOT NULL
+        AND EXTRACT(MONTH FROM birth_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        AND EXTRACT(DAY FROM birth_date) = EXTRACT(DAY FROM CURRENT_DATE)
+    `;
     const params = [];
     if (groupId) {
       sql += ` AND group_id = $1`;
       params.push(Number(groupId));
     }
     const { rows } = await pool.query(sql, params);
-    const list = rows.filter(u => {
-      const d = new Date(u.birth_date);
-      const mmu = String(d.getMonth() + 1).padStart(2, '0');
-      const ddu = String(d.getDate()).padStart(2, '0');
-      return mmu === mm && ddu === dd;
-    }).map(u => ({ id: u.id, username: u.username, first_name: u.first_name, last_name: u.last_name }));
-    res.json({ today: `${mm}-${dd}`, users: list });
+    const list = rows.map(u => ({ id: u.id, username: u.username, first_name: u.first_name, last_name: u.last_name }));
+    res.json({ today: new Date().toISOString().slice(5,10), users: list });
   } catch (err) {
     console.error('GET /api/birthdays/today error:', err);
     res.status(500).json({ error: err.message });

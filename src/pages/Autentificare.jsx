@@ -112,7 +112,7 @@ export default function AutentificarePage() {
     } catch (error) {
       addDebugLog('❌ ERROR: ' + error.message);
       console.error("Login error:", error);
-      setError("Eroare la conectare. Verifică internetul și încearcă din nou.");
+      setError("Se pregătește un update. Te rugăm să ai puțină răbdare și reîncearcă în câteva momente. Te așteaptă ceva nou!");
     } finally {
       setLoading(false);
     }
