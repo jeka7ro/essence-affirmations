@@ -1342,8 +1342,13 @@ async function performAutoBackup() {
         // Check if interval has passed since last backup
         const lastBackupTime = new Date(lastBackup);
         const hoursSinceLastBackup = (now.getTime() - lastBackupTime.getTime()) / (1000 * 60 * 60);
+        const minutesSinceLastBackup = (now.getTime() - lastBackupTime.getTime()) / (1000 * 60);
+        
+        console.log(`Auto-backup check: Last backup was ${minutesSinceLastBackup.toFixed(1)} minutes ago (${hoursSinceLastBackup.toFixed(2)} hours). Interval set: ${intervalHours} hours.`);
         
         if (hoursSinceLastBackup < intervalHours) {
+          const minutesUntilNext = (intervalHours * 60) - minutesSinceLastBackup;
+          console.log(`Auto-backup: Waiting ${minutesUntilNext.toFixed(1)} more minutes before next backup.`);
           return; // Interval not reached yet
         }
         
@@ -1424,8 +1429,9 @@ async function performAutoBackup() {
   }
 }
 
-// Check for auto-backup every hour
-setInterval(performAutoBackup, 60 * 60 * 1000); // Every hour
+// Check for auto-backup every 10 minutes (to catch interval-based backups accurately)
+// This ensures we don't miss the exact moment when interval is reached
+setInterval(performAutoBackup, 10 * 60 * 1000); // Every 10 minutes
 
 // Add a catch-all route for debugging
 app.use((req, res) => {
