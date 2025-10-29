@@ -103,10 +103,11 @@ export default function AutentificarePage() {
 
       addDebugLog('🔄 Redirecting to Home...');
       
-      // Redirect to home WITHOUT reload to prevent redirect loop
+      // Give time for localStorage to be saved and Layout to load
       setTimeout(() => {
-        navigate(createPageUrl("Home"));
-      }, 100);
+        addDebugLog('🚀 Navigating now...');
+        navigate(createPageUrl("Home"), { replace: true });
+      }, 500);
       
     } catch (error) {
       addDebugLog('❌ ERROR: ' + error.message);

@@ -63,6 +63,9 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
+      // Small delay to prevent race condition with localStorage
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       const userId = localStorage.getItem('essence_user_id');
       
       if (!userId) {
