@@ -22,6 +22,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [updatingRole, setUpdatingRole] = useState(null);
+  const [deletingGroup, setDeletingGroup] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -56,7 +58,15 @@ export default function AdminPage() {
       });
       
       setUsers(allUsers.sort((a, b) => (b.total_repetitions || 0) - (a.total_repetitions || 0)));
-      setGroups(allGroups);
+      // Calculate actual member count for each group dynamically
+      const groupsWithCount = allGroups.map(group => {
+        const members = allUsers.filter(u => u.group_id === group.id);
+        return {
+          ...group,
+          member_count: members.length
+        };
+      });
+      setGroups(groupsWithCount);
     } catch (error) {
       console.error("Error loading admin data:", error);
     } finally {
@@ -79,6 +89,50 @@ export default function AdminPage() {
       alert("Eroare la actualizarea rolului");
     } finally {
       setUpdatingRole(null);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    if (currentUser?.email !== "jeka7ro@gmail.com") {
+      alert("Doar super administratorul poate șterge grupuri");
+      return;
+    }
+
+    if (!confirm("Ești sigur că vrei să ștergi acest grup? Această acțiune nu poate fi anulată.")) {
+      return;
+    }
+
+    setDeletingGroup(groupId);
+    try {
+      await base44.entities.Group.delete(groupId);
+      await loadData();
+    } catch (error) {
+      console.error("Error deleting group:", error);
+      alert("Eroare la ștergerea grupului");
+    } finally {
+      setDeletingGroup(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (currentUser?.email !== "jeka7ro@gmail.com") {
+      alert("Doar super administratorul poate șterge utilizatori");
+      return;
+    }
+
+    if (!confirm("Ești sigur că vrei să ștergi acest utilizator? Această acțiune nu poate fi anulată.")) {
+      return;
+    }
+
+    setDeletingUser(userId);
+    try {
+      await base44.entities.User.delete(userId);
+      await loadData();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Eroare la ștergerea utilizatorului");
+    } finally {
+      setDeletingUser(null);
     }
   };
 
@@ -223,6 +277,7 @@ export default function AdminPage() {
                     <TableHead>Total Repetări</TableHead>
                     <TableHead>Ziua Curentă</TableHead>
                     <TableHead>Grup</TableHead>
+                    <TableHead>Acțiuni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -276,6 +331,17 @@ export default function AdminPage() {
                             <span className="text-sm text-gray-400 italic">Fără grup</span>
                           )}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            onClick={() => handleDeleteUser(user.id)}
+                            disabled={deletingUser === user.id || user.email === "jeka7ro@gmail.com"}
+                            variant="destructive"
+                            size="sm"
+                            className="rounded-xl"
+                          >
+                            {deletingUser === user.id ? 'Se șterge...' : 'Șterge'}
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -300,6 +366,7 @@ export default function AdminPage() {
                     <TableHead>Creat De</TableHead>
                     <TableHead>Membri</TableHead>
                     <TableHead>Data Început</TableHead>
+                    <TableHead>Acțiuni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -326,6 +393,17 @@ export default function AdminPage() {
                           ? new Date(group.start_date).toLocaleDateString('ro-RO')
                           : '-'
                         }
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          onClick={() => handleDeleteGroup(group.id)}
+                          disabled={deletingGroup === group.id}
+                          variant="destructive"
+                          size="sm"
+                          className="rounded-xl"
+                        >
+                          {deletingGroup === group.id ? 'Se șterge...' : 'Șterge'}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

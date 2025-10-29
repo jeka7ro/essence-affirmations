@@ -262,6 +262,25 @@ app.get('/api/users/:id/backups', async (req, res) => {
   }
 });
 
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    // First, remove user from any group
+    await pool.query('UPDATE users SET group_id = NULL WHERE id = $1', [id]);
+    // Delete user backups
+    await pool.query('DELETE FROM user_backups WHERE user_id = $1', [id]);
+    // Delete user
+    const { rows } = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ success: true, deleted: rows[0] });
+  } catch (err) {
+    console.error('DELETE /api/users/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Users
 app.get('/api/users', async (req, res) => {
   try {
@@ -437,10 +456,26 @@ app.post('/api/groups', async (req, res) => {
 app.put('/api/groups/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, start_date, end_date, cities } = req.body;
+    const updates = req.body || {};
+    const allowedFields = ['name', 'description', 'start_date', 'end_date', 'cities', 'secret_code', 'is_active'];
+    const sanitized = {};
+    for (const key of allowedFields) {
+      if (updates.hasOwnProperty(key)) {
+        if (key === 'is_active') {
+          sanitized[key] = updates[key] === true || updates[key] === 'true';
+        } else {
+          sanitized[key] = updates[key] || null;
+        }
+      }
+    }
+    if (Object.keys(sanitized).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    const setClause = Object.keys(sanitized).map((key, idx) => `${key} = $${idx + 2}`).join(', ');
+    const values = Object.values(sanitized);
     const { rows } = await pool.query(
-      'UPDATE groups SET name = $1, description = $2, start_date = $3, end_date = $4, cities = $5 WHERE id = $6 RETURNING *',
-      [name, description, start_date, end_date, cities, id]
+      `UPDATE groups SET ${setClause} WHERE id = $1 RETURNING *`,
+      [id, ...values]
     );
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Group not found' });
@@ -448,6 +483,20 @@ app.put('/api/groups/:id', async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error('PUT /api/groups/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/groups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query('DELETE FROM groups WHERE id = $1 RETURNING *', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    res.json({ success: true, deleted: rows[0] });
+  } catch (err) {
+    console.error('DELETE /api/groups/:id error:', err);
     res.status(500).json({ error: err.message });
   }
 });
