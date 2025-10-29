@@ -8,13 +8,17 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 // Handle preflight OPTIONS requests FIRST - before all other middleware
-app.options('*', (req, res) => {
-  const origin = req.headers.origin;
-  res.header('Access-Control-Allow-Origin', origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.sendStatus(200);
+// Use middleware instead of app.options to avoid PathError on Render
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin;
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    return res.sendStatus(200);
+  }
+  next();
 });
 
 // CORS configuration - Allow all origins
@@ -854,33 +858,61 @@ app.post('/api/messages', async (req, res) => {
 // Get all system backups
 app.get('/api/backups', async (req, res) => {
   try {
-    const { rows } = await pool.query(`
-      SELECT id, backup_type, description, user_id, created_by, created_at,
-             CASE 
-               WHEN backup_data::text LIKE '%"users"%' THEN 
-                 jsonb_array_length(backup_data->'users')
-               ELSE 0
-             END as user_count
-      FROM system_backups 
-      ORDER BY created_at DESC 
-      LIMIT 100
+    console.log('GET /api/backups called');
+    // Ensure table exists
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'system_backups'
+      )
     `);
-    res.json(rows);
-  } catch (err) {
-    console.error('GET /api/backups error:', err);
-    // Fallback: simpler query without jsonb function
+    
+    if (!tableCheck.rows[0].exists) {
+      console.log('system_backups table does not exist, creating...');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS system_backups (
+          id SERIAL PRIMARY KEY,
+          backup_type VARCHAR(50) NOT NULL,
+          description TEXT,
+          user_id INTEGER,
+          backup_data JSONB NOT NULL,
+          created_by VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
+    
+    // Try with jsonb function first
     try {
       const { rows } = await pool.query(`
+        SELECT id, backup_type, description, user_id, created_by, created_at,
+               CASE 
+                 WHEN backup_data::text LIKE '%"users"%' THEN 
+                   jsonb_array_length(backup_data->'users')
+                 ELSE 0
+               END as user_count
+        FROM system_backups 
+        ORDER BY created_at DESC 
+        LIMIT 100
+      `);
+      console.log('GET /api/backups success:', rows.length, 'backups');
+      res.json(rows);
+    } catch (jsonbErr) {
+      console.warn('JSONB query failed, using fallback:', jsonbErr.message);
+      // Fallback: simpler query without jsonb function
+      const { rows } = await pool.query(`
         SELECT id, backup_type, description, user_id, created_by, created_at, 
-               NULL as user_count
+               0 as user_count
         FROM system_backups 
         ORDER BY created_at DESC 
         LIMIT 100
       `);
       res.json(rows);
-    } catch (fallbackErr) {
-      res.status(500).json({ error: fallbackErr.message });
     }
+  } catch (err) {
+    console.error('GET /api/backups error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -1052,8 +1084,40 @@ app.post('/api/backups/:id/restore', async (req, res) => {
 // Get backup settings
 app.get('/api/backup-settings', async (req, res) => {
   try {
+    console.log('GET /api/backup-settings called');
+    // Ensure table exists
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'backup_settings'
+      )
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      console.log('backup_settings table does not exist, creating...');
+      // Create table if it doesn't exist
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS backup_settings (
+          id SERIAL PRIMARY KEY,
+          auto_backup_enabled BOOLEAN DEFAULT false,
+          auto_backup_interval_hours INTEGER DEFAULT 24,
+          auto_backup_time TIME DEFAULT '02:00:00',
+          last_backup_at TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      await pool.query(`
+        INSERT INTO backup_settings (auto_backup_enabled, auto_backup_interval_hours, auto_backup_time)
+        VALUES (false, 24, '02:00:00'::TIME)
+      `);
+    }
+    
     const { rows } = await pool.query('SELECT * FROM backup_settings ORDER BY id DESC LIMIT 1');
-    res.json(rows[0] || { auto_backup_enabled: false, auto_backup_interval_hours: 24, auto_backup_time: '02:00:00' });
+    const result = rows[0] || { auto_backup_enabled: false, auto_backup_interval_hours: 24, auto_backup_time: '02:00:00' };
+    console.log('GET /api/backup-settings success:', result);
+    res.json(result);
   } catch (err) {
     console.error('GET /api/backup-settings error:', err);
     res.status(500).json({ error: err.message });
@@ -1063,6 +1127,31 @@ app.get('/api/backup-settings', async (req, res) => {
 // Update backup settings
 app.put('/api/backup-settings', async (req, res) => {
   try {
+    console.log('PUT /api/backup-settings called', req.body);
+    
+    // Ensure table exists
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'backup_settings'
+      )
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      console.log('backup_settings table does not exist, creating...');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS backup_settings (
+          id SERIAL PRIMARY KEY,
+          auto_backup_enabled BOOLEAN DEFAULT false,
+          auto_backup_interval_hours INTEGER DEFAULT 24,
+          auto_backup_time TIME DEFAULT '02:00:00',
+          last_backup_at TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
+    
     const { auto_backup_enabled, auto_backup_interval_hours, auto_backup_time } = req.body;
     
     const result = await pool.query(
@@ -1083,8 +1172,10 @@ app.put('/api/backup-settings', async (req, res) => {
          VALUES ($1, $2, $3) RETURNING *`,
         [auto_backup_enabled || false, auto_backup_interval_hours || 24, auto_backup_time || '02:00:00']
       );
+      console.log('PUT /api/backup-settings created new:', insertResult.rows[0]);
       res.json(insertResult.rows[0]);
     } else {
+      console.log('PUT /api/backup-settings updated:', result.rows[0]);
       res.json(result.rows[0]);
     }
   } catch (err) {
