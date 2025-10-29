@@ -43,9 +43,6 @@ export default function HomePage() {
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
   const [hasShownCongratulations, setHasShownCongratulations] = useState(false);
-  const [showThemeTip, setShowThemeTip] = useState(false);
-  const [showAffirmationTip, setShowAffirmationTip] = useState(false);
-
   useEffect(() => {
     loadData();
     
@@ -75,29 +72,6 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [todayRepetitions]);
 
-  // One-time onboarding per user (persisted in server-side preferences)
-  useEffect(() => {
-    if (!user) return;
-    try {
-      // Handle both string and object preferences
-      let prefs = {};
-      if (typeof user.preferences === 'string') {
-        try {
-          prefs = JSON.parse(user.preferences);
-        } catch {}
-      } else if (user.preferences) {
-        prefs = user.preferences;
-      }
-      
-      // Only show tips if they haven't been dismissed AND haven't been shown in this session
-      if (!prefs.dismissedThemeTip && !showThemeTip) {
-        setShowThemeTip(true);
-      }
-      if (!prefs.dismissedAffirmationTip && !user.affirmation && !showAffirmationTip) {
-        setShowAffirmationTip(true);
-      }
-    } catch {}
-  }, [user]);
 
   // Detect when user reaches 100 repetitions and show congratulations
   useEffect(() => {
@@ -650,78 +624,6 @@ export default function HomePage() {
           </DialogContent>
         </Dialog>
 
-        {/* Theme tip dialog */}
-        <Dialog open={showThemeTip} onOpenChange={async (v) => {
-          if (!v && user?.id) {
-            try {
-              let prefs = {};
-              if (typeof user.preferences === 'string') {
-                try {
-                  prefs = JSON.parse(user.preferences);
-                } catch {}
-              } else if (user.preferences) {
-                prefs = user.preferences;
-              }
-              prefs.dismissedThemeTip = true;
-              await base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
-              // Update local user state
-              const updatedUser = await base44.entities.User.get(user.id);
-              setUser(updatedUser);
-            } catch (error) {
-              console.error("Error saving theme tip dismissal:", error);
-            }
-          }
-          setShowThemeTip(v);
-        }}>
-          <DialogContent className="sm:max-w-md bg-green-600 text-white">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-white">Tema aplicației</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <p>Implicit folosim modul „Auto” (după sistem).</p>
-              <p>Poți schimba rapid tema din comutatorul din header.</p>
-              <div className="text-right">
-                <Button onClick={() => setShowThemeTip(false)} className="bg-white text-green-700 hover:bg-gray-100">Am înțeles</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Affirmation copy tip dialog */}
-        <Dialog open={showAffirmationTip} onOpenChange={async (v) => {
-          if (!v && user?.id) {
-            try {
-              let prefs = {};
-              if (typeof user.preferences === 'string') {
-                try {
-                  prefs = JSON.parse(user.preferences);
-                } catch {}
-              } else if (user.preferences) {
-                prefs = user.preferences;
-              }
-              prefs.dismissedAffirmationTip = true;
-              await base44.entities.User.update(user.id, { preferences: JSON.stringify(prefs) });
-              // Update local user state
-              const updatedUser = await base44.entities.User.get(user.id);
-              setUser(updatedUser);
-            } catch (error) {
-              console.error("Error saving affirmation tip dismissal:", error);
-            }
-          }
-          setShowAffirmationTip(v);
-        }}>
-          <DialogContent className="sm:max-w-md bg-green-600 text-white">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-white">Afirmația ta</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <p>Scrie-ți afirmația și păstreaz-o în siguranță. Îți recomandăm să o copiezi pentru backup.</p>
-              <div className="text-right">
-                <Button onClick={() => setShowAffirmationTip(false)} className="bg-white text-green-700 hover:bg-gray-100">Ok</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-6">
           <StatsCards
