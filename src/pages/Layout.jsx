@@ -194,7 +194,7 @@ export default function Layout({ children, currentPageName }) {
               onClick={cycleTheme}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
             >
-              <span className="w-5 h-5 inline-block">{theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'}</span>
+              <span className="w-5 h-5 inline-block">{theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🔄'}</span>
               <span className="font-semibold text-base">{theme === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}</span>
             </button>
             
@@ -232,7 +232,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-blue-600">{user.username || user.email}</span>
                 <button onClick={cycleTheme} className="text-xl" aria-label="Cycle theme">
-                  {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'}
+                  {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🔄'}
                 </button>
                 {user.role === "admin" && (
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">ADMIN</span>

@@ -127,7 +127,7 @@ export default function AutentificarePage() {
             onClick={cycleTheme}
             className="absolute right-2 top-2 text-xl"
           >
-            {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'}
+            {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🔄'}
           </button>
           <div className="flex justify-center">
             <img 
