@@ -108,7 +108,7 @@ export default function SettingsPage() {
     setSaving(true);
 
     try {
-      await base44.entities.User.update(user.id, {
+      const updated = await base44.entities.User.update(user.id, {
         email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -119,7 +119,20 @@ export default function SettingsPage() {
 
       setSuccess("Datele personale au fost salvate cu succes!");
       setTimeout(() => setSuccess(""), 3000);
-      await loadData(); // Reload to show updated email
+      if (updated) {
+        // reflect changes local fără reload care poate reseta formatul
+        setUser(updated);
+        const isImageAvatar = updated.avatar?.startsWith('http') || updated.avatar?.startsWith('data:image');
+        setFormData({
+          email: updated.email || "",
+          first_name: updated.first_name || "",
+          last_name: updated.last_name || "",
+          phone: updated.phone || "",
+          birth_date: updated.birth_date || "",
+          avatar: updated.avatar || formData.avatar,
+          avatarType: isImageAvatar ? "image" : "emoji"
+        });
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
       setError("Eroare la salvarea datelor");
