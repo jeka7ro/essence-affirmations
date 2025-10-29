@@ -72,33 +72,42 @@ export default function HomePage() {
   }, [todayRepetitions]);
 
 
-  // Helper function to check if user has seen congratulations today
+  // Helper function to check if user has seen congratulations today (from database)
   const hasSeenCongratulationsToday = () => {
     if (!user) return false;
     const today = format(new Date(), 'yyyy-MM-dd');
-    const lastSeen = localStorage.getItem(`congratulations_seen_${user.id}`);
-    return lastSeen === today;
+    // Check from user data (from database, not localStorage)
+    return user.congratulations_seen_date === today;
   };
 
-  // Helper function to mark congratulations as seen for today
-  const markCongratulationsSeen = () => {
+  // Helper function to mark congratulations as seen for today (save to database)
+  const markCongratulationsSeen = async () => {
     if (!user) return;
     const today = format(new Date(), 'yyyy-MM-dd');
-    localStorage.setItem(`congratulations_seen_${user.id}`, today);
+    try {
+      await base44.entities.User.update(user.id, {
+        congratulations_seen_date: today
+      });
+      // Update local user state
+      setUser({ ...user, congratulations_seen_date: today });
+    } catch (error) {
+      console.error("Error marking congratulations as seen:", error);
+    }
   };
 
-  // Detect when user reaches 100 repetitions and show congratulations (only once per day)
+  // Detect when user reaches 100 repetitions and show congratulations (only once per day, across all devices)
   useEffect(() => {
     if (!user) return;
     
     // Only show if:
     // 1. User reached 100 repetitions today
-    // 2. Hasn't seen the popup today (checked via localStorage)
+    // 2. Hasn't seen the popup today (checked from database - works across all devices)
     if (todayRepetitions >= 100 && !hasSeenCongratulationsToday()) {
       setShowCongratulationsDialog(true);
-      markCongratulationsSeen(); // Save that user saw it today
+      markCongratulationsSeen(); // Save to database that user saw it today
     }
-  }, [todayRepetitions, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayRepetitions, user?.id, user?.congratulations_seen_date]);
 
   const loadData = async () => {
     try {
@@ -667,9 +676,9 @@ export default function HomePage() {
                 Continuă înainte așa! 💪
               </p>
               <Button 
-                onClick={() => {
+                onClick={async () => {
                   setShowCongratulationsDialog(false);
-                  markCongratulationsSeen(); // Make sure it's saved when user closes
+                  await markCongratulationsSeen(); // Make sure it's saved to database when user closes
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-lg font-bold py-6"
               >

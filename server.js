@@ -153,6 +153,9 @@ async function initializeTables() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='group_joined_at') THEN
           ALTER TABLE users ADD COLUMN group_joined_at TIMESTAMP;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='congratulations_seen_date') THEN
+          ALTER TABLE users ADD COLUMN congratulations_seen_date DATE;
+        END IF;
       END $$;
     `);
 
