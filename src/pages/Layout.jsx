@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   Home,
-  Trophy
+  Trophy,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ export default function Layout({ children, currentPageName }) {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState('auto');
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
   const shouldShowLayout = !noLayoutPages.includes(currentPageName);
@@ -49,6 +51,71 @@ export default function Layout({ children, currentPageName }) {
       setLoading(false);
     }
   }, [shouldShowLayout, currentPageName]);
+
+  // Check for unread messages periodically
+  useEffect(() => {
+    if (!user) return;
+
+    const checkUnreadMessages = async () => {
+      try {
+        const lastReadTimestamp = localStorage.getItem(`last_read_messages_${user.id}`) || '0';
+        const lastReadDate = new Date(parseInt(lastReadTimestamp, 10));
+
+        const allMessages = await base44.entities.Message.list("-created_date");
+        
+        let unreadCount = 0;
+
+        // Group messages
+        if (user.group_id) {
+          const groupMessages = allMessages.filter(
+            m => m.type === "group" && 
+            m.group_id === user.group_id &&
+            m.sender !== user.username
+          );
+          
+          // Filter by group_joined_at if exists
+          const joinedAt = user.group_joined_at ? new Date(user.group_joined_at) : new Date(0);
+          const relevantGroupMessages = groupMessages.filter(m => {
+            if (!m.created_date) return false;
+            const msgDate = new Date(m.created_date);
+            return msgDate >= joinedAt && msgDate > lastReadDate;
+          });
+          
+          unreadCount += relevantGroupMessages.length;
+        }
+
+        // Direct messages
+        const directMessages = allMessages.filter(
+          m => m.type === "direct" && 
+          m.recipient === user.username &&
+          m.sender !== user.username
+        );
+        
+        const relevantDirectMessages = directMessages.filter(m => {
+          if (!m.created_date) return false;
+          return new Date(m.created_date) > lastReadDate;
+        });
+        
+        unreadCount += relevantDirectMessages.length;
+
+        setUnreadMessagesCount(unreadCount);
+      } catch (error) {
+        console.error("Error checking unread messages:", error);
+      }
+    };
+
+    checkUnreadMessages();
+    // Check every 10 seconds
+    const interval = setInterval(checkUnreadMessages, 10000);
+
+    // Update last read timestamp when user visits chat page
+    if (location.pathname === createPageUrl("Chat")) {
+      localStorage.setItem(`last_read_messages_${user.id}`, Date.now().toString());
+      setUnreadMessagesCount(0);
+    }
+
+    return () => clearInterval(interval);
+  }, [user, location.pathname]);
 
   // Theme init
   useEffect(() => {
@@ -279,6 +346,22 @@ export default function Layout({ children, currentPageName }) {
             </div>
             {user && (
               <div className="flex items-center gap-3">
+                {/* Notifications icon */}
+                <Link
+                  to={createPageUrl("Chat")}
+                  className="relative"
+                  onClick={() => {
+                    localStorage.setItem(`last_read_messages_${user.id}`, Date.now().toString());
+                    setUnreadMessagesCount(0);
+                  }}
+                >
+                  <Bell className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                  {unreadMessagesCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                    </span>
+                  )}
+                </Link>
                 {/* Left: name + theme toggle */}
                 <div className="flex flex-col items-end gap-1">
                   <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>

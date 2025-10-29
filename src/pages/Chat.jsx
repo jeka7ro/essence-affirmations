@@ -35,10 +35,22 @@ export default function ChatPage() {
   useEffect(() => {
     loadData();
     
+    // Mark messages as read when page is accessed
+    if (user) {
+      localStorage.setItem(`last_read_messages_${user.id}`, Date.now().toString());
+    }
+    
     // Refresh messages every 5 seconds
     const interval = setInterval(loadMessages, 5000);
     return () => clearInterval(interval);
   }, []);
+  
+  // Update last read timestamp when user data is loaded
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(`last_read_messages_${user.id}`, Date.now().toString());
+    }
+  }, [user]);
 
   const loadData = async () => {
     try {
