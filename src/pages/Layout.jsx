@@ -259,27 +259,29 @@ export default function Layout({ children, currentPageName }) {
               />
             </div>
             {user && (
-              <div className="flex flex-col items-center gap-2">
-                {/* Theme toggle first */}
-                <button 
-                  onClick={cycleTheme} 
-                  className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
-                    theme === 'dark' ? 'bg-gray-700' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
-                  }`}
-                  aria-label="Cycle theme"
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform flex items-center justify-center text-[8px] font-bold ${
-                      theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
-                    } ${
-                      theme === 'auto' ? 'text-green-600' : 'text-gray-600'
+              <div className="flex items-center gap-3">
+                {/* Left: name + theme toggle */}
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>
+                  <button 
+                    onClick={cycleTheme} 
+                    className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
+                      theme === 'dark' ? 'bg-gray-700' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
                     }`}
+                    aria-label="Cycle theme"
                   >
-                    {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
-                  </span>
-                </button>
-                
-                {/* Avatar - larger, without username */}
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform flex items-center justify-center text-[8px] font-bold ${
+                        theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
+                      } ${
+                        theme === 'auto' ? 'text-green-600' : 'text-gray-600'
+                      }`}
+                    >
+                      {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
+                    </span>
+                  </button>
+                </div>
+                {/* Right: avatar larger */}
                 {(() => {
                   const avatarDisplay = getAvatarDisplay(user);
                   return avatarDisplay && (

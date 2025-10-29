@@ -39,6 +39,9 @@ export default function GroupsPage() {
     cities: [],
     secret_code: ""
   });
+  const [showMembersDialog, setShowMembersDialog] = useState(false);
+  const [membersForDialog, setMembersForDialog] = useState([]);
+  const [memberSearch, setMemberSearch] = useState("");
   const isAdmin = user?.role === 'admin' || (user?.email || '').toLowerCase() === 'jeka7ro@gmail.com';
 
   const romanianCities = [
@@ -94,6 +97,57 @@ export default function GroupsPage() {
     } catch (e) {
       console.error('Toggle active error:', e);
       setError('Nu s-a putut schimba statusul grupului.');
+    }
+  };
+
+  const openMembersDialog = (group) => {
+    setEditingGroup(group);
+    const groupMembers = groups.length
+      ? groups // use already loaded users relation via loadData users variable
+      : [];
+    // We don't keep users in state globally; recompute from latest load
+    // Safer: reload minimal users list
+    (async () => {
+      try {
+        const allUsers = await base44.entities.User.list();
+        const members = allUsers.filter(u => u.group_id === group.id);
+        setMembersForDialog(members);
+        setShowMembersDialog(true);
+      } catch (err) {
+        console.error('Load members error:', err);
+      }
+    })();
+  };
+
+  const handleRemoveMember = async (member) => {
+    try {
+      await base44.entities.User.update(member.id, { group_id: null });
+      setMembersForDialog(prev => prev.filter(m => m.id !== member.id));
+      await loadData();
+    } catch (e) {
+      console.error('Remove member error:', e);
+      setError('Nu am putut elimina membrul.');
+    }
+  };
+
+  const handleAddMember = async () => {
+    const q = (memberSearch || '').trim().toLowerCase();
+    if (!q || !editingGroup) return;
+    try {
+      const allUsers = await base44.entities.User.list();
+      const candidate = allUsers.find(u => (u.username || '').toLowerCase() === q || (u.email || '').toLowerCase() === q);
+      if (!candidate) {
+        setError('Utilizatorul nu a fost găsit după username/email.');
+        return;
+      }
+      await base44.entities.User.update(candidate.id, { group_id: editingGroup.id });
+      setMemberSearch('');
+      const members = allUsers.filter(u => u.group_id === editingGroup.id || u.id === candidate.id);
+      setMembersForDialog(members);
+      await loadData();
+    } catch (e) {
+      console.error('Add member error:', e);
+      setError('Nu am putut adăuga membrul.');
     }
   };
 
@@ -501,6 +555,7 @@ export default function GroupsPage() {
                       </CardTitle>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" className="rounded-2xl" onClick={() => handleEditGroup(group)}>Editează</Button>
+                        <Button size="sm" variant="outline" className="rounded-2xl" onClick={() => openMembersDialog(group)}>Membri</Button>
                         <Button size="sm" className={`rounded-2xl ${group.is_active ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' : 'bg-green-600 hover:bg-green-700 text-white'}`} onClick={() => handleToggleActive(group)}>
                           {group.is_active ? 'Dezactivează' : 'Activează'}
                         </Button>
@@ -947,6 +1002,42 @@ export default function GroupsPage() {
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Members Management Dialog (Admin) */}
+        <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
+          <DialogContent className="rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Membri — {editingGroup?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Username sau email pentru adăugare"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  className="rounded-2xl"
+                />
+                <Button onClick={handleAddMember} className="rounded-2xl">Adaugă</Button>
+              </div>
+              <div className="space-y-2 max-h-80 overflow-auto pr-1">
+                {membersForDialog.map(m => (
+                  <div key={m.id} className="flex items-center justify-between p-2 border rounded-xl">
+                    <div>
+                      <div className="font-semibold text-gray-900 dark:text-gray-100">{m.username || m.email}</div>
+                      <div className="text-xs text-gray-500">{m.email}</div>
+                    </div>
+                    <Button variant="outline" className="rounded-2xl border-red-500 text-red-600 hover:bg-red-50" onClick={() => handleRemoveMember(m)}>
+                      Elimină
+                    </Button>
+                  </div>
+                ))}
+                {membersForDialog.length === 0 && (
+                  <div className="text-sm text-gray-500">Niciun membru în acest grup.</div>
+                )}
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
