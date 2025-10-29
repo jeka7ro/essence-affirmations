@@ -239,11 +239,13 @@ export default function Layout({ children, currentPageName }) {
       <aside className="hidden md:flex md:flex-col w-64 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 fixed left-0 top-0 bottom-0 z-50">
         <div className="border-b border-gray-200 dark:border-gray-800 p-6">
           <div className="flex flex-col items-center gap-4">
-            <img 
-              src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
-              alt="Essence Logo" 
-              className="w-32 h-auto"
-            />
+            <Link to={createPageUrl("Home")}>
+              <img 
+                src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
+                alt="Essence Logo" 
+                className="w-32 h-auto cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            </Link>
             <div className="text-center">
               <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Afirmatii Essence</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Advanced</p>
@@ -338,11 +340,13 @@ export default function Layout({ children, currentPageName }) {
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </Button>
-              <img 
-                src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
-                alt="Essence" 
-                className="h-8"
-              />
+              <Link to={createPageUrl("Home")}>
+                <img 
+                  src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
+                  alt="Essence" 
+                  className="h-8 cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </Link>
             </div>
             {user && (
               <div className="flex items-center gap-3">

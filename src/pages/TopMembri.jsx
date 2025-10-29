@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trophy, Medal, Award, Users } from "lucide-react";
 
 export default function TopMembriPage() {
@@ -130,45 +131,44 @@ export default function TopMembriPage() {
               </button>
             </div>
 
-            {/* Top 3 users */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Top 3 users - smaller cards */}
+            <div className="grid grid-cols-3 gap-2 mb-6">
               {topThree.map((user, index) => {
                 const avatarDisplay = getAvatarDisplay(user);
                 const value = sortBy === 'total' ? user.total_repetitions : user.custom_today_repetitions;
                 return (
                   <Card
                     key={user.id}
-                    className={`border-2 rounded-2xl shadow-lg ${
+                    className={`border-2 rounded-xl ${
                       index === 0 ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' :
                       index === 1 ? 'border-gray-400 bg-gray-50 dark:bg-gray-800' :
                       'border-amber-600 bg-amber-50 dark:bg-amber-900/20'
                     }`}
                   >
-                    <CardContent className="p-4 text-center">
-                      <div className="flex justify-center mb-2">
-                        {getRankIcon(index)}
+                    <CardContent className="p-3 text-center">
+                      <div className="flex justify-center mb-1">
+                        {index === 0 && '🥇'}
+                        {index === 1 && '🥈'}
+                        {index === 2 && '🥉'}
                       </div>
-                      <div className="flex justify-center mb-2">
+                      <div className="flex justify-center mb-1">
                         {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
                           <img
                             src={avatarDisplay}
                             alt="Avatar"
-                            className="w-16 h-16 rounded-full border-2 border-blue-600 object-cover"
+                            className="w-10 h-10 rounded-full border border-blue-600 object-cover"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-3xl">
+                          <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-600 flex items-center justify-center text-xl">
                             {avatarDisplay}
                           </div>
                         )}
                       </div>
-                      <p className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-0.5 truncate">
                         {user.username || user.email}
                       </p>
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-lg font-bold text-blue-600">
                         {value?.toLocaleString('ro-RO') || 0}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {sortBy === 'total' ? 'repetări total' : 'repetări azi'}
                       </p>
                     </CardContent>
                   </Card>
@@ -176,53 +176,55 @@ export default function TopMembriPage() {
               })}
             </div>
 
-            {/* Rest of users */}
-            <div className="space-y-2">
-              {restUsers.map((user, index) => {
-                const avatarDisplay = getAvatarDisplay(user);
-                const value = sortBy === 'total' ? user.total_repetitions : user.custom_today_repetitions;
-                return (
-                  <Card
-                    key={user.id}
-                    className="border-2 border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-shrink-0 w-10 text-center font-bold text-gray-500">
-                          {index + 4}
-                        </div>
-                        <div className="flex-shrink-0">
-                          {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
-                            <img
-                              src={avatarDisplay}
-                              alt="Avatar"
-                              className="w-12 h-12 rounded-full border-2 border-blue-600 object-cover"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600 flex items-center justify-center text-2xl">
-                              {avatarDisplay}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 dark:text-gray-100">
-                            {user.username || user.email}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                          <p className="text-xl font-bold text-blue-600">
-                            {value?.toLocaleString('ro-RO') || 0}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {sortBy === 'total' ? 'total' : 'azi'}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            {/* Rest of users - classic table */}
+            {restUsers.length > 0 && (
+              <Card className="border-2 border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-950">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">Restul membrilor</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12 text-center">#</TableHead>
+                        <TableHead>Utilizator</TableHead>
+                        <TableHead className="text-right">{sortBy === 'total' ? 'Total Repetări' : 'Repetări Astăzi'}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {restUsers.map((user, index) => {
+                        const avatarDisplay = getAvatarDisplay(user);
+                        const value = sortBy === 'total' ? user.total_repetitions : user.custom_today_repetitions;
+                        return (
+                          <TableRow key={user.id}>
+                            <TableCell className="text-center font-medium text-gray-600 dark:text-gray-400">{index + 4}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                                  <img
+                                    src={avatarDisplay}
+                                    alt="Avatar"
+                                    className="w-8 h-8 rounded-full border object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 border flex items-center justify-center text-lg">
+                                    {avatarDisplay}
+                                  </div>
+                                )}
+                                <span className="font-semibold text-gray-900 dark:text-gray-100">{user.username || user.email}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-blue-600">
+                              {value.toLocaleString('ro-RO')}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
             {sortedUsers.length === 0 && (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
