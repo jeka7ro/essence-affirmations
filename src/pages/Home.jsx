@@ -660,7 +660,7 @@ export default function HomePage() {
           </DialogContent>
         </Dialog>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-6">
           <StatsCards
             icon={Users}
             title="Total membri"
