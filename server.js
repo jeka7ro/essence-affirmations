@@ -249,6 +249,70 @@ async function seedIfEmpty() {
 
 seedIfEmpty();
 
+// Seed courses if table is empty
+async function seedCourses() {
+  try {
+    const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM courses');
+    if (rows[0]?.count === 0) {
+      // Courses from https://essence-process.com/ro/cursuri/
+      const courses = [
+        {
+          title: 'Essence Advance Therapeutic Process',
+          city: 'Cluj-Napoca',
+          start_date: '2025-11-05',
+          end_date: '2025-11-09',
+          link: 'https://essence-process.com/ro/cursuri/',
+          description: 'Cursul Advance te duce la un nivel mult mai adânc, unde vei dezvolta convingeri pozitive noi și tipare comportamentale care îți îmbogățesc viața.'
+        },
+        {
+          title: 'Essence Foundation Therapeutic Process',
+          city: 'Iasi',
+          start_date: '2025-12-05',
+          end_date: '2025-12-07',
+          link: 'https://essence-process.com/ro/cursuri/',
+          description: 'Curs extrem de practic unde participanții trăiesc o experiență blândă și distractivă, timp de trei zile, pe structura unor exerciții educaționale și interactive.'
+        },
+        {
+          title: 'Essence Advance Therapeutic Process',
+          city: 'Cluj-Napoca',
+          start_date: '2026-01-14',
+          end_date: '2026-01-18',
+          link: 'https://essence-process.com/ro/cursuri/',
+          description: 'Cursul Advance te duce la un nivel mult mai adânc, unde vei dezvolta convingeri pozitive noi și tipare comportamentale care îți îmbogățesc viața.'
+        },
+        {
+          title: 'Essence Advance Therapeutic Process',
+          city: 'Cluj-Napoca',
+          start_date: '2026-02-18',
+          end_date: '2026-02-22',
+          link: 'https://essence-process.com/ro/cursuri/',
+          description: 'Cursul Advance te duce la un nivel mult mai adânc, unde vei dezvolta convingeri pozitive noi și tipare comportamentale care îți îmbogățesc viața.'
+        },
+        {
+          title: 'Essence Relationships Therapeutic Process',
+          city: 'Brasov',
+          start_date: '2026-05-08',
+          end_date: '2026-05-10',
+          link: 'https://essence-process.com/ro/cursuri/',
+          description: 'Cursul oferă o oportunitate valoroasă de a construi relații mai bune cu partenerii noștri, cu familiile, prietenii, colegii și nu în ultimul rând, cu noi înșine.'
+        }
+      ];
+
+      for (const course of courses) {
+        await pool.query(
+          'INSERT INTO courses (title, city, start_date, end_date, link, description) VALUES ($1, $2, $3, $4, $5, $6)',
+          [course.title, course.city, course.start_date, course.end_date, course.link, course.description]
+        );
+      }
+      console.log(`Seeded ${courses.length} courses`);
+    }
+  } catch (err) {
+    console.error('Seed courses error:', err);
+  }
+}
+
+seedCourses();
+
 // API Routes
 
 // Health check endpoint
