@@ -30,9 +30,25 @@ export default function Layout({ children, currentPageName }) {
   const [birthdayUsers, setBirthdayUsers] = useState([]);
   const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
 
-  // Minimal custom zodiac icon for sidebar (emoji-based to suggest zodiac wheel)
-  const ZodiacIcon = () => (
-    <span className="text-xl leading-none">♏︎♎︎</span>
+  // Custom Scorpio zodiac icon (stroke-based to match Lucide style)
+  const ScorpioIcon = ({ className = "w-5 h-5" }) => (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Approximate scorpio glyph: m-shape with tail/arrow */}
+      <path d="M5 6v8a3 3 0 0 0 6 0V8" />
+      <path d="M11 8c0-1.657-1.343-3-3-3s-3 1.343-3 3" />
+      <path d="M11 12c0 1.657 1.343 3 3 3s3-1.343 3-3V6" />
+      <path d="M17 12h2.5c.828 0 1.5.672 1.5 1.5v.5l-2-2" />
+      <path d="M21 14l-2 2" />
+    </svg>
   );
 
   const noLayoutPages = ["Autentificare", "Register", "ForgotPin"];
@@ -257,7 +273,7 @@ export default function Layout({ children, currentPageName }) {
     navigationItems.splice(4, 0, {
       title: "Zodii",
       url: createPageUrl("Zodii"),
-      icon: ZodiacIcon,
+      icon: ScorpioIcon,
     });
   }
 
