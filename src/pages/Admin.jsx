@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [updatingPinFor, setUpdatingPinFor] = useState(null);
+  const [revealPinFor, setRevealPinFor] = useState(null);
 
   const handleSetUserPin = async (user) => {
     try {
@@ -709,15 +710,7 @@ export default function AdminPage() {
                         <SortIcon column="name" />
                       </button>
                     </TableHead>
-                    <TableHead>
-                      <button
-                        onClick={() => handleSort('email')}
-                        className="flex items-center hover:text-blue-600 transition-colors"
-                      >
-                        Email
-                        <SortIcon column="email" />
-                      </button>
-                    </TableHead>
+                    {/* Email column hidden to simplify table. Details are in UserDetails page. */}
                     <TableHead>
                       <button
                         onClick={() => handleSort('role')}
@@ -781,6 +774,7 @@ export default function AdminPage() {
                         <SortIcon column="today_repetitions" />
                       </button>
                     </TableHead>
+                    <TableHead>PIN</TableHead>
                     <TableHead>
                       <button
                         onClick={() => handleSort('group')}
@@ -829,7 +823,7 @@ export default function AdminPage() {
                             {user.first_name} {user.last_name}
                           </button>
                         </TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        {/* Email hidden in table for compact view */}
                         <TableCell>
                           <Select
                             value={user.role || "user"}
@@ -869,6 +863,21 @@ export default function AdminPage() {
                           <span className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-sm">
                             {(user.today_repetitions || 0)}/100
                           </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm">
+                              {revealPinFor === user.id ? (user.pin || '----') : '••••'}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl"
+                              onClick={() => setRevealPinFor(prev => prev === user.id ? null : user.id)}
+                            >
+                              {revealPinFor === user.id ? 'Ascunde' : 'Vezi PIN'}
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {userGroup ? (
@@ -1305,7 +1314,7 @@ export default function AdminPage() {
                         <TableRow>
                           <TableHead>Username</TableHead>
                           <TableHead>Nume</TableHead>
-                          <TableHead>Email</TableHead>
+                          {/* Email hidden in backup users table for compactness */}
                           <TableHead>Afirmație</TableHead>
                           <TableHead>Repetări</TableHead>
                           <TableHead>Istoric</TableHead>
@@ -1325,7 +1334,7 @@ export default function AdminPage() {
                             <TableRow key={user.id}>
                               <TableCell className="font-medium">{user.username}</TableCell>
                               <TableCell>{user.first_name} {user.last_name}</TableCell>
-                              <TableCell>{user.email || '-'}</TableCell>
+                              {/* Email hidden in backup users table */}
                               <TableCell>
                                 {user.affirmation && user.affirmation.trim() !== '' ? (
                                   <span className="text-green-600 dark:text-green-400">✓</span>
