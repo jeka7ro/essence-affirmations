@@ -121,6 +121,38 @@ export default function UserDetailsPage() {
     XLSX.writeFile(wb, fileName);
   };
 
+  const formatBirthDateSafe = (value) => {
+    if (!value) return '-';
+    try {
+      const str = String(value);
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const [y, m, d] = str.slice(0,10).split('-');
+        return `${d}.${m}.${y}`;
+      }
+      return format(new Date(value), 'dd.MM.yyyy', { locale: ro });
+    } catch {
+      return '-';
+    }
+  };
+
+  const getZodiac = (dateStr) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const names = [
+      "Berbec","Taur","Gemeni","Rac","Leu","Fecioară","Balanță","Scorpion","Săgetător","Capricorn","Vărsător","Pești"
+    ];
+    const ranges = [
+      [3,21,4,19,0],[4,20,5,20,1],[5,21,6,20,2],[6,21,7,22,3],[7,23,8,22,4],[8,23,9,22,5],
+      [9,23,10,22,6],[10,23,11,21,7],[11,22,12,21,8],[12,22,1,19,9],[1,20,2,18,10],[2,19,3,20,11]
+    ];
+    for (const [m1,d1,m2,d2,idx] of ranges) {
+      if ((month===m1 && day>=d1) || (month===m2 && day<=d2)) return names[idx];
+    }
+    return "-";
+  };
+
   const getAvatarDisplay = (user) => {
     if (user?.avatar) {
       const a = user.avatar;
@@ -203,6 +235,34 @@ export default function UserDetailsPage() {
               </div>
             </div>
           </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">Telefon</p>
+                <p className="font-medium">{user.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Data nașterii</p>
+                <p className="font-medium">{formatBirthDateSafe(user.birth_date)}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Zodie</p>
+                <p className="font-medium">{getZodiac(user.birth_date)}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Sex</p>
+                <p className="font-medium">{user.sex === 'M' ? 'M' : user.sex === 'F' ? 'F' : '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Grup</p>
+                <p className="font-medium">{user.group_id ? user.group_id : 'Fără grup'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">PIN</p>
+                <p className="font-medium">{user.pin || '----'}</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Filters Card */}
