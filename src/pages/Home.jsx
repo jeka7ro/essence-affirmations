@@ -496,9 +496,35 @@ export default function HomePage() {
   const challengeDaysPassed = challengeStartDate 
     ? Math.floor((new Date() - parseISO(challengeStartDate)) / (1000 * 60 * 60 * 24))
     : 0;
+  
+  // Calculate actual completed days: from completedDays array + days with >= 100 repetitions
+  const completedDaysSet = new Set(completedDays || []);
+  const daysWith100Reps = new Set();
+  
+  if (repetitionHistory && Array.isArray(repetitionHistory)) {
+    // Group repetitions by date
+    const repsByDate = {};
+    repetitionHistory.forEach(r => {
+      if (r && r.date) {
+        repsByDate[r.date] = (repsByDate[r.date] || 0) + 1;
+      }
+    });
+    
+    // Add days with >= 100 repetitions to the set
+    Object.entries(repsByDate).forEach(([date, count]) => {
+      if (count >= 100) {
+        daysWith100Reps.add(date);
+      }
+    });
+  }
+  
+  // Merge both sets to get total completed days
+  const allCompletedDays = new Set([...completedDaysSet, ...daysWith100Reps]);
+  const actualCompletedDaysCount = allCompletedDays.size;
+  
   const daysRemaining = challengeDaysPassed >= 30 
     ? 0 // Challenge extended beyond 30 days
-    : Math.max(0, 30 - completedDays.length);
+    : Math.max(0, 30 - actualCompletedDaysCount);
   const progressPercentage = (todayRepetitions / 100) * 100;
 
   if (loading) {
@@ -734,8 +760,8 @@ export default function HomePage() {
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-300">Zile Complete</p>
                       <p className="text-2xl font-bold text-blue-600">
-                        {completedDays.length}
-                        {challengeDaysPassed >= 30 && completedDays.length >= 30 ? (
+                        {actualCompletedDaysCount}
+                        {challengeDaysPassed >= 30 && actualCompletedDaysCount >= 30 ? (
                           <span className="text-lg">+</span>
                         ) : (
                           <span className="text-lg">/30</span>
