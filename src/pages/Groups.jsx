@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Users, Lock, Calendar, Check, Pencil } from "lucide-react";
 
 export default function GroupsPage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +24,8 @@ export default function GroupsPage() {
   const [secretCode, setSecretCode] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showJoinSuccessDialog, setShowJoinSuccessDialog] = useState(false);
+  const [joinedGroupName, setJoinedGroupName] = useState("");
   const [newGroup, setNewGroup] = useState({
     name: "",
     description: "",
@@ -241,7 +246,11 @@ export default function GroupsPage() {
 
       setShowCreateDialog(false);
       setNewGroup({ name: "", description: "", start_date: "", end_date: "", cities: [], secret_code: "" });
-      loadData();
+      await loadData();
+      
+      // Show success dialog and redirect to Home
+      setJoinedGroupName(newGroup.name);
+      setShowJoinSuccessDialog(true);
     } catch (error) {
       console.error("Error creating group:", error);
       setError(`Eroare: ${error.message}`);
@@ -281,9 +290,11 @@ export default function GroupsPage() {
       setSelectedGroup(null);
       setSecretCode("");
       setError("");
-      setSuccessMessage(`🎉 Felicitări! Te-ai alăturat cu succes grupului "${selectedGroup.name}"!`);
-      setTimeout(() => setSuccessMessage(""), 5000);
-      loadData();
+      await loadData();
+      
+      // Show success dialog and redirect to Home
+      setJoinedGroupName(selectedGroup.name);
+      setShowJoinSuccessDialog(true);
     } catch (error) {
       console.error("Error joining group:", error);
       setError("Eroare la alăturarea la grup");
@@ -319,12 +330,11 @@ export default function GroupsPage() {
       
       setSecretCode("");
       setError("");
-      setSuccessMessage(`🎉 Felicitări! Te-ai alăturat cu succes grupului "${match.name}"!`);
-      
-      // Auto-hide success message after 5 seconds
-      setTimeout(() => setSuccessMessage(""), 5000);
-      
       await loadData(); // refresh and hide the join section next render
+      
+      // Show success dialog and redirect to Home
+      setJoinedGroupName(match.name);
+      setShowJoinSuccessDialog(true);
     } catch (e) {
       console.error("Join by code error:", e);
       setError("Eroare la alăturare. Încearcă din nou.");
@@ -1072,6 +1082,31 @@ export default function GroupsPage() {
                   <div className="text-sm text-gray-500">Niciun membru în acest grup.</div>
                 )}
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Join Success Dialog - One-time popup with redirect to Home */}
+        <Dialog open={showJoinSuccessDialog} onOpenChange={() => {}}>
+          <DialogContent className="rounded-3xl bg-green-600 border-green-700 text-white" style={{ pointerEvents: 'auto' }}>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-white text-center">
+                🎉 Felicitări!
+              </DialogTitle>
+              <DialogDescription className="text-green-100 text-center mt-2 text-lg">
+                Te-ai alăturat cu succes grupului <strong className="text-white">{joinedGroupName}</strong>!
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={() => {
+                  setShowJoinSuccessDialog(false);
+                  navigate(createPageUrl("Home"));
+                }}
+                className="bg-white text-green-600 hover:bg-green-50 font-bold px-8 py-3 rounded-2xl text-lg"
+              >
+                Mergi la Pagina Principală
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

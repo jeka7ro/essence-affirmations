@@ -492,7 +492,13 @@ export default function HomePage() {
     }
   };
 
-  const daysRemaining = Math.max(0, 30 - completedDays.length);
+  // Calculate days remaining - if challenge extends beyond 30 days, show current progress
+  const challengeDaysPassed = challengeStartDate 
+    ? Math.floor((new Date() - parseISO(challengeStartDate)) / (1000 * 60 * 60 * 24))
+    : 0;
+  const daysRemaining = challengeDaysPassed >= 30 
+    ? 0 // Challenge extended beyond 30 days
+    : Math.max(0, 30 - completedDays.length);
   const progressPercentage = (todayRepetitions / 100) * 100;
 
   if (loading) {
@@ -630,6 +636,7 @@ export default function HomePage() {
             icon={Users}
             title="Total membri"
             value={stats.totalUsers}
+            subtitle="membri"
             color="blue"
           />
           <StatsCards
@@ -677,18 +684,29 @@ export default function HomePage() {
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <div className="space-y-3">
+                    <p className={`text-sm font-semibold ${
+                      todayRepetitions >= 100 
+                        ? "text-gray-600 dark:text-gray-300" 
+                        : "text-orange-600 dark:text-orange-400"
+                    }`}>
                       {todayRepetitions >= 100 
                         ? "🎉 Felicitări! Ai completat provocarea de astăzi!" 
                         : `Mai ai nevoie de ${100 - todayRepetitions} repetări (≈${repsNeededPerHour}/oră)`
                       }
                     </p>
                     {todayRepetitions < 100 && (
-                      <div className="flex items-center justify-center gap-2 text-xs font-semibold text-orange-600 dark:text-orange-400">
-                        <span>⏰ Mai sunt:</span>
-                        <span className="text-lg font-bold">{timeUntilMidnight}</span>
-                      </div>
+                      <>
+                        <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 dark:border-orange-400 rounded-r-lg p-3">
+                          <p className="text-xs text-orange-800 dark:text-orange-200 font-medium text-center leading-relaxed">
+                            Vă reamintim regula de bază: dacă într-o zi nu se îndeplinesc cele 100 de repetiții, ciclul de 30 de zile se resetează și se reia de la început.
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-orange-600 dark:text-orange-400">
+                          <span>⏰ Mai sunt:</span>
+                          <span className="text-lg font-bold">{timeUntilMidnight}</span>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -722,11 +740,22 @@ export default function HomePage() {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-300">Zile Complete</p>
-                      <p className="text-2xl font-bold text-blue-600">{completedDays.length}/30</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {completedDays.length}
+                        {challengeDaysPassed >= 30 && completedDays.length >= 30 ? (
+                          <span className="text-lg">+</span>
+                        ) : (
+                          <span className="text-lg">/30</span>
+                        )}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-300">Zile Rămase</p>
-                      <p className="text-2xl font-bold text-green-600">{daysRemaining}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
+                        {challengeDaysPassed >= 30 ? "Provocare extinsă" : "Zile Rămase"}
+                      </p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {challengeDaysPassed >= 30 ? "∞" : daysRemaining}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-300">Total Repetări</p>

@@ -387,11 +387,15 @@ export default function Layout({ children, currentPageName }) {
                     </span>
                   </button>
                 </div>
-                {/* Right: avatar larger */}
+                {/* Right: avatar larger - clickable to Settings */}
                 {(() => {
                   const avatarDisplay = getAvatarDisplay(user);
                   return avatarDisplay && (
-                    <>
+                    <Link 
+                      to={createPageUrl("Settings")}
+                      className="cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
                         <img
                           src={avatarDisplay}
@@ -403,7 +407,7 @@ export default function Layout({ children, currentPageName }) {
                           {avatarDisplay}
                         </div>
                       )}
-                    </>
+                    </Link>
                   );
                 })()}
               </div>

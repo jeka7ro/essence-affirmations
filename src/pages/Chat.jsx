@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Users as UsersIcon, Trash2 } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
+import { Send, Users as UsersIcon, Trash2, Smile } from "lucide-react";
+import { formatDistanceToNow, format, isSameDay, isToday, isYesterday } from "date-fns";
 import { ro } from "date-fns/locale";
 
 export default function ChatPage() {
@@ -18,6 +18,10 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const messagesEndRef = useRef(null);
+  const groupMessagesRef = useRef(null);
+  const directMessagesRef = useRef(null);
   
   // Helper to get avatar display
   const getAvatarDisplay = (userData) => {
@@ -31,6 +35,35 @@ export default function ChatPage() {
   const getUserByUsername = (username) => {
     return allUsers.find(u => u.username === username);
   };
+  
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = (isGroup = true) => {
+    const ref = isGroup ? groupMessagesRef : directMessagesRef;
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
+  // Format date separator
+  const formatDateSeparator = (date) => {
+    if (isToday(date)) return 'Astăzi';
+    if (isYesterday(date)) return 'Ieri';
+    return format(date, 'd MMMM yyyy', { locale: ro });
+  };
+  
+  // Check if we should show date separator
+  const shouldShowDateSeparator = (currentMsg, previousMsg) => {
+    if (!previousMsg) return true;
+    const currentDate = currentMsg.created_date ? new Date(currentMsg.created_date) : new Date();
+    const previousDate = previousMsg.created_date ? new Date(previousMsg.created_date) : new Date();
+    return !isSameDay(currentDate, previousDate);
+  };
+  
+  // Simple emoji list
+  const commonEmojis = ['😊', '❤️', '👍', '😂', '🙏', '🎉', '🔥', '💪', '🌟', '😍', '🙌', '😎', '💯', '✨', '🎯'];
 
   useEffect(() => {
     loadData();
@@ -41,9 +74,25 @@ export default function ChatPage() {
     }
     
     // Refresh messages every 5 seconds
-    const interval = setInterval(loadMessages, 5000);
+    const interval = setInterval(() => {
+      loadMessages(user).then(() => {
+        // Auto-scroll if user is at bottom
+        setTimeout(() => scrollToBottom(true), 100);
+      });
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
+  
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showEmojiPicker && !event.target.closest('.emoji-container')) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojiPicker]);
   
   // Update last read timestamp when user data is loaded
   useEffect(() => {
@@ -66,6 +115,8 @@ export default function ChatPage() {
       }
 
       await loadMessages(userData);
+      // Auto-scroll after loading messages
+      setTimeout(() => scrollToBottom(true), 100);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -129,6 +180,8 @@ export default function ChatPage() {
       setNewMessage("");
       // Reload messages with current user data
       await loadMessages(user);
+      // Auto-scroll to new message
+      setTimeout(() => scrollToBottom(true), 100);
     } catch (error) {
       console.error("Error sending message:", error);
       alert(`Eroare la trimiterea mesajului: ${error.message}`);
@@ -150,6 +203,8 @@ export default function ChatPage() {
       setNewMessage("");
       // Reload messages with current user data
       await loadMessages(user);
+      // Auto-scroll to new message
+      setTimeout(() => scrollToBottom(false), 100);
     } catch (error) {
       console.error("Error sending message:", error);
       alert(`Eroare la trimiterea mesajului: ${error.message}`);
@@ -224,11 +279,15 @@ export default function ChatPage() {
                 <CardTitle className="text-gray-900 dark:text-gray-100">Chat de Grup</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-0">
-                <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50">
+                <div 
+                  ref={groupMessagesRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
+                >
                   {groupMessages.length === 0 ? (
                     <p className="text-center text-gray-500 dark:text-gray-400 pt-8">Nu există mesaje încă</p>
                   ) : (
-                    groupMessages.map((msg) => {
+                    groupMessages.map((msg, index) => {
+                      const previousMsg = index > 0 ? groupMessages[index - 1] : null;
                       const senderData = getUserByUsername(msg.sender);
                       const avatarDisplay = getAvatarDisplay(senderData);
                       const senderName = senderData ? (senderData.username || senderData.email) : msg.sender;
@@ -236,10 +295,17 @@ export default function ChatPage() {
                       const msgDate = msg.created_date ? new Date(msg.created_date) : new Date();
                       
                       return (
-                        <div
-                          key={msg.id}
-                          className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'} items-end mb-2`}
-                        >
+                        <React.Fragment key={msg.id}>
+                          {shouldShowDateSeparator(msg, previousMsg) && (
+                            <div className="flex justify-center my-4">
+                              <div className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full">
+                                {formatDateSeparator(msgDate)}
+                              </div>
+                            </div>
+                          )}
+                          <div
+                            className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'} items-end mb-2`}
+                          >
                           {!isOwnMessage && (
                             <div className="flex-shrink-0 mb-1">
                               {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
@@ -299,18 +365,46 @@ export default function ChatPage() {
                             </div>
                           )}
                         </div>
-                      );
+                        <div ref={messagesEndRef} />
+                      </React.Fragment>
+                    );
                     })
                   )}
                 </div>
-                <form onSubmit={handleSendGroupMessage} className="p-3 border-t bg-white dark:bg-gray-900">
-                  <div className="flex gap-2 items-center">
+                <form onSubmit={handleSendGroupMessage} className="p-3 border-t bg-white dark:bg-gray-900 relative">
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 z-10">
+                      <div className="flex flex-wrap gap-2 max-w-xs">
+                        {commonEmojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                              setNewMessage(prev => prev + emoji);
+                              setShowEmojiPicker(false);
+                            }}
+                            className="text-2xl hover:scale-125 transition-transform p-1"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2 items-center emoji-container">
                     <Input
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       placeholder="Scrie un mesaj..."
                       className="flex-1 rounded-full px-4 py-2.5 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500"
                     />
+                    <Button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="rounded-full w-10 h-10 p-0 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                      <Smile className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </Button>
                     <Button 
                       type="submit" 
                       className="bg-blue-500 hover:bg-blue-600 rounded-full w-10 h-10 p-0 shadow-md"
@@ -395,15 +489,27 @@ export default function ChatPage() {
                 </CardHeader>
                 {selectedUser ? (
                   <CardContent className="flex-1 flex flex-col p-0">
-                    <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50">
-                      {getDirectMessagesWithUser(selectedUser).map((msg) => {
+                    <div 
+                      ref={directMessagesRef}
+                      className="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50 dark:bg-gray-950/50"
+                    >
+                      {getDirectMessagesWithUser(selectedUser).map((msg, index) => {
+                        const directMsgs = getDirectMessagesWithUser(selectedUser);
+                        const previousMsg = index > 0 ? directMsgs[index - 1] : null;
                         const isOwnMessage = msg.sender === user.username;
                         const msgDate = msg.created_date ? new Date(msg.created_date) : new Date();
                         return (
-                          <div
-                            key={msg.id}
-                            className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'} items-end mb-2`}
-                          >
+                          <React.Fragment key={msg.id}>
+                            {shouldShowDateSeparator(msg, previousMsg) && (
+                              <div className="flex justify-center my-4">
+                                <div className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full">
+                                  {formatDateSeparator(msgDate)}
+                                </div>
+                              </div>
+                            )}
+                            <div
+                              className={`flex gap-2 ${isOwnMessage ? 'justify-end' : 'justify-start'} items-end mb-2`}
+                            >
                             {!isOwnMessage && (
                               <div className="flex-shrink-0 mb-1">
                                 {(() => {
@@ -440,20 +546,48 @@ export default function ChatPage() {
                               </div>
                             )}
                           </div>
-                        );
+                          <div ref={messagesEndRef} />
+                        </React.Fragment>
+                      );
                       })}
                       {getDirectMessagesWithUser(selectedUser).length === 0 && (
                         <p className="text-center text-gray-500 dark:text-gray-400 pt-8">Nu există mesaje încă</p>
                       )}
                     </div>
-                    <form onSubmit={handleSendDirectMessage} className="p-3 border-t bg-white dark:bg-gray-900">
-                      <div className="flex gap-2 items-center">
+                    <form onSubmit={handleSendDirectMessage} className="p-3 border-t bg-white dark:bg-gray-900 relative">
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 z-10">
+                          <div className="flex flex-wrap gap-2 max-w-xs">
+                            {commonEmojis.map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => {
+                                  setNewMessage(prev => prev + emoji);
+                                  setShowEmojiPicker(false);
+                                }}
+                                className="text-2xl hover:scale-125 transition-transform p-1"
+                              >
+                                {emoji}
+                              </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                      <div className="flex gap-2 items-center emoji-container">
                         <Input
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           placeholder="Scrie un mesaj..."
                           className="flex-1 rounded-full px-4 py-2.5 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500"
                         />
+                        <Button
+                          type="button"
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          className="rounded-full w-10 h-10 p-0 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                          <Smile className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        </Button>
                         <Button 
                           type="submit" 
                           className="bg-blue-500 hover:bg-blue-600 rounded-full w-10 h-10 p-0 shadow-md"

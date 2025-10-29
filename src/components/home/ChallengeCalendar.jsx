@@ -1,6 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { format, addDays, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
 import { base44 } from "@/api/base44Client";
@@ -13,36 +15,81 @@ export default function ChallengeCalendar({
   userId,
   onUpdate 
 }) {
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedDayDate, setSelectedDayDate] = useState(null);
+  const [selectedDayReps, setSelectedDayReps] = useState(0);
+  
   if (!startDate) return null;
 
-  const handleDayClick = async (dayDate, isCompleted, isPast) => {
+  const handleDayClick = async (dayDate, isCompleted, isPast, dayReps) => {
     if (!userId) return;
     
-    // Only allow toggling past days
+    // Only allow editing past days
     if (!isPast) return;
     
-    const newCompletedDays = [...completedDays];
-    
+    // If already completed, just unmark it
     if (isCompleted) {
-      // Remove from completed
-      const index = newCompletedDays.indexOf(dayDate);
-      if (index !== -1) {
-        newCompletedDays.splice(index, 1);
+      const newCompletedDays = completedDays.filter(d => d !== dayDate);
+      try {
+        await base44.entities.User.update(userId, {
+          completed_days: JSON.stringify(newCompletedDays)
+        });
+        onUpdate();
+      } catch (error) {
+        console.error("Error updating day:", error);
       }
-    } else {
-      // Add to completed
-      if (!newCompletedDays.includes(dayDate)) {
-        newCompletedDays.push(dayDate);
-      }
+      return;
     }
     
+    // If not completed, show dialog to ask if user wants to mark as complete
+    // and add missing repetitions
+    setSelectedDayDate(dayDate);
+    setSelectedDayReps(dayReps);
+    setShowEditDialog(true);
+  };
+
+  const handleMarkAsComplete = async () => {
+    if (!userId || !selectedDayDate) return;
+    
+    const repsNeeded = 100 - selectedDayReps;
+    
     try {
+      // Add missing repetitions to history
+      const newHistory = Array.isArray(repetitionHistory) ? [...repetitionHistory] : [];
+      for (let i = 0; i < repsNeeded; i++) {
+        newHistory.push({
+          date: selectedDayDate,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Mark day as completed
+      const newCompletedDays = [...completedDays];
+      if (!newCompletedDays.includes(selectedDayDate)) {
+        newCompletedDays.push(selectedDayDate);
+      }
+      
+      // Get current user data
+      const users = await base44.entities.User.list();
+      const user = users.find(u => u.id === userId);
+      
+      // Calculate new total
+      const newTotalReps = (user.total_repetitions || 0) + repsNeeded;
+      
+      // Update user
       await base44.entities.User.update(userId, {
-        completed_days: JSON.stringify(newCompletedDays)
+        repetition_history: JSON.stringify(newHistory),
+        completed_days: JSON.stringify(newCompletedDays),
+        total_repetitions: newTotalReps
       });
+      
+      setShowEditDialog(false);
+      setSelectedDayDate(null);
+      setSelectedDayReps(0);
       onUpdate();
     } catch (error) {
-      console.error("Error updating day:", error);
+      console.error("Error marking day as complete:", error);
+      alert("Eroare la marcarea zilei ca îndeplinită");
     }
   };
 
@@ -51,7 +98,14 @@ export default function ChallengeCalendar({
     const start = parseISO(startDate);
     const today = format(new Date(), 'yyyy-MM-dd');
     
-    for (let i = 0; i < 30; i++) {
+    // Calculate how many days have passed since start
+    const daysSinceStart = Math.floor((new Date() - start) / (1000 * 60 * 60 * 24));
+    
+    // Show at least 30 days, but extend if more days have passed
+    // Also show 7 days into the future for planning
+    const totalDaysToShow = Math.max(30, daysSinceStart + 7);
+    
+    for (let i = 0; i < totalDaysToShow; i++) {
       const dayDate = format(addDays(start, i), 'yyyy-MM-dd');
       const isToday = dayDate === today;
       const isPast = dayDate < today;
@@ -61,7 +115,7 @@ export default function ChallengeCalendar({
       const isCompleted = completedDays.includes(dayDate);
       
       // Get repetitions for this day
-      const dayReps = repetitionHistory.filter(r => r.date === dayDate).length;
+      const dayReps = (repetitionHistory || []).filter(r => r && r.date === dayDate).length;
       
       let bgColor = 'bg-gray-100';
       let textColor = 'text-gray-600';
@@ -86,7 +140,7 @@ export default function ChallengeCalendar({
       days.push(
         <button
           key={i}
-          onClick={() => handleDayClick(dayDate, isCompleted, isPast)}
+          onClick={() => handleDayClick(dayDate, isCompleted, isPast, dayReps)}
           disabled={isFuture}
           className={`p-3 rounded-lg border-2 ${borderColor} ${bgColor} ${textColor} 
             ${isPast ? 'cursor-pointer hover:opacity-80' : isFuture ? 'cursor-not-allowed opacity-50' : 'cursor-default'}
@@ -118,7 +172,12 @@ export default function ChallengeCalendar({
     <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Calendar Provocare - 30 Zile
+          Calendar Provocare
+          {completedDays.length >= 30 && (
+            <span className="text-lg text-green-600 dark:text-green-400 ml-2">
+              (Extins - {completedDays.length} zile completate)
+            </span>
+          )}
         </CardTitle>
         <div className="flex flex-wrap gap-4 text-sm mt-4">
           <div className="flex items-center gap-2">
@@ -143,10 +202,61 @@ export default function ChallengeCalendar({
         <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
           {renderCalendar()}
         </div>
-        <p className="text-sm text-gray-600 mt-4 text-center">
-          Click pe o zi trecută pentru a o marca ca completă sau incompletă
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
+          Click pe o zi trecută necompletă pentru a o marca ca îndeplinită
         </p>
       </CardContent>
+
+      {/* Dialog for marking past day as complete */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Marchează ziua ca îndeplinită?
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 dark:text-gray-400 mt-2">
+              {selectedDayDate && (
+                <div className="space-y-4">
+                  <p>
+                    Ziua selectată: <strong className="text-gray-900 dark:text-gray-100">
+                      {format(parseISO(selectedDayDate), 'd MMMM yyyy', { locale: ro })}
+                    </strong>
+                  </p>
+                  <p>
+                    Repetări actuale: <strong className="text-gray-900 dark:text-gray-100">{selectedDayReps}/100</strong>
+                  </p>
+                  {selectedDayReps < 100 && (
+                    <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 dark:border-orange-400 rounded-r-lg p-3">
+                      <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                        Vei adăuga automat <strong className="text-lg">{100 - selectedDayReps} repetări</strong> pentru a completa ziua.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-6">
+            <Button
+              onClick={handleMarkAsComplete}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-2xl"
+            >
+              Da, marchează ca îndeplinită
+            </Button>
+            <Button
+              onClick={() => {
+                setShowEditDialog(false);
+                setSelectedDayDate(null);
+                setSelectedDayReps(0);
+              }}
+              variant="outline"
+              className="flex-1 rounded-2xl"
+            >
+              Anulează
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -22,13 +22,18 @@ export default function TopMembriPage() {
       // Filter users: if user is in a group, show only group members; if admin, show all
       let filteredUsers = allUsers;
       if (userData?.group_id && userData?.role !== 'admin') {
-        // Show only group members
-        filteredUsers = allUsers.filter(u => u.group_id === userData.group_id);
+        // Show only group members (must have group_id set and matching current user's group)
+        filteredUsers = allUsers.filter(u => u.group_id === userData.group_id && u.group_id !== null);
       } else if (!userData?.group_id && userData?.role !== 'admin') {
         // Show only current user if not in group
-        filteredUsers = [userData];
+        filteredUsers = [userData].filter(u => u); // Ensure user exists
       }
-      // If admin, show all users (already set)
+      // If admin, show all users BUT filter out users who are not in any group
+      // Admin still sees only users who are in groups (or just the user themselves)
+      if (userData?.role === 'admin') {
+        // For admin, show all users who are in groups (group_id is not null)
+        filteredUsers = allUsers.filter(u => u.group_id !== null && u.group_id !== undefined);
+      }
       
       // Calculate today's repetitions for each user
       const today = new Date().toISOString().split('T')[0];

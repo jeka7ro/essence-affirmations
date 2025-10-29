@@ -208,57 +208,128 @@ export default function RegisterPage() {
     }
   };
 
+  // Google OAuth initialization - Temporarily disabled
+  /*
   useEffect(() => {
     // Initialize Google Identity Services if client ID is available
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     
-    if (window.google && googleClientId) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: handleGoogleSignIn
-        });
-        
-        // Render button
-        window.google.accounts.id.renderButton(
-          document.getElementById('google-signin-button'),
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'signin_with',
-            locale: 'ro'
-          }
-        );
-      } catch (error) {
-        console.error('Error initializing Google Sign-In:', error);
-      }
+    console.log('🔍 Google OAuth Debug:', {
+      hasClientId: !!googleClientId,
+      clientIdPrefix: googleClientId ? googleClientId.substring(0, 20) + '...' : 'NONE',
+      hasGoogleScript: typeof window.google !== 'undefined',
+      currentOrigin: window.location.origin
+    });
+    
+    if (!googleClientId) {
+      console.warn('⚠️ VITE_GOOGLE_CLIENT_ID nu este setat. Vezi GOOGLE_OAUTH_SETUP.md pentru instrucțiuni.');
+      return;
     }
+    
+    const startTime = Date.now();
+    let checkCount = 0;
+    const maxChecks = 100; // 10 seconds max
+    
+    // Wait for Google script to load
+    const checkGoogle = setInterval(() => {
+      checkCount++;
+      
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        clearInterval(checkGoogle);
+        try {
+          console.log('✅ Google Identity Services loaded, initializing...');
+          
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: handleGoogleSignIn,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+          
+          // Verify the div exists before rendering
+          const buttonDiv = document.getElementById('google-signin-button');
+          if (!buttonDiv) {
+            console.error('❌ google-signin-button div not found');
+            setError('Eroare: elementul pentru butonul Google nu a fost găsit.');
+            return;
+          }
+          
+          // Render button
+          window.google.accounts.id.renderButton(
+            buttonDiv,
+            {
+              theme: 'outline',
+              size: 'large',
+              width: '100%',
+              text: 'signin_with',
+              locale: 'ro'
+            }
+          );
+          
+          console.log('✅ Google Sign-In button rendered successfully');
+        } catch (error) {
+          console.error('❌ Error initializing Google Sign-In:', error);
+          setError(`Eroare la inițializarea Google Sign-In: ${error.message}. Verifică Client ID-ul și URI-urile autorizate în Google Cloud Console.`);
+        }
+      } else if (!window.google && googleClientId) {
+        // Google script still loading, continue waiting (max 10 seconds)
+        if (checkCount >= maxChecks) {
+          clearInterval(checkGoogle);
+          console.error('❌ Google Sign-In script failed to load after 10 seconds');
+          setError('Google Sign-In nu se poate încărca. Verifică conexiunea la internet și încearcă din nou. Dacă problema persistă, verifică că script-ul Google este inclus în index.html.');
+        }
+      }
+    }, 100);
+    
+    // Cleanup on unmount
+    return () => clearInterval(checkGoogle);
   }, []);
+  */
 
-  // Global function for Google callback
+  // Global function for Google callback - Temporarily disabled
+  /*
   window.handleGoogleSignIn = (response) => {
     try {
+      console.log('📥 Google Sign-In response received');
+      
+      if (!response || !response.credential) {
+        throw new Error('Răspuns invalid de la Google');
+      }
+      
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
-      console.log('Google user data:', payload);
+      console.log('✅ Google user data decoded:', {
+        email: payload.email,
+        name: payload.name,
+        hasPicture: !!payload.picture
+      });
+      
+      // Validate required fields
+      if (!payload.email) {
+        throw new Error('Email lipsă din răspunsul Google');
+      }
       
       // Auto-fill form with REAL Google data
       setFormData(prev => ({
         ...prev,
-        username: payload.given_name + payload.family_name,
-        email: payload.email,
-        first_name: payload.given_name,
-        last_name: payload.family_name,
-        avatar: payload.picture,
+        username: (payload.given_name || '') + (payload.family_name || '') || payload.name?.split(' ')[0] || 'User',
+        email: payload.email || '',
+        first_name: payload.given_name || payload.name?.split(' ')[0] || '',
+        last_name: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '',
+        avatar: payload.picture || '👤',
         pin: "1234", // Default PIN for Google users
         confirmPin: "1234"
       }));
       
+      // Clear any previous errors
+      setError('');
+      console.log('✅ Form auto-filled with Google data');
+      
     } catch (error) {
-      console.error('Error parsing Google response:', error);
-      setError('Eroare la autentificarea cu Google');
+      console.error('❌ Error parsing Google response:', error);
+      setError(`Eroare la autentificarea cu Google: ${error.message}. Te rog încearcă din nou sau completează manual formularul.`);
     }
   };
+  */
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 py-8 px-4">
@@ -472,6 +543,8 @@ export default function RegisterPage() {
             </Button>
           </form>
 
+          {/* Google Sign-In Button - Temporarily disabled */}
+          {/* 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
@@ -480,35 +553,28 @@ export default function RegisterPage() {
               <span className="px-4 bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400">SAU</span>
             </div>
           </div>
-
-          {/* Google Sign-In Button */}
+          */}
+          {/* 
           {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-            <div 
-              id="google-signin-button"
-              className="w-full"
-              style={{ height: '48px' }}
-            />
-          ) : (
             <div className="w-full">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full flex items-center justify-center gap-3 h-12"
-                onClick={() => {
-                  setError('Google Sign-In necesită configurare. Contactează administratorul pentru activare.');
-                }}
-                disabled
-              >
-                <img 
-                  src="https://www.google.com/favicon.ico" 
-                  alt="Google" 
-                  className="w-5 h-5"
-                  onError={(e) => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d nursLnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIyLjU2IDExLjIyaC4wMTVjLS4xNiAyLjQ1LS45MyA0LjI0LTIuNjIgNS42NC0xLjYzIDEuMzctMy43NCAyLjA5LTYuMzUgMi4wOS00LjQ5IDAtNy44NS0yLjYyLTcuODUtNy40MiAwLTQuNDIgMy4yNC03LjQxIDcuNzMtNy40MSAyLjYyIDAgNC41MS45MyA1Ljg0IDEuNTlsLTEuNTEgMS40MmMtLjkyLS4zOC0yLjA3LS42MS0zLjMzLS42MS0yLjg1IDAtNC43MyAxLjc0LTUuNTggNC4xM2wtMi4yOC0uMDhjLS4zNC02LjU5IDQuMDctOC40NyA2LjMyLTEuMjd0LS4wN2gxLjY1djUuNzRoMS42N1YxMS4yMXoiLz48L3N2Zz4='; }}
-                />
-                Continuă cu Google (Necesită configurare)
-              </Button>
+              <div 
+                id="google-signin-button"
+                className="w-full"
+                style={{ height: '48px' }}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                Folosește contul tău Google pentru înregistrare rapidă
+              </p>
             </div>
+          ) : (
+            <Alert className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+              <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                Google Sign-In nu este configurat. Contactează administratorul pentru activare.
+              </AlertDescription>
+            </Alert>
           )}
+          */}
 
           <Button
             variant="link"

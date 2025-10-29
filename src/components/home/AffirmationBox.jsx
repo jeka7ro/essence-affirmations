@@ -63,27 +63,31 @@ export default function AffirmationBox({
             className="min-h-[400px] text-lg leading-relaxed resize-y rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
         ) : (
-          <div className="min-h-[200px] p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl relative">
-            {affirmation ? (
-              <p className="text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                {affirmation}
-              </p>
-            ) : (
-              <p className="text-gray-400 dark:text-gray-500 italic">
-                Adaugă afirmația ta personală apăsând pe iconița de editare
-              </p>
-            )}
-            {/* Round green + button in bottom-right to add repetition */}
+          <div className="min-h-[200px] p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+            <div className="relative pb-16">
+              {affirmation ? (
+                <p className="text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                  {affirmation}
+                </p>
+              ) : (
+                <p className="text-gray-400 dark:text-gray-500 italic">
+                  Adaugă afirmația ta personală apăsând pe iconița de editare
+                </p>
+              )}
+            </div>
+            {/* Round green + button below text to add repetition - always at bottom */}
             {onAddRepetition && (
-              <Button
-                onClick={onAddRepetition}
-                size="icon"
-                className="h-12 w-12 rounded-full bg-green-600 hover:bg-green-700 text-white absolute right-3 bottom-3 shadow-lg"
-                aria-label="Adaugă repetare"
-                title="Adaugă repetare"
-              >
-                +
-              </Button>
+              <div className="flex justify-end mt-2">
+                <Button
+                  onClick={onAddRepetition}
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                  aria-label="Adaugă repetare"
+                  title="Adaugă repetare"
+                >
+                  +
+                </Button>
+              </div>
             )}
           </div>
         )}

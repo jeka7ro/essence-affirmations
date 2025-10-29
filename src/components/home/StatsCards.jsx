@@ -16,7 +16,7 @@ export default function StatsCards({ icon: Icon, title, value, subtitle, color, 
             <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
             <p className="text-xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
             {subtitle && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden md:block">{subtitle}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
             )}
           </div>
           <div className={`p-2 md:p-3 rounded-xl ${colorClasses[color]} bg-opacity-10 dark:bg-opacity-20 hidden md:block`}>
