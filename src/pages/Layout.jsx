@@ -194,13 +194,13 @@ export default function Layout({ children, currentPageName }) {
               <span className="font-semibold text-base flex-1">Temă</span>
               <button
                 onClick={cycleTheme}
-                className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  theme === 'dark' ? 'bg-gray-800' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
+                className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
+                  theme === 'dark' ? 'bg-gray-700' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
                 }`}
               >
                 <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
-                    theme === 'dark' ? 'translate-x-9' : theme === 'light' ? 'translate-x-1' : 'translate-x-5'
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
                   }`}
                 >
                   {theme === 'dark' && '🌙'}
@@ -245,14 +245,14 @@ export default function Layout({ children, currentPageName }) {
                 <span className="text-sm font-semibold text-blue-600">{user.username || user.email}</span>
                 <button 
                   onClick={cycleTheme} 
-                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    theme === 'dark' ? 'bg-gray-800' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
+                  className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
+                    theme === 'dark' ? 'bg-gray-700' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
                   }`}
                   aria-label="Cycle theme"
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform text-xs ${
-                      theme === 'dark' ? 'translate-x-9' : theme === 'light' ? 'translate-x-1' : 'translate-x-5'
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform text-[10px] ${
+                      theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
                     }`}
                   >
                     {theme === 'dark' && '🌙'}
