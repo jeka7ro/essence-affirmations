@@ -337,7 +337,7 @@ export default function RegisterPage() {
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
             <img 
-              src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
+              src="/logo_essece2.png?v=20251030" 
               alt="Essence Logo" 
               className="w-40 h-auto"
             />

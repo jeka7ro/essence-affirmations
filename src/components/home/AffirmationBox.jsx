@@ -36,7 +36,7 @@ export default function AffirmationBox({
               }
               return (
                 <img 
-                  src="/logo_essece2.png" 
+                  src="/logo_essece2.png?v=20251030" 
                   alt="App Logo" 
                   className="w-12 h-12 object-cover rounded-xl cursor-pointer hover:opacity-80 transition-opacity" 
                   onClick={() => navigate(createPageUrl("Home"))}

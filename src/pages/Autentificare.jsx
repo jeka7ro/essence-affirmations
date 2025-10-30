@@ -100,6 +100,14 @@ export default function AutentificarePage() {
       await base44.entities.User.update(user.id, {
         last_login: new Date().toISOString()
       });
+      // Record login activity (non-blocking)
+      try {
+        await base44.entities.Activity.create({
+          username: user.username,
+          activity_type: "login",
+          description: `${user.username} s-a logat`
+        });
+      } catch {}
 
       addDebugLog('🔄 Redirecting to Home...');
       
@@ -131,9 +139,9 @@ export default function AutentificarePage() {
           </button>
           <div className="flex justify-center">
             <img 
-              src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
+              src="/logo_essece2.png?v=20251030" 
               alt="Essence Logo" 
-              className="w-40 h-auto brightness-200 contrast-125"
+              className="w-40 h-auto"
             />
           </div>
           <CardTitle className="text-3xl font-bold text-center text-gray-100">

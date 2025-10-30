@@ -267,6 +267,11 @@ export default function Layout({ children, currentPageName }) {
       url: createPageUrl("Admin"),
       icon: Shield,
     });
+    navigationItems.splice(5, 0, {
+      title: "Events",
+      url: createPageUrl("Events"),
+      icon: Activity,
+    });
   }
 
   // Zodii, Chat, Feed, Cursuri Essence au fost eliminate din sidebar
@@ -291,7 +296,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex flex-col items-center gap-4">
             <Link to={createPageUrl("Home")}>
               <img 
-                src="/logo_essece2.png" 
+                src="/logo_essece2.png?v=20251030" 
                 alt="App Logo" 
                 className="w-32 h-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded-xl"
               />
@@ -395,7 +400,7 @@ export default function Layout({ children, currentPageName }) {
               </Button>
               <Link to={createPageUrl("Home")}>
                 <img 
-                  src="/logo_essece2.png" 
+                  src="/logo_essece2.png?v=20251030" 
                   alt="App Logo" 
                   className="h-8 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded"
                 />
