@@ -62,7 +62,7 @@ export default function ForgotPinPage() {
           </Button>
           <div className="flex justify-center">
             <img 
-              src="https://essence-process.com/ro/wp-content/uploads/2022/10/logo-essence-int.png" 
+              src="/logo_essece2.png" 
               alt="Essence Logo" 
               className="w-40 h-auto"
             />
