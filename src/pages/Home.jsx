@@ -48,6 +48,8 @@ export default function HomePage() {
   // Serialized updates to prevent race conditions
   const inFlightRef = useRef(false);
   const queuedDeltaRef = useRef(0);
+  const suppressServerSyncUntilRef = useRef(0);
+  const noDecreaseUntilRef = useRef(0);
   const localQueuedKey = () => {
     const uid = userIdRef.current || 'anon';
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -641,13 +643,14 @@ export default function HomePage() {
       const canRemove = Math.max(0, currentToday);
       effective = -Math.min(Math.abs(count), canRemove);
     }
-    if (!effective) return;
-    pendingDeltaRef.current += effective;
-    if (effective > 0) {
-      noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
-    }
-    applyLocalDelta(effective);
-    scheduleFlush();
+  if (!effective) return;
+  if (effective > 0) {
+    noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
+  }
+  // enqueue and process
+  queuedDeltaRef.current += effective;
+  applyLocalDelta(effective);
+  processQueue();
   };
 
   const handleSaveAffirmation = async () => {
