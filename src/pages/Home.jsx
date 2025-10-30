@@ -44,6 +44,10 @@ export default function HomePage() {
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
   // Track if we've already shown mailman congratulations dialog in this session
   const congratulationsShownRef = useRef(false);
+  // Optimistic batching for repetitions
+  const pendingDeltaRef = useRef(0);
+  const saveTimeoutRef = useRef(null);
+  const isFlushingRef = useRef(false);
   useEffect(() => {
     loadData();
     
@@ -72,6 +76,88 @@ export default function HomePage() {
     
     return () => clearInterval(interval);
   }, [todayRepetitions]);
+  // Cleanup any scheduled saves on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const applyLocalDelta = (delta) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const nowIso = new Date().toISOString();
+    setRepetitionHistory((prev) => {
+      const newHistory = Array.isArray(prev) ? [...prev] : [];
+      if (delta > 0) {
+        for (let i = 0; i < delta; i++) {
+          newHistory.push({ date: today, timestamp: nowIso });
+        }
+      } else if (delta < 0) {
+        const removeCount = Math.min(Math.abs(delta), newHistory.filter((r) => r.date === today).length);
+        for (let i = 0; i < removeCount; i++) {
+          const idx = newHistory.map((r) => r.date).lastIndexOf(today);
+          if (idx !== -1) newHistory.splice(idx, 1);
+        }
+      }
+      const calculatedToday = newHistory.filter((r) => r.date === today).length;
+      setTodayRepetitions(calculatedToday);
+      setTotalRepetitions(newHistory.length);
+      return newHistory;
+    });
+  };
+
+  const flushPending = async () => {
+    if (isFlushingRef.current) return;
+    isFlushingRef.current = true;
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const today = format(new Date(), 'yyyy-MM-dd');
+    try {
+      await base44.entities.User.update(user.id, {
+        today_repetitions: todayRepetitions,
+        total_repetitions: totalRepetitions,
+        repetition_history: JSON.stringify(repetitionHistory || []),
+        last_date: today
+      });
+
+      // Activity and completed days handling when exactly reaching 100
+      if (todayRepetitions === 100) {
+        try {
+          await base44.entities.Activity.create({
+            username: user.username,
+            activity_type: "completed_day",
+            description: `${user.username} a completat 100 de repetări astăzi! 🎉`
+          });
+        } catch {}
+
+        if (!completedDays.includes(today)) {
+          const newCompletedDays = [...completedDays, today];
+          setCompletedDays(newCompletedDays);
+          try {
+            await base44.entities.User.update(user.id, {
+              completed_days: JSON.stringify(newCompletedDays)
+            });
+          } catch {}
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing repetitions:", error);
+    } finally {
+      pendingDeltaRef.current = 0;
+      isFlushingRef.current = false;
+    }
+  };
+
+  const scheduleFlush = () => {
+    if (saveTimeoutRef.current) return;
+    saveTimeoutRef.current = setTimeout(flushPending, 400);
+  };
+
 
 
   // Helper function to normalize date to yyyy-MM-dd format
@@ -424,94 +510,16 @@ export default function HomePage() {
     }
   };
 
-  const handleRepetition = async (count) => {
+  const handleRepetition = (count) => {
     if (!user) return;
-    
-    // First, reload user data to get the latest repetition_history from server
-    // This prevents duplicate repetitions when logged in on multiple devices
-    const latestUserData = await base44.entities.User.get(user.id);
-    const latestHistory = JSON.parse(latestUserData.repetition_history || '[]');
-    
-    const newTodayReps = Math.max(0, todayRepetitions + count);
-    const newTotalReps = Math.max(0, totalRepetitions + count);
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const now = new Date();
-    
-    // Check for recent repetitions (within last 2 seconds) to prevent duplicates
-    const recentThreshold = now.getTime() - 2000; // 2 seconds ago
-    const recentReps = latestHistory.filter(r => {
-      if (!r.timestamp) return false;
-      const repTime = new Date(r.timestamp).getTime();
-      return repTime > recentThreshold && r.date === today;
-    });
-    
-    // If we're adding repetitions and there are recent ones, it might be a duplicate
-    // Check if we're trying to add more than what's on the server
-    if (count > 0 && recentReps.length > 0) {
-      const serverTodayReps = latestHistory.filter(r => r.date === today).length;
-      const clientTodayReps = todayRepetitions;
-      if (serverTodayReps > clientTodayReps) {
-        // Server has more recent data, sync from server
-        console.log("Sync from server - detected newer data");
-        loadData();
-        return;
-      }
+    // Prevent going below zero
+    if (count < 0 && todayRepetitions + count < 0) {
+      count = -todayRepetitions;
     }
-    
-    const newHistory = [...latestHistory]; // Use latest history from server
-    for (let i = 0; i < Math.abs(count); i++) {
-      if (count > 0) {
-        newHistory.push({
-          date: today,
-          timestamp: now.toISOString()
-        });
-      } else if (newHistory.length > 0) {
-        const todayIndex = newHistory.map(r => r.date).lastIndexOf(today);
-        if (todayIndex !== -1) {
-          newHistory.splice(todayIndex, 1);
-        }
-      }
-    }
-    
-    // Recalculate from history
-    const calculatedTodayReps = newHistory.filter(r => r.date === today).length;
-    const calculatedTotal = newHistory.length;
-    
-    setTodayRepetitions(calculatedTodayReps);
-    setTotalRepetitions(calculatedTotal);
-    setRepetitionHistory(newHistory);
-    
-    try {
-      await base44.entities.User.update(user.id, {
-        today_repetitions: calculatedTodayReps,
-        total_repetitions: calculatedTotal,
-        repetition_history: JSON.stringify(newHistory),
-        last_date: today
-      });
-      
-      if (newTodayReps === 100 && todayRepetitions < 100) {
-        await base44.entities.Activity.create({
-          username: user.username,
-          activity_type: "completed_day",
-          description: `${user.username} a completat 100 de repetări astăzi! 🎉`
-        });
-      }
-
-      // Update completed days if reached 100 today
-      if (newTodayReps === 100) {
-        const newCompletedDays = [...completedDays];
-        if (!newCompletedDays.includes(today)) {
-          newCompletedDays.push(today);
-          setCompletedDays(newCompletedDays);
-          
-          await base44.entities.User.update(user.id, {
-            completed_days: JSON.stringify(newCompletedDays)
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error updating repetitions:", error);
-    }
+    if (!count) return;
+    pendingDeltaRef.current += count;
+    applyLocalDelta(count);
+    scheduleFlush();
   };
 
   const handleSaveAffirmation = async () => {
@@ -889,7 +897,7 @@ export default function HomePage() {
                     <>
                       <Button
                         onClick={() => handleRepetition(1)}
-                        className={`w-full md:w-80 h-14 text-xl font-bold rounded-2xl shadow-lg transform transition-transform hover:scale-105 ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'}`}
+                        className={`w-full md:w-80 h-14 text-xl font-bold rounded-2xl shadow-lg transform transition-transform active:scale-95 hover:scale-105 ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'}`}
                       >
                         Am repetat (+1)
                       </Button>

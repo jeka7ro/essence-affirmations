@@ -100,7 +100,7 @@ export default function AffirmationBox({
                       onAddRepetition();
                     }}
                     size="icon"
-                    className={`h-12 w-12 rounded-full text-white shadow-lg ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                    className={`h-12 w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                     aria-label="Adaugă repetare"
                     title="Adaugă repetare"
                   >
