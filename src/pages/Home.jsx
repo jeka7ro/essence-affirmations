@@ -45,15 +45,24 @@ export default function HomePage() {
   // Track if we've already shown mailman congratulations dialog in this session
   const congratulationsShownRef = useRef(false);
   // Optimistic batching for repetitions
-  const pendingDeltaRef = useRef(0);
-  const saveTimeoutRef = useRef(null);
-  const isFlushingRef = useRef(false);
-  // Prevent server refresh from overwriting local taps briefly
-  const suppressServerSyncUntilRef = useRef(0);
-  const localPendingCountRef = useRef(0);
+  // Serialized updates to prevent race conditions
+  const inFlightRef = useRef(false);
+  const queuedDeltaRef = useRef(0);
+  const localQueuedKey = () => {
+    const uid = userIdRef.current || 'anon';
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return `unsynced_delta_${uid}_${today}`;
+  };
+  const readLocalQueued = () => {
+    try { return parseInt(localStorage.getItem(localQueuedKey()) || '0', 10) || 0; } catch { return 0; }
+  };
+  const writeLocalQueued = (val) => {
+    try {
+      if (val) localStorage.setItem(localQueuedKey(), String(val));
+      else localStorage.removeItem(localQueuedKey());
+    } catch {}
+  };
   const userIdRef = useRef(null);
-  // Guard: after positive taps, ignore any decreases coming from server for a short time
-  const noDecreaseUntilRef = useRef(0);
 
   const getPendingKey = (userId) => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -112,40 +121,11 @@ export default function HomePage() {
     };
   }, []);
 
-  // Flush on page hide/unload so we don't lose last taps
-  useEffect(() => {
-    const onBeforeUnload = () => {
-      if (pendingDeltaRef.current !== 0) {
-        // Best effort flush; state is already updated locally
-        flushPending();
-      }
-    };
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden' && pendingDeltaRef.current !== 0) {
-        flushPending();
-      }
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, []);
+  // No page-hide flushing needed with serialized immediate saves
 
   const applyLocalDelta = (delta) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowIso = new Date().toISOString();
-    // Suppress server overwrites for a short window after local change
-    suppressServerSyncUntilRef.current = Date.now() + 10000;
-    // Track locally so a quick refresh won't lose taps
-    const uid = userIdRef.current || user?.id;
-    if (uid) {
-      const current = readLocalPending(uid);
-      const next = Math.max(0, current + delta);
-      localPendingCountRef.current = next;
-      writeLocalPending(uid, next);
-    }
     setRepetitionHistory((prev) => {
       const newHistory = Array.isArray(prev) ? [...prev] : [];
       if (delta > 0) {
@@ -164,26 +144,22 @@ export default function HomePage() {
       setTotalRepetitions(newHistory.length);
       return newHistory;
     });
+    // Track unsynced locally for refresh-resilience
+    const currentQueued = readLocalQueued();
+    writeLocalQueued(currentQueued + delta);
   };
 
-  const flushPending = async () => {
-    if (isFlushingRef.current) return;
-    isFlushingRef.current = true;
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
-    }
+  const saveHistoryToServer = async (newHistory) => {
     const today = format(new Date(), 'yyyy-MM-dd');
+    const calculatedToday = newHistory.filter(r => r.date === today).length;
     try {
       await base44.entities.User.update(user.id, {
-        today_repetitions: todayRepetitions,
-        total_repetitions: totalRepetitions,
-        repetition_history: JSON.stringify(repetitionHistory || []),
+        today_repetitions: calculatedToday,
+        total_repetitions: newHistory.length,
+        repetition_history: JSON.stringify(newHistory),
         last_date: today
       });
-
-      // Activity and completed days handling when first reaching or exceeding 100
-      if (todayRepetitions >= 100 && !completedDays.includes(today)) {
+      if (calculatedToday >= 100 && !completedDays.includes(today)) {
         try {
           await base44.entities.Activity.create({
             username: user.username,
@@ -191,34 +167,67 @@ export default function HomePage() {
             description: `${user.username} a completat 100 de repetări astăzi! 🎉`
           });
         } catch {}
-
         const newCompletedDays = [...completedDays, today];
         setCompletedDays(newCompletedDays);
         try {
-          await base44.entities.User.update(user.id, {
-            completed_days: JSON.stringify(newCompletedDays)
-          });
+          await base44.entities.User.update(user.id, { completed_days: JSON.stringify(newCompletedDays) });
         } catch {}
       }
-    } catch (error) {
-      console.error("Error syncing repetitions:", error);
-    } finally {
-      pendingDeltaRef.current = 0;
-      isFlushingRef.current = false;
-      // Briefly extend suppression to cover any in-flight loads
-      suppressServerSyncUntilRef.current = Date.now() + 500;
-      // Clear local pending since server is updated
-      const uid = userIdRef.current || user?.id;
-      if (uid) {
-        localPendingCountRef.current = 0;
-        writeLocalPending(uid, 0);
-      }
+    } catch (e) {
+      console.error('Error saving history:', e);
+      throw e;
     }
+    // On successful save, clear local unsynced
+    writeLocalQueued(0);
   };
 
-  const scheduleFlush = () => {
-    if (saveTimeoutRef.current) return;
-    saveTimeoutRef.current = setTimeout(flushPending, 0);
+  const processQueue = async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    try {
+      while (queuedDeltaRef.current !== 0 || readLocalQueued() !== 0) {
+        const pending = queuedDeltaRef.current || readLocalQueued();
+        queuedDeltaRef.current = 0;
+        writeLocalQueued(0);
+        const delta = pending;
+        // Compute effective with 0..100 cap (as before)
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        const currentToday = (Array.isArray(repetitionHistory) ? repetitionHistory : []).filter(r => r && r.date === todayStr).length;
+        let effective = delta;
+        if (delta > 0) {
+          const room = Math.max(0, 100 - currentToday);
+          effective = Math.min(delta, room);
+        } else if (delta < 0) {
+          const canRemove = Math.max(0, currentToday);
+          effective = -Math.min(Math.abs(delta), canRemove);
+        }
+        if (!effective) continue;
+        // Apply locally and persist
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const nowIso = new Date().toISOString();
+        const newHistory = (() => {
+          const base = Array.isArray(repetitionHistory) ? [...repetitionHistory] : [];
+          if (effective > 0) {
+            for (let i = 0; i < effective; i++) base.push({ date: today, timestamp: nowIso });
+          } else {
+            const removeCount = Math.min(Math.abs(effective), base.filter(r => r.date === today).length);
+            for (let i = 0; i < removeCount; i++) {
+              const idx = base.map(r => r.date).lastIndexOf(today);
+              if (idx !== -1) base.splice(idx, 1);
+            }
+          }
+          return base;
+        })();
+        // Update state immediately
+        setRepetitionHistory(newHistory);
+        setTodayRepetitions(newHistory.filter(r => r.date === today).length);
+        setTotalRepetitions(newHistory.length);
+        // Persist
+        await saveHistoryToServer(newHistory);
+      }
+    } finally {
+      inFlightRef.current = false;
+    }
   };
 
 
@@ -331,12 +340,18 @@ export default function HomePage() {
         let parsedHistory = [];
         try { parsedHistory = JSON.parse(userData.repetition_history || "[]"); } catch { parsedHistory = []; }
         const todayStrLocal = format(new Date(), 'yyyy-MM-dd');
-        // Merge any local pending that may not have been flushed
-        const localPending = readLocalPending(userData.id);
-        if (localPending > 0) {
+        // Merge any unsynced queued delta from localStorage (refresh-resilient)
+        const localQueued = (() => { try { return parseInt(localStorage.getItem(`unsynced_delta_${userData.id}_${todayStrLocal}`) || '0', 10) || 0; } catch { return 0; } })();
+        if (localQueued) {
           const nowIso = new Date().toISOString();
-          for (let i = 0; i < localPending; i++) {
-            parsedHistory.push({ date: todayStrLocal, timestamp: nowIso });
+          if (localQueued > 0) {
+            for (let i = 0; i < localQueued; i++) parsedHistory.push({ date: todayStrLocal, timestamp: nowIso });
+          } else {
+            const removeCount = Math.min(Math.abs(localQueued), parsedHistory.filter(r => r.date === todayStrLocal).length);
+            for (let i = 0; i < removeCount; i++) {
+              const idx = parsedHistory.map(r => r.date).lastIndexOf(todayStrLocal);
+              if (idx !== -1) parsedHistory.splice(idx, 1);
+            }
           }
         }
         const derivedToday = parsedHistory.filter(r => r && r.date === todayStrLocal).length;
