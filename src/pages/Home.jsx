@@ -182,8 +182,8 @@ export default function HomePage() {
         last_date: today
       });
 
-      // Activity and completed days handling when exactly reaching 100
-      if (todayRepetitions === 100) {
+      // Activity and completed days handling when first reaching or exceeding 100
+      if (todayRepetitions >= 100 && !completedDays.includes(today)) {
         try {
           await base44.entities.Activity.create({
             username: user.username,
@@ -192,15 +192,13 @@ export default function HomePage() {
           });
         } catch {}
 
-        if (!completedDays.includes(today)) {
-          const newCompletedDays = [...completedDays, today];
-          setCompletedDays(newCompletedDays);
-          try {
-            await base44.entities.User.update(user.id, {
-              completed_days: JSON.stringify(newCompletedDays)
-            });
-          } catch {}
-        }
+        const newCompletedDays = [...completedDays, today];
+        setCompletedDays(newCompletedDays);
+        try {
+          await base44.entities.User.update(user.id, {
+            completed_days: JSON.stringify(newCompletedDays)
+          });
+        } catch {}
       }
     } catch (error) {
       console.error("Error syncing repetitions:", error);
@@ -620,14 +618,11 @@ export default function HomePage() {
 
   const handleRepetition = (count) => {
     if (!user) return;
-    // Compute current today count from history to ensure precise caps
+    // Compute current today count from history to ensure precise lower bound
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const currentToday = (Array.isArray(repetitionHistory) ? repetitionHistory : []).filter(r => r && r.date === todayStr).length;
     let effective = count;
-    if (count > 0) {
-      const room = Math.max(0, 100 - currentToday);
-      effective = Math.min(count, room);
-    } else if (count < 0) {
+    if (count < 0) {
       const canRemove = Math.max(0, currentToday);
       effective = -Math.min(Math.abs(count), canRemove);
     }
