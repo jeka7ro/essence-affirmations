@@ -135,7 +135,7 @@ export default function HomePage() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowIso = new Date().toISOString();
     // Suppress server overwrites for a short window after local change
-    suppressServerSyncUntilRef.current = Date.now() + 5000;
+    suppressServerSyncUntilRef.current = Date.now() + 10000;
     // Track locally so a quick refresh won't lose taps
     const uid = userIdRef.current || user?.id;
     if (uid) {
@@ -218,7 +218,7 @@ export default function HomePage() {
 
   const scheduleFlush = () => {
     if (saveTimeoutRef.current) return;
-    saveTimeoutRef.current = setTimeout(flushPending, 200);
+    saveTimeoutRef.current = setTimeout(flushPending, 0);
   };
 
 
@@ -417,9 +417,7 @@ export default function HomePage() {
                     setTotalRepetitions(histUpdated.length);
                   }
                 } catch {
-                  if (Date.now() > suppressServerSyncUntilRef.current) {
-                    setTodayRepetitions(updatedUserData.today_repetitions || 0);
-                  }
+                  // Never trust server's today_repetitions; keep client-derived value
                 }
                 setCurrentDay(updatedUserData.current_day || 0);
                 setCompletedDays(JSON.parse(updatedUserData.completed_days || "[]"));
