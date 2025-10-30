@@ -620,16 +620,23 @@ export default function HomePage() {
 
   const handleRepetition = (count) => {
     if (!user) return;
-    // Prevent going below zero
-    if (count < 0 && todayRepetitions + count < 0) {
-      count = -todayRepetitions;
-    }
-    if (!count) return;
-    pendingDeltaRef.current += count;
+    // Compute current today count from history to ensure precise caps
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const currentToday = (Array.isArray(repetitionHistory) ? repetitionHistory : []).filter(r => r && r.date === todayStr).length;
+    let effective = count;
     if (count > 0) {
+      const room = Math.max(0, 100 - currentToday);
+      effective = Math.min(count, room);
+    } else if (count < 0) {
+      const canRemove = Math.max(0, currentToday);
+      effective = -Math.min(Math.abs(count), canRemove);
+    }
+    if (!effective) return;
+    pendingDeltaRef.current += effective;
+    if (effective > 0) {
       noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
     }
-    applyLocalDelta(count);
+    applyLocalDelta(effective);
     scheduleFlush();
   };
 
