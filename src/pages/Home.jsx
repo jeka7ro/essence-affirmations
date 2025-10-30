@@ -92,7 +92,7 @@ export default function HomePage() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowIso = new Date().toISOString();
     // Suppress server overwrites for a short window after local change
-    suppressServerSyncUntilRef.current = Date.now() + 2000;
+    suppressServerSyncUntilRef.current = Date.now() + 5000;
     setRepetitionHistory((prev) => {
       const newHistory = Array.isArray(prev) ? [...prev] : [];
       if (delta > 0) {
@@ -154,6 +154,8 @@ export default function HomePage() {
     } finally {
       pendingDeltaRef.current = 0;
       isFlushingRef.current = false;
+      // Briefly extend suppression to cover any in-flight loads
+      suppressServerSyncUntilRef.current = Date.now() + 500;
     }
   };
 
