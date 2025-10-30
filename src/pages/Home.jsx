@@ -396,11 +396,11 @@ export default function HomePage() {
             await autoCompletePastDays(userData, startDate, daysPassed);
           }
           
-          // Check for new day - only if last_date is different from today
+          // Check for new day - only if last_date (normalized) is different from today
           const todayStr = format(new Date(), 'yyyy-MM-dd');
-          const lastDate = userData.last_date;
+          const lastDateNorm = normalizeDate(userData.last_date);
           
-          if (lastDate && lastDate !== todayStr) {
+          if (lastDateNorm && lastDateNorm !== todayStr) {
             // Calculate repetitions for today from history
             const hist = JSON.parse(userData.repetition_history || "[]");
             const todayReps = hist.filter(r => r.date === todayStr).length;
@@ -583,7 +583,7 @@ export default function HomePage() {
 
   const checkNewDay = async (userData) => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const lastDate = userData.last_date;
+    const lastDate = normalizeDate(userData.last_date);
     
     // Only reset if last_date is different from today
     if (lastDate && lastDate !== today) {
