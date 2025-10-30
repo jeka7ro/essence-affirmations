@@ -52,6 +52,8 @@ export default function HomePage() {
   const suppressServerSyncUntilRef = useRef(0);
   const localPendingCountRef = useRef(0);
   const userIdRef = useRef(null);
+  // Guard: after positive taps, ignore any decreases coming from server for a short time
+  const noDecreaseUntilRef = useRef(0);
 
   const getPendingKey = (userId) => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -343,7 +345,11 @@ export default function HomePage() {
         const derivedTotal = parsedHistory.length;
         if (Date.now() > suppressServerSyncUntilRef.current) {
           setRepetitionHistory(parsedHistory);
-          setTodayRepetitions(derivedToday);
+          setTodayRepetitions(prev => {
+            const guard = Date.now() < noDecreaseUntilRef.current;
+            const next = derivedToday;
+            return guard && next < prev ? prev : next;
+          });
           setTotalRepetitions(derivedTotal);
         }
         setCurrentDay(userData.current_day || 0);
@@ -412,7 +418,11 @@ export default function HomePage() {
                   const todayStrU = format(new Date(), 'yyyy-MM-dd');
                   const todayCountU = histUpdated.filter(r => r && r.date === todayStrU).length;
                   if (Date.now() > suppressServerSyncUntilRef.current) {
-                    setTodayRepetitions(todayCountU);
+                    setTodayRepetitions(prev => {
+                      const guard = Date.now() < noDecreaseUntilRef.current;
+                      const next = todayCountU;
+                      return guard && next < prev ? prev : next;
+                    });
                     setRepetitionHistory(histUpdated);
                     setTotalRepetitions(histUpdated.length);
                   }
@@ -616,6 +626,9 @@ export default function HomePage() {
     }
     if (!count) return;
     pendingDeltaRef.current += count;
+    if (count > 0) {
+      noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
+    }
     applyLocalDelta(count);
     scheduleFlush();
   };
