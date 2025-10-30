@@ -113,15 +113,7 @@ export default function HomePage() {
     
     return () => clearInterval(interval);
   }, [todayRepetitions]);
-  // Cleanup any scheduled saves on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-      }
-    };
-  }, []);
+  // No save timeout cleanup needed (we use serialized saves now)
 
   // No page-hide flushing needed with serialized immediate saves
 
