@@ -48,6 +48,8 @@ export default function HomePage() {
   const pendingDeltaRef = useRef(0);
   const saveTimeoutRef = useRef(null);
   const isFlushingRef = useRef(false);
+  // Prevent server refresh from overwriting local taps briefly
+  const suppressServerSyncUntilRef = useRef(0);
   useEffect(() => {
     loadData();
     
@@ -89,6 +91,8 @@ export default function HomePage() {
   const applyLocalDelta = (delta) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowIso = new Date().toISOString();
+    // Suppress server overwrites for a short window after local change
+    suppressServerSyncUntilRef.current = Date.now() + 2000;
     setRepetitionHistory((prev) => {
       const newHistory = Array.isArray(prev) ? [...prev] : [];
       if (delta > 0) {
@@ -263,8 +267,17 @@ export default function HomePage() {
       if (userData) {
         setUser(userData);
         setAffirmation(userData.affirmation || "");
-        setTodayRepetitions(userData.today_repetitions || 0);
-        setTotalRepetitions(userData.total_repetitions || 0);
+        // Derive counts from history for consistency
+        let parsedHistory = [];
+        try { parsedHistory = JSON.parse(userData.repetition_history || "[]"); } catch { parsedHistory = []; }
+        const todayStrLocal = format(new Date(), 'yyyy-MM-dd');
+        const derivedToday = parsedHistory.filter(r => r && r.date === todayStrLocal).length;
+        const derivedTotal = parsedHistory.length;
+        if (Date.now() > suppressServerSyncUntilRef.current) {
+          setRepetitionHistory(parsedHistory);
+          setTodayRepetitions(derivedToday);
+          setTotalRepetitions(derivedTotal);
+        }
         setCurrentDay(userData.current_day || 0);
         
         // CRITICAL: Check if user already saw congratulations today - if yes, NEVER show popup
@@ -283,10 +296,14 @@ export default function HomePage() {
         }
         
         try {
-          setRepetitionHistory(JSON.parse(userData.repetition_history || "[]"));
+          if (Date.now() > suppressServerSyncUntilRef.current) {
+            setRepetitionHistory(parsedHistory);
+          }
           setCompletedDays(JSON.parse(userData.completed_days || "[]"));
         } catch (e) {
-          setRepetitionHistory([]);
+          if (Date.now() > suppressServerSyncUntilRef.current) {
+            setRepetitionHistory([]);
+          }
           setCompletedDays([]);
         }
         
@@ -322,13 +339,28 @@ export default function HomePage() {
               const updatedUsers = await base44.entities.User.list();
               const updatedUserData = updatedUsers.find(u => u.email === currentUser.email);
               if (updatedUserData) {
-                setTodayRepetitions(updatedUserData.today_repetitions || 0);
+                try {
+                  const histUpdated = JSON.parse(updatedUserData.repetition_history || "[]");
+                  const todayStrU = format(new Date(), 'yyyy-MM-dd');
+                  const todayCountU = histUpdated.filter(r => r && r.date === todayStrU).length;
+                  if (Date.now() > suppressServerSyncUntilRef.current) {
+                    setTodayRepetitions(todayCountU);
+                    setRepetitionHistory(histUpdated);
+                    setTotalRepetitions(histUpdated.length);
+                  }
+                } catch {
+                  if (Date.now() > suppressServerSyncUntilRef.current) {
+                    setTodayRepetitions(updatedUserData.today_repetitions || 0);
+                  }
+                }
                 setCurrentDay(updatedUserData.current_day || 0);
                 setCompletedDays(JSON.parse(updatedUserData.completed_days || "[]"));
               }
             } else {
               // If repetitions exist today, set them directly
-              setTodayRepetitions(todayReps);
+              if (Date.now() > suppressServerSyncUntilRef.current) {
+                setTodayRepetitions(todayReps);
+              }
             }
           }
         }
