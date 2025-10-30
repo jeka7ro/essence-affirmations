@@ -50,6 +50,28 @@ export default function HomePage() {
   const isFlushingRef = useRef(false);
   // Prevent server refresh from overwriting local taps briefly
   const suppressServerSyncUntilRef = useRef(0);
+  const localPendingCountRef = useRef(0);
+  const userIdRef = useRef(null);
+
+  const getPendingKey = (userId) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return `pending_reps_today_${userId || 'anon'}_${today}`;
+  };
+
+  const readLocalPending = (userId) => {
+    try {
+      const raw = localStorage.getItem(getPendingKey(userId));
+      const n = parseInt(raw || '0', 10);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    } catch { return 0; }
+  };
+
+  const writeLocalPending = (userId, value) => {
+    try {
+      if (value > 0) localStorage.setItem(getPendingKey(userId), String(value));
+      else localStorage.removeItem(getPendingKey(userId));
+    } catch {}
+  };
   useEffect(() => {
     loadData();
     
@@ -88,11 +110,40 @@ export default function HomePage() {
     };
   }, []);
 
+  // Flush on page hide/unload so we don't lose last taps
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      if (pendingDeltaRef.current !== 0) {
+        // Best effort flush; state is already updated locally
+        flushPending();
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden' && pendingDeltaRef.current !== 0) {
+        flushPending();
+      }
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
   const applyLocalDelta = (delta) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowIso = new Date().toISOString();
     // Suppress server overwrites for a short window after local change
     suppressServerSyncUntilRef.current = Date.now() + 5000;
+    // Track locally so a quick refresh won't lose taps
+    const uid = userIdRef.current || user?.id;
+    if (uid) {
+      const current = readLocalPending(uid);
+      const next = Math.max(0, current + delta);
+      localPendingCountRef.current = next;
+      writeLocalPending(uid, next);
+    }
     setRepetitionHistory((prev) => {
       const newHistory = Array.isArray(prev) ? [...prev] : [];
       if (delta > 0) {
@@ -156,12 +207,18 @@ export default function HomePage() {
       isFlushingRef.current = false;
       // Briefly extend suppression to cover any in-flight loads
       suppressServerSyncUntilRef.current = Date.now() + 500;
+      // Clear local pending since server is updated
+      const uid = userIdRef.current || user?.id;
+      if (uid) {
+        localPendingCountRef.current = 0;
+        writeLocalPending(uid, 0);
+      }
     }
   };
 
   const scheduleFlush = () => {
     if (saveTimeoutRef.current) return;
-    saveTimeoutRef.current = setTimeout(flushPending, 400);
+    saveTimeoutRef.current = setTimeout(flushPending, 200);
   };
 
 
@@ -268,11 +325,20 @@ export default function HomePage() {
       
       if (userData) {
         setUser(userData);
+        userIdRef.current = userData.id;
         setAffirmation(userData.affirmation || "");
         // Derive counts from history for consistency
         let parsedHistory = [];
         try { parsedHistory = JSON.parse(userData.repetition_history || "[]"); } catch { parsedHistory = []; }
         const todayStrLocal = format(new Date(), 'yyyy-MM-dd');
+        // Merge any local pending that may not have been flushed
+        const localPending = readLocalPending(userData.id);
+        if (localPending > 0) {
+          const nowIso = new Date().toISOString();
+          for (let i = 0; i < localPending; i++) {
+            parsedHistory.push({ date: todayStrLocal, timestamp: nowIso });
+          }
+        }
         const derivedToday = parsedHistory.filter(r => r && r.date === todayStrLocal).length;
         const derivedTotal = parsedHistory.length;
         if (Date.now() > suppressServerSyncUntilRef.current) {
