@@ -156,20 +156,34 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     if (!user) return;
     
-    const updateReps = () => {
+    const updateReps = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
         const localQueuedKey = `unsynced_delta_${user.id}_${today}`;
         
-        // Get the latest data from localStorage immediately
+        // First try localStorage for instant updates
         let currentReps = 0;
+        let foundInLocalStorage = false;
+        
         try {
           const histRaw = localStorage.getItem(`repetition_history_${user.id}`);
           if (histRaw) {
             const hist = JSON.parse(histRaw);
             currentReps = hist.filter(r => r && r.date === today).length;
+            foundInLocalStorage = true;
           }
         } catch {}
+        
+        // If not in localStorage, fetch from server (after refresh)
+        if (!foundInLocalStorage && user.id) {
+          try {
+            const userData = await base44.entities.User.get(user.id);
+            const hist = JSON.parse(userData.repetition_history || "[]");
+            currentReps = hist.filter(r => r && r.date === today).length;
+            // Save to localStorage for next time
+            localStorage.setItem(`repetition_history_${user.id}`, JSON.stringify(hist));
+          } catch {}
+        }
         
         // Add any unsynced deltas
         let localQueued = 0;

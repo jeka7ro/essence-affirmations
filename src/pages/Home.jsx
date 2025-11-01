@@ -126,36 +126,37 @@ export default function HomePage() {
   const applyLocalDelta = (delta) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const nowIso = new Date().toISOString();
-    setRepetitionHistory((prev) => {
-      const newHistory = Array.isArray(prev) ? [...prev] : [];
-      if (delta > 0) {
-        for (let i = 0; i < delta; i++) {
-          newHistory.push({ date: today, timestamp: nowIso });
-        }
-      } else if (delta < 0) {
-        const removeCount = Math.min(Math.abs(delta), newHistory.filter((r) => r.date === today).length);
-        for (let i = 0; i < removeCount; i++) {
-          const idx = newHistory.map((r) => r.date).lastIndexOf(today);
-          if (idx !== -1) newHistory.splice(idx, 1);
-        }
+    
+    // Apply delta immediately to local state
+    const newHistory = Array.isArray(repetitionHistoryRef.current) ? [...repetitionHistoryRef.current] : [];
+    
+    if (delta > 0) {
+      for (let i = 0; i < delta; i++) {
+        newHistory.push({ date: today, timestamp: nowIso });
       }
-      const calculatedToday = newHistory.filter((r) => r.date === today).length;
-      setTodayRepetitions(calculatedToday);
-      setTotalRepetitions(newHistory.length);
-      repetitionHistoryRef.current = newHistory;
-      
-      // Save to localStorage for instant sync with header
-      if (user?.id) {
-        try {
-          localStorage.setItem(`repetition_history_${user.id}`, JSON.stringify(newHistory));
-        } catch {}
+    } else if (delta < 0) {
+      const removeCount = Math.min(Math.abs(delta), newHistory.filter((r) => r.date === today).length);
+      for (let i = 0; i < removeCount; i++) {
+        const idx = newHistory.map((r) => r.date).lastIndexOf(today);
+        if (idx !== -1) newHistory.splice(idx, 1);
       }
-      
-      return newHistory;
-    });
-    // Track unsynced locally for refresh-resilience
-    const currentQueued = readLocalQueued();
-    writeLocalQueued(currentQueued + delta);
+    }
+    
+    const calculatedToday = newHistory.filter((r) => r.date === today).length;
+    
+    // Update all refs and state synchronously
+    repetitionHistoryRef.current = newHistory;
+    serverHistoryRef.current = newHistory;
+    setRepetitionHistory(newHistory);
+    setTodayRepetitions(calculatedToday);
+    setTotalRepetitions(newHistory.length);
+    
+    // Save to localStorage for instant sync with header
+    if (user?.id) {
+      try {
+        localStorage.setItem(`repetition_history_${user.id}`, JSON.stringify(newHistory));
+      } catch {}
+    }
   };
 
   const saveHistoryToServer = async (newHistory) => {
@@ -194,22 +195,13 @@ export default function HomePage() {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     try {
-      while (queuedDeltaRef.current !== 0 || readLocalQueued() !== 0) {
-        const pending = queuedDeltaRef.current || readLocalQueued();
-        queuedDeltaRef.current = 0;
-        writeLocalQueued(0);
-        if (!pending) continue;
-
-        // Use current client state as the source of truth
-        const currentHistory = Array.isArray(repetitionHistoryRef.current) ? [...repetitionHistoryRef.current] : [];
-        
-        // Save current state to server
-        serverHistoryRef.current = currentHistory;
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const todayCount = currentHistory.filter(r => r && r.date === todayStr).length;
-        
-        await saveHistoryToServer(currentHistory);
-      }
+      // Simply save the current state to server - no recalculation needed
+      const currentHistory = Array.isArray(repetitionHistoryRef.current) ? [...repetitionHistoryRef.current] : [];
+      await saveHistoryToServer(currentHistory);
+      
+      // Clear the queue markers
+      queuedDeltaRef.current = 0;
+      writeLocalQueued(0);
     } finally {
       inFlightRef.current = false;
     }
@@ -638,25 +630,29 @@ export default function HomePage() {
 
   const handleRepetition = (count) => {
     if (!user) return;
-    // Compute current today count from history to ensure precise lower bound
+    
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const historySnapshot = Array.isArray(repetitionHistoryRef.current) ? repetitionHistoryRef.current : [];
     const currentToday = historySnapshot.filter(r => r && r.date === todayStr).length;
+    
     let effective = count;
-    if (count > 0) {
-      // No upper limit - allow unlimited repetitions
-      effective = count;
-    } else if (count < 0) {
+    
+    // For negative counts, limit to available repetitions
+    if (count < 0) {
       const canRemove = Math.max(0, currentToday);
       effective = -Math.min(Math.abs(count), canRemove);
     }
+    
     if (!effective) return;
+    
     if (effective > 0) {
       noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
     }
-    // enqueue and process
-    queuedDeltaRef.current += effective;
+    
+    // Apply immediately to UI
     applyLocalDelta(effective);
+    
+    // Save to server asynchronously
     processQueue();
   };
 
