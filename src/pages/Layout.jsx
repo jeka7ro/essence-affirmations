@@ -152,7 +152,7 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, [user, location.pathname]);
 
-  // Poll today's repetitions every 5 seconds
+  // Poll today's repetitions every 2 seconds for real-time updates
   useEffect(() => {
     if (!user) return;
     const pollReps = async () => {
@@ -160,12 +160,18 @@ export default function Layout({ children, currentPageName }) {
         const userData = await base44.entities.User.get(user.id);
         const hist = JSON.parse(userData.repetition_history || "[]");
         const today = new Date().toISOString().slice(0, 10);
-        const count = hist.filter(r => r && r.date === today).length;
+        // Also check localStorage for any unsynced deltas
+        const localQueuedKey = `unsynced_delta_${userData.id}_${today}`;
+        let localQueued = 0;
+        try {
+          localQueued = parseInt(localStorage.getItem(localQueuedKey) || '0', 10) || 0;
+        } catch {}
+        const count = hist.filter(r => r && r.date === today).length + localQueued;
         setTodayRepetitions(count);
       } catch {}
     };
     pollReps();
-    const interval = setInterval(pollReps, 5000);
+    const interval = setInterval(pollReps, 2000);
     return () => clearInterval(interval);
   }, [user]);
 
