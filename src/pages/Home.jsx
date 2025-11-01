@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useProgress } from "@/context/ProgressContext";
 import { Calendar, Users, TrendingUp, RotateCcw, AlertCircle } from "lucide-react";
 import { format, differenceInDays, addDays, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -19,6 +20,7 @@ import AffirmationBox from "../components/home/AffirmationBox";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { setProgress } = useProgress();
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -808,6 +810,34 @@ export default function HomePage() {
     ? 0 // Challenge extended beyond 30 days
     : Math.max(0, 30 - actualCompletedDaysCount);
   const progressPercentage = (todayRepetitions / 100) * 100;
+
+  useEffect(() => {
+    const goal = 100;
+    const clampedToday = Math.max(0, todayRepetitions);
+    const clampedTotal = Math.max(0, totalRepetitions);
+    const remaining = Math.max(0, goal - clampedToday);
+    const percentage = goal > 0 ? Math.min(100, (clampedToday / goal) * 100) : 0;
+
+    let label;
+    if (!challengeStartDate) {
+      label = "Setează data de început pentru a urmări progresul zilnic.";
+    } else if (clampedToday >= goal) {
+      label = "Provocarea de azi este completă! 🎉";
+    } else {
+      label = `Mai ai ${remaining} repetări pentru azi.`;
+    }
+
+    setProgress({
+      today: clampedToday,
+      goal,
+      total: clampedTotal,
+      remaining,
+      percentage,
+      label,
+      completedDays: actualCompletedDaysCount,
+      challengeLength: 30
+    });
+  }, [setProgress, todayRepetitions, totalRepetitions, challengeStartDate, actualCompletedDaysCount]);
 
   if (loading) {
     return (

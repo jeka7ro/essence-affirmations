@@ -1,4 +1,5 @@
 import Layout from "./Layout.jsx";
+import { ProgressProvider } from "@/context/ProgressContext";
 
 import Register from "./Register";
 
@@ -77,42 +78,44 @@ function PagesContent() {
     const currentPage = _getCurrentPage(location.pathname);
     
     return (
-        <Layout currentPageName={currentPage}>
-            <Routes>            
-                
-                    <Route path="/" element={<Autentificare />} />
-                
-                
-                <Route path="/Register" element={<Register />} />
-                
-                <Route path="/Home" element={<Home />} />
-                
-                <Route path="/Groups" element={<Groups />} />
-                
-                <Route path="/Feed" element={<Feed />} />
-                
-                <Route path="/Chat" element={<Chat />} />
-                
-                <Route path="/Admin" element={<Admin />} />
-                
-                <Route path="/Settings" element={<Settings />} />
-                
-                <Route path="/ForgotPin" element={<ForgotPin />} />
-                
-                <Route path="/Autentificare" element={<Autentificare />} />
-                
-                <Route path="/Courses" element={<Courses />} />
-                
-                <Route path="/GroupDetails" element={<GroupDetails />} />
-                
-                
-                
-                <Route path="/UserDetails" element={<UserDetails />} />
-                
-                <Route path="/Zodii" element={<Zodii />} />
-                
-            </Routes>
-        </Layout>
+        <ProgressProvider>
+            <Layout currentPageName={currentPage}>
+                <Routes>            
+                    
+                        <Route path="/" element={<Autentificare />} />
+                    
+                    
+                    <Route path="/Register" element={<Register />} />
+                    
+                    <Route path="/Home" element={<Home />} />
+                    
+                    <Route path="/Groups" element={<Groups />} />
+                    
+                    <Route path="/Feed" element={<Feed />} />
+                    
+                    <Route path="/Chat" element={<Chat />} />
+                    
+                    <Route path="/Admin" element={<Admin />} />
+                    
+                    <Route path="/Settings" element={<Settings />} />
+                    
+                    <Route path="/ForgotPin" element={<ForgotPin />} />
+                    
+                    <Route path="/Autentificare" element={<Autentificare />} />
+                    
+                    <Route path="/Courses" element={<Courses />} />
+                    
+                    <Route path="/GroupDetails" element={<GroupDetails />} />
+                    
+                    
+                    
+                    <Route path="/UserDetails" element={<UserDetails />} />
+                    
+                    <Route path="/Zodii" element={<Zodii />} />
+                    
+                </Routes>
+            </Layout>
+        </ProgressProvider>
     );
 }
 

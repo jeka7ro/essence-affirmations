@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44, API_URL } from "@/api/base44Client";
+import { useProgress } from "@/context/ProgressContext";
 import { 
   Users, 
   Settings, 
@@ -31,6 +32,11 @@ export default function Layout({ children, currentPageName }) {
   const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
   const [seasonalActive, setSeasonalActive] = useState(false);
   const isHalloween = seasonalActive;
+  const { progress } = useProgress();
+
+  const todayGoal = progress?.goal || 0;
+  const todayCount = progress?.today || 0;
+  const progressPercent = todayGoal > 0 ? Math.min(100, (todayCount / todayGoal) * 100) : 0;
 
   // Scorpio unicode sign (clean and consistent with text icons)
   const ScorpioIcon = ({ className = "w-5 h-5" }) => (
@@ -485,7 +491,30 @@ export default function Layout({ children, currentPageName }) {
               </div>
             )}
           </div>
-          
+
+          {todayGoal > 0 && (
+            <div className="mt-4 space-y-2 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/60 p-3 shadow-sm">
+              <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <span>Repetări azi</span>
+                <span>{todayCount}/{todayGoal}</span>
+              </div>
+              <div className="relative h-3 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
+                <div
+                  className={`absolute inset-y-0 left-0 transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100">
+                    {Math.round(progressPercent)}%
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                Ai făcut {todayCount} din {todayGoal} repetări astăzi.
+              </p>
+            </div>
+          )}
+
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 shadow-lg z-50">
