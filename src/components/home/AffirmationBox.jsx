@@ -27,7 +27,7 @@ export default function AffirmationBox({
               if (isHalloween) {
                 return (
                   <div
-                    className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center text-2xl"
+                    className="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xl"
                     title="Halloween"
                   >
                     🎃
@@ -38,12 +38,12 @@ export default function AffirmationBox({
                 <img 
                   src="/logo_essece2.png?v=20251030" 
                   alt="App Logo" 
-                  className="w-12 h-12 object-cover rounded-xl cursor-pointer hover:opacity-80 transition-opacity" 
+                  className="w-9 h-9 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" 
                   onClick={() => navigate(createPageUrl("Home"))}
                 />
               );
             })()}
-            <CardTitle className="affirmation-title text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <CardTitle className="affirmation-title text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
               Afirmația Mea
             </CardTitle>
           </div>
@@ -78,10 +78,10 @@ export default function AffirmationBox({
             className="min-h-[400px] text-lg leading-relaxed resize-y rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
         ) : (
-          <div className="min-h-[200px] p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-            <div className="relative pb-16">
+          <div className="min-h-[160px] p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+            <div className="relative pb-12">
               {affirmation ? (
-                <p className="text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                <p className="text-base md:text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
                   {affirmation}
                 </p>
               ) : (
@@ -92,7 +92,7 @@ export default function AffirmationBox({
             </div>
             {/* Round green + button below text to add repetition - always at bottom */}
             {onAddRepetition && (
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-end mt-1.5">
                 {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
                   <Button
                     onClick={(e) => {
@@ -100,7 +100,7 @@ export default function AffirmationBox({
                       onAddRepetition();
                     }}
                     size="icon"
-                    className={`h-12 w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                    className={`h-10 w-10 md:h-12 md:w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                     aria-label="Adaugă repetare"
                     title="Adaugă repetare"
                   >

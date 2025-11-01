@@ -31,6 +31,7 @@ export default function Layout({ children, currentPageName }) {
   const [showBirthdayDialog, setShowBirthdayDialog] = useState(false);
   const [seasonalActive, setSeasonalActive] = useState(false);
   const isHalloween = seasonalActive;
+  const [todayRepetitions, setTodayRepetitions] = useState(0);
 
   // Scorpio unicode sign (clean and consistent with text icons)
   const ScorpioIcon = ({ className = "w-5 h-5" }) => (
@@ -151,6 +152,23 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, [user, location.pathname]);
 
+  // Poll today's repetitions every 5 seconds
+  useEffect(() => {
+    if (!user) return;
+    const pollReps = async () => {
+      try {
+        const userData = await base44.entities.User.get(user.id);
+        const hist = JSON.parse(userData.repetition_history || "[]");
+        const today = new Date().toISOString().slice(0, 10);
+        const count = hist.filter(r => r && r.date === today).length;
+        setTodayRepetitions(count);
+      } catch {}
+    };
+    pollReps();
+    const interval = setInterval(pollReps, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Birthday popup after 10:00, once per day across devices
   useEffect(() => {
     (async () => {
@@ -249,6 +267,16 @@ export default function Layout({ children, currentPageName }) {
         }
       } catch {}
       setUser(userData);
+      
+      // Load today's repetitions from history
+      try {
+        const hist = JSON.parse(userData.repetition_history || "[]");
+        const today = new Date().toISOString().slice(0, 10);
+        const count = hist.filter(r => r && r.date === today).length;
+        setTodayRepetitions(count);
+      } catch {
+        setTodayRepetitions(0);
+      }
     } catch (error) {
       console.error("Error loading user in layout:", error);
       localStorage.removeItem('essence_user_id');
@@ -399,8 +427,9 @@ export default function Layout({ children, currentPageName }) {
       {/* Main content with margin for sidebar */}
       <div className="flex-1 flex flex-col md:ml-64">
         {/* Mobile Header */}
-        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-4 md:hidden sticky top-0 z-50">
-          <div className="flex items-center justify-between">
+        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 md:hidden sticky top-0 z-50">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -482,6 +511,22 @@ export default function Layout({ children, currentPageName }) {
                     </Link>
                   );
                 })()}
+              </div>
+            )}
+            </div>
+            
+            {/* Progress bar for repetitions */}
+            {user && location.pathname === createPageUrl("Home") && (
+              <div className="flex items-center gap-2 px-1">
+                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-300 ${isHalloween ? 'bg-orange-500' : 'bg-green-500'}`}
+                    style={{ width: `${Math.min((todayRepetitions / 100) * 100, 100)}%` }}
+                  />
+                </div>
+                <span className={`text-xs font-bold whitespace-nowrap ${todayRepetitions >= 100 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                  {todayRepetitions}/100
+                </span>
               </div>
             )}
           </div>

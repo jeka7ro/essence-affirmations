@@ -11,6 +11,7 @@ import Feed from "./Feed";
 import Chat from "./Chat";
 
 import Admin from "./Admin";
+import Events from "./Events";
 
 import Settings from "./Settings";
 
@@ -38,6 +39,7 @@ const PAGES = {
     Chat: Chat,
     
     Admin: Admin,
+    Events: Events,
     
     Settings: Settings,
     
@@ -94,6 +96,7 @@ function PagesContent() {
                 <Route path="/Chat" element={<Chat />} />
                 
                 <Route path="/Admin" element={<Admin />} />
+                <Route path="/Events" element={<Events />} />
                 
                 <Route path="/Settings" element={<Settings />} />
                 
