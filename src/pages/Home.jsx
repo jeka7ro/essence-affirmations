@@ -198,8 +198,8 @@ export default function HomePage() {
         let effective = pending;
 
         if (pending > 0) {
-          const room = Math.max(0, 100 - currentToday);
-          effective = Math.min(pending, room);
+          // No upper limit - allow unlimited repetitions
+          effective = pending;
         } else if (pending < 0) {
           const canRemove = Math.max(0, currentToday);
           effective = -Math.min(Math.abs(pending), canRemove);
@@ -323,11 +323,11 @@ export default function HomePage() {
     }
     
     // Only show if:
-    // 1. User reached 100 repetitions today
+    // 1. User reached exactly 100 repetitions today (not more, to show only once)
     // 2. Hasn't seen the popup today (checked from database - works across all devices)
     // 3. Dialog is not already shown (to prevent multiple triggers)
     // 4. Haven't shown in this session yet (prevents re-trigger on state updates)
-    if (todayRepetitions >= 100 && !hasSeenToday && !showCongratulationsDialog && !congratulationsShownRef.current) {
+    if (todayRepetitions === 100 && !hasSeenToday && !showCongratulationsDialog && !congratulationsShownRef.current) {
       // Mark as shown immediately to prevent re-trigger
       congratulationsShownRef.current = true;
       // Mark as seen IMMEDIATELY and synchronously in state BEFORE showing
@@ -674,8 +674,8 @@ export default function HomePage() {
     const currentToday = historySnapshot.filter(r => r && r.date === todayStr).length;
     let effective = count;
     if (count > 0) {
-      const room = Math.max(0, 100 - currentToday);
-      effective = Math.min(count, room);
+      // No upper limit - allow unlimited repetitions
+      effective = count;
     } else if (count < 0) {
       const canRemove = Math.max(0, currentToday);
       effective = -Math.min(Math.abs(count), canRemove);
