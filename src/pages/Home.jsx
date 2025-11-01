@@ -32,6 +32,8 @@ export default function HomePage() {
   const [totalRepetitions, setTotalRepetitions] = useState(0);
   const [currentDay, setCurrentDay] = useState(0);
   const [repetitionHistory, setRepetitionHistory] = useState([]);
+  const repetitionHistoryRef = useRef([]);
+  const serverHistoryRef = useRef([]);
   const [completedDays, setCompletedDays] = useState([]);
   const [challengeStartDate, setChallengeStartDate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -113,6 +115,10 @@ export default function HomePage() {
     
     return () => clearInterval(interval);
   }, [todayRepetitions]);
+
+  useEffect(() => {
+    repetitionHistoryRef.current = Array.isArray(repetitionHistory) ? repetitionHistory : [];
+  }, [repetitionHistory]);
   // No save timeout cleanup needed (we use serialized saves now)
 
   // No page-hide flushing needed with serialized immediate saves
@@ -136,6 +142,7 @@ export default function HomePage() {
       const calculatedToday = newHistory.filter((r) => r.date === today).length;
       setTodayRepetitions(calculatedToday);
       setTotalRepetitions(newHistory.length);
+      repetitionHistoryRef.current = newHistory;
       return newHistory;
     });
     // Track unsynced locally for refresh-resilience
@@ -183,40 +190,54 @@ export default function HomePage() {
         const pending = queuedDeltaRef.current || readLocalQueued();
         queuedDeltaRef.current = 0;
         writeLocalQueued(0);
-        const delta = pending;
-        // Compute effective with 0..100 cap (as before)
+        if (!pending) continue;
+
         const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const currentToday = (Array.isArray(repetitionHistory) ? repetitionHistory : []).filter(r => r && r.date === todayStr).length;
-        let effective = delta;
-        if (delta > 0) {
+        const baseHistory = Array.isArray(serverHistoryRef.current) ? serverHistoryRef.current : [];
+        const currentToday = baseHistory.filter(r => r && r.date === todayStr).length;
+        let effective = pending;
+
+        if (pending > 0) {
           const room = Math.max(0, 100 - currentToday);
-          effective = Math.min(delta, room);
-        } else if (delta < 0) {
+          effective = Math.min(pending, room);
+        } else if (pending < 0) {
           const canRemove = Math.max(0, currentToday);
-          effective = -Math.min(Math.abs(delta), canRemove);
+          effective = -Math.min(Math.abs(pending), canRemove);
         }
-        if (!effective) continue;
-        // Apply locally and persist
-        const today = format(new Date(), 'yyyy-MM-dd');
+
+        if (!effective) {
+          const syncedHistory = Array.isArray(baseHistory) ? [...baseHistory] : [];
+          serverHistoryRef.current = syncedHistory;
+          repetitionHistoryRef.current = syncedHistory;
+          setRepetitionHistory(syncedHistory);
+          setTodayRepetitions(currentToday);
+          setTotalRepetitions(syncedHistory.length);
+          continue;
+        }
+
         const nowIso = new Date().toISOString();
         const newHistory = (() => {
-          const base = Array.isArray(repetitionHistory) ? [...repetitionHistory] : [];
+          const base = Array.isArray(baseHistory) ? [...baseHistory] : [];
           if (effective > 0) {
-            for (let i = 0; i < effective; i++) base.push({ date: today, timestamp: nowIso });
+            for (let i = 0; i < effective; i++) {
+              base.push({ date: todayStr, timestamp: nowIso });
+            }
           } else {
-            const removeCount = Math.min(Math.abs(effective), base.filter(r => r.date === today).length);
+            const removeCount = Math.min(Math.abs(effective), base.filter(r => r.date === todayStr).length);
             for (let i = 0; i < removeCount; i++) {
-              const idx = base.map(r => r.date).lastIndexOf(today);
+              const idx = base.map(r => r.date).lastIndexOf(todayStr);
               if (idx !== -1) base.splice(idx, 1);
             }
           }
           return base;
         })();
-        // Update state immediately
+
+        serverHistoryRef.current = newHistory;
+        repetitionHistoryRef.current = newHistory;
         setRepetitionHistory(newHistory);
-        setTodayRepetitions(newHistory.filter(r => r.date === today).length);
+        const todayCount = newHistory.filter(r => r && r.date === todayStr).length;
+        setTodayRepetitions(todayCount);
         setTotalRepetitions(newHistory.length);
-        // Persist
         await saveHistoryToServer(newHistory);
       }
     } finally {
@@ -331,27 +352,43 @@ export default function HomePage() {
         userIdRef.current = userData.id;
         setAffirmation(userData.affirmation || "");
         // Derive counts from history for consistency
-        let parsedHistory = [];
-        try { parsedHistory = JSON.parse(userData.repetition_history || "[]"); } catch { parsedHistory = []; }
+        let serverHistory = [];
+        try {
+          serverHistory = JSON.parse(userData.repetition_history || "[]");
+        } catch {
+          serverHistory = [];
+        }
         const todayStrLocal = format(new Date(), 'yyyy-MM-dd');
+        let mergedHistory = Array.isArray(serverHistory) ? [...serverHistory] : [];
         // Merge any unsynced queued delta from localStorage (refresh-resilient)
-        const localQueued = (() => { try { return parseInt(localStorage.getItem(`unsynced_delta_${userData.id}_${todayStrLocal}`) || '0', 10) || 0; } catch { return 0; } })();
+        const localQueued = (() => {
+          try {
+            return parseInt(localStorage.getItem(`unsynced_delta_${userData.id}_${todayStrLocal}`) || '0', 10) || 0;
+          } catch {
+            return 0;
+          }
+        })();
         if (localQueued) {
           const nowIso = new Date().toISOString();
           if (localQueued > 0) {
-            for (let i = 0; i < localQueued; i++) parsedHistory.push({ date: todayStrLocal, timestamp: nowIso });
+            for (let i = 0; i < localQueued; i++) mergedHistory.push({ date: todayStrLocal, timestamp: nowIso });
           } else {
-            const removeCount = Math.min(Math.abs(localQueued), parsedHistory.filter(r => r.date === todayStrLocal).length);
+            const removeCount = Math.min(Math.abs(localQueued), mergedHistory.filter(r => r.date === todayStrLocal).length);
             for (let i = 0; i < removeCount; i++) {
-              const idx = parsedHistory.map(r => r.date).lastIndexOf(todayStrLocal);
-              if (idx !== -1) parsedHistory.splice(idx, 1);
+              const idx = mergedHistory.map(r => r.date).lastIndexOf(todayStrLocal);
+              if (idx !== -1) mergedHistory.splice(idx, 1);
             }
           }
         }
-        const derivedToday = parsedHistory.filter(r => r && r.date === todayStrLocal).length;
-        const derivedTotal = parsedHistory.length;
-        if (Date.now() > suppressServerSyncUntilRef.current) {
-          setRepetitionHistory(parsedHistory);
+        const derivedToday = mergedHistory.filter(r => r && r.date === todayStrLocal).length;
+        const derivedTotal = mergedHistory.length;
+        const shouldSyncNow = Date.now() > suppressServerSyncUntilRef.current;
+
+        serverHistoryRef.current = Array.isArray(serverHistory) ? [...serverHistory] : [];
+
+        if (shouldSyncNow) {
+          setRepetitionHistory(mergedHistory);
+          repetitionHistoryRef.current = mergedHistory;
           setTodayRepetitions(prev => {
             const guard = Date.now() < noDecreaseUntilRef.current;
             const next = derivedToday;
@@ -377,13 +414,12 @@ export default function HomePage() {
         }
         
         try {
-          if (Date.now() > suppressServerSyncUntilRef.current) {
-            setRepetitionHistory(parsedHistory);
-          }
           setCompletedDays(JSON.parse(userData.completed_days || "[]"));
         } catch (e) {
-          if (Date.now() > suppressServerSyncUntilRef.current) {
+          if (shouldSyncNow) {
             setRepetitionHistory([]);
+            repetitionHistoryRef.current = [];
+            serverHistoryRef.current = [];
           }
           setCompletedDays([]);
         }
@@ -430,8 +466,11 @@ export default function HomePage() {
                       const next = todayCountU;
                       return guard && next < prev ? prev : next;
                     });
-                    setRepetitionHistory(histUpdated);
-                    setTotalRepetitions(histUpdated.length);
+                    const syncedHistory = Array.isArray(histUpdated) ? [...histUpdated] : [];
+                    serverHistoryRef.current = syncedHistory;
+                    repetitionHistoryRef.current = syncedHistory;
+                    setRepetitionHistory(syncedHistory);
+                    setTotalRepetitions(syncedHistory.length);
                   }
                 } catch {
                   // Never trust server's today_repetitions; keep client-derived value
@@ -550,6 +589,8 @@ export default function HomePage() {
       setChallengeStartDate(selectedStartDate);
       setCurrentDay(newCurrentDay);
       setCompletedDays(newCompletedDays);
+      serverHistoryRef.current = newRepetitionHistory;
+      repetitionHistoryRef.current = newRepetitionHistory;
       setRepetitionHistory(newRepetitionHistory);
       setTotalRepetitions(newRepetitionHistory.length);
       setShowStartDialog(false);
@@ -629,20 +670,24 @@ export default function HomePage() {
     if (!user) return;
     // Compute current today count from history to ensure precise lower bound
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const currentToday = (Array.isArray(repetitionHistory) ? repetitionHistory : []).filter(r => r && r.date === todayStr).length;
+    const historySnapshot = Array.isArray(repetitionHistoryRef.current) ? repetitionHistoryRef.current : [];
+    const currentToday = historySnapshot.filter(r => r && r.date === todayStr).length;
     let effective = count;
-    if (count < 0) {
+    if (count > 0) {
+      const room = Math.max(0, 100 - currentToday);
+      effective = Math.min(count, room);
+    } else if (count < 0) {
       const canRemove = Math.max(0, currentToday);
       effective = -Math.min(Math.abs(count), canRemove);
     }
-  if (!effective) return;
-  if (effective > 0) {
-    noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
-  }
-  // enqueue and process
-  queuedDeltaRef.current += effective;
-  applyLocalDelta(effective);
-  processQueue();
+    if (!effective) return;
+    if (effective > 0) {
+      noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
+    }
+    // enqueue and process
+    queuedDeltaRef.current += effective;
+    applyLocalDelta(effective);
+    processQueue();
   };
 
   const handleSaveAffirmation = async () => {
@@ -685,6 +730,8 @@ export default function HomePage() {
       setTodayRepetitions(0);
       setTotalRepetitions(0);
       setCurrentDay(0);
+      serverHistoryRef.current = [];
+      repetitionHistoryRef.current = [];
       setRepetitionHistory([]);
       setCompletedDays([]);
       setChallengeStartDate(null);
@@ -719,6 +766,8 @@ export default function HomePage() {
       
       setTodayRepetitions(0);
       setTotalRepetitions(totalRepetitions - repsToRemove);
+      serverHistoryRef.current = newHistory;
+      repetitionHistoryRef.current = newHistory;
       setRepetitionHistory(newHistory);
     } catch (error) {
       console.error("Error resetting today:", error);

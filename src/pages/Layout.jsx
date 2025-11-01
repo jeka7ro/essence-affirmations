@@ -64,7 +64,10 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [shouldShowLayout, currentPageName]);
 
-  // Seasonal: activate Halloween for user Eugen now, and globally on Oct 30-31
+  const normalizeName = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+  const seasonalPreviewUsers = ['halloween 2'];
+
+  // Seasonal: activate Halloween for preview users and globally on Oct 30-31
   useEffect(() => {
     const applySeasonal = () => {
       try {
@@ -72,7 +75,9 @@ export default function Layout({ children, currentPageName }) {
         const isOct = now.getMonth() === 9; // October (0-indexed)
         const day = now.getDate();
         const isGlobalHalloween = isOct && (day === 30 || day === 31);
-        const isUserPreview = user && (user.username === 'Eugen' || user.first_name === 'Eugen');
+        const userName = normalizeName(user?.username);
+        const firstName = normalizeName(user?.first_name);
+        const isUserPreview = user && seasonalPreviewUsers.some((preview) => userName === preview || firstName === preview);
         const active = isGlobalHalloween || isUserPreview;
         document.documentElement.classList.toggle('halloween', !!active);
         setSeasonalActive(!!active);
@@ -212,15 +217,21 @@ export default function Layout({ children, currentPageName }) {
       await new Promise(resolve => setTimeout(resolve, 300));
       
       const userId = localStorage.getItem('essence_user_id');
-      
+
       if (!userId) {
         navigate(createPageUrl("Autentificare"));
         return;
       }
 
-      const users = await base44.entities.User.list();
-      const userData = users.find(u => String(u.id) === String(userId));
-      
+      const normalizedId = String(userId).trim();
+      let userData = null;
+
+      try {
+        userData = await base44.entities.User.get(normalizedId);
+      } catch (fetchError) {
+        console.error("Error fetching user by id:", fetchError);
+      }
+
       if (!userData) {
         localStorage.removeItem('essence_user_id');
         localStorage.removeItem('essence_username');
