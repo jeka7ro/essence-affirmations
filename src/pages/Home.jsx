@@ -143,6 +143,14 @@ export default function HomePage() {
       setTodayRepetitions(calculatedToday);
       setTotalRepetitions(newHistory.length);
       repetitionHistoryRef.current = newHistory;
+      
+      // Save to localStorage for instant sync with header
+      if (user?.id) {
+        try {
+          localStorage.setItem(`repetition_history_${user.id}`, JSON.stringify(newHistory));
+        } catch {}
+      }
+      
       return newHistory;
     });
     // Track unsynced locally for refresh-resilience
@@ -192,53 +200,15 @@ export default function HomePage() {
         writeLocalQueued(0);
         if (!pending) continue;
 
+        // Use current client state as the source of truth
+        const currentHistory = Array.isArray(repetitionHistoryRef.current) ? [...repetitionHistoryRef.current] : [];
+        
+        // Save current state to server
+        serverHistoryRef.current = currentHistory;
         const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const baseHistory = Array.isArray(serverHistoryRef.current) ? serverHistoryRef.current : [];
-        const currentToday = baseHistory.filter(r => r && r.date === todayStr).length;
-        let effective = pending;
-
-        if (pending > 0) {
-          // No upper limit - allow unlimited repetitions
-          effective = pending;
-        } else if (pending < 0) {
-          const canRemove = Math.max(0, currentToday);
-          effective = -Math.min(Math.abs(pending), canRemove);
-        }
-
-        if (!effective) {
-          const syncedHistory = Array.isArray(baseHistory) ? [...baseHistory] : [];
-          serverHistoryRef.current = syncedHistory;
-          repetitionHistoryRef.current = syncedHistory;
-          setRepetitionHistory(syncedHistory);
-          setTodayRepetitions(currentToday);
-          setTotalRepetitions(syncedHistory.length);
-          continue;
-        }
-
-        const nowIso = new Date().toISOString();
-        const newHistory = (() => {
-          const base = Array.isArray(baseHistory) ? [...baseHistory] : [];
-          if (effective > 0) {
-            for (let i = 0; i < effective; i++) {
-              base.push({ date: todayStr, timestamp: nowIso });
-            }
-          } else {
-            const removeCount = Math.min(Math.abs(effective), base.filter(r => r.date === todayStr).length);
-            for (let i = 0; i < removeCount; i++) {
-              const idx = base.map(r => r.date).lastIndexOf(todayStr);
-              if (idx !== -1) base.splice(idx, 1);
-            }
-          }
-          return base;
-        })();
-
-        serverHistoryRef.current = newHistory;
-        repetitionHistoryRef.current = newHistory;
-        setRepetitionHistory(newHistory);
-        const todayCount = newHistory.filter(r => r && r.date === todayStr).length;
-        setTodayRepetitions(todayCount);
-        setTotalRepetitions(newHistory.length);
-        await saveHistoryToServer(newHistory);
+        const todayCount = currentHistory.filter(r => r && r.date === todayStr).length;
+        
+        await saveHistoryToServer(currentHistory);
       }
     } finally {
       inFlightRef.current = false;

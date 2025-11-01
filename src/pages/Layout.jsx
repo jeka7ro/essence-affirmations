@@ -152,27 +152,48 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, [user, location.pathname]);
 
-  // Poll today's repetitions every 2 seconds for real-time updates
+  // Real-time sync of repetitions from localStorage (instant updates)
   useEffect(() => {
     if (!user) return;
-    const pollReps = async () => {
+    
+    const updateReps = () => {
       try {
-        const userData = await base44.entities.User.get(user.id);
-        const hist = JSON.parse(userData.repetition_history || "[]");
         const today = new Date().toISOString().slice(0, 10);
-        // Also check localStorage for any unsynced deltas
-        const localQueuedKey = `unsynced_delta_${userData.id}_${today}`;
+        const localQueuedKey = `unsynced_delta_${user.id}_${today}`;
+        
+        // Get the latest data from localStorage immediately
+        let currentReps = 0;
+        try {
+          const histRaw = localStorage.getItem(`repetition_history_${user.id}`);
+          if (histRaw) {
+            const hist = JSON.parse(histRaw);
+            currentReps = hist.filter(r => r && r.date === today).length;
+          }
+        } catch {}
+        
+        // Add any unsynced deltas
         let localQueued = 0;
         try {
           localQueued = parseInt(localStorage.getItem(localQueuedKey) || '0', 10) || 0;
         } catch {}
-        const count = hist.filter(r => r && r.date === today).length + localQueued;
-        setTodayRepetitions(count);
+        
+        setTodayRepetitions(currentReps + localQueued);
       } catch {}
     };
-    pollReps();
-    const interval = setInterval(pollReps, 2000);
-    return () => clearInterval(interval);
+    
+    // Update immediately
+    updateReps();
+    
+    // Poll frequently for instant updates (300ms)
+    const interval = setInterval(updateReps, 300);
+    
+    // Listen for storage events from other tabs
+    window.addEventListener('storage', updateReps);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', updateReps);
+    };
   }, [user]);
 
   // Birthday popup after 10:00, once per day across devices
