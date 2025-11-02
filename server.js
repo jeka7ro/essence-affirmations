@@ -1566,9 +1566,41 @@ app.use((req, res) => {
   });
 });
 
+// Delete old backups (older than 30 hours)
+async function cleanupOldBackups() {
+  try {
+    console.log('[Cleanup] Starting cleanup of old backups...');
+    const thirtyHoursAgo = new Date(Date.now() - 30 * 60 * 60 * 1000);
+    
+    const result = await pool.query(`
+      DELETE FROM system_backups 
+      WHERE created_at < $1 
+      AND backup_type = 'automatic'
+      RETURNING id, description, created_at
+    `, [thirtyHoursAgo]);
+    
+    if (result.rows.length > 0) {
+      console.log(`[Cleanup] Deleted ${result.rows.length} old backup(s):`);
+      result.rows.forEach(backup => {
+        console.log(`  - ID ${backup.id}: ${backup.description} (${backup.created_at})`);
+      });
+    } else {
+      console.log('[Cleanup] No old backups to delete');
+    }
+  } catch (error) {
+    console.error('[Cleanup] Error deleting old backups:', error);
+  }
+}
+
+// Run cleanup every hour
+setInterval(cleanupOldBackups, 60 * 60 * 1000);
+// Run cleanup on startup
+cleanupOldBackups();
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database URL configured: ${!!process.env.DATABASE_URL}`);
   console.log('Auto-backup checker started (checks every hour)');
+  console.log('Auto-cleanup of old backups started (runs every hour, deletes backups older than 30 hours)');
 });
