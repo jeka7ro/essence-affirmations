@@ -306,8 +306,17 @@ export default function HomePage() {
     try {
       const currentUser = await base44.auth.me();
       
-      const users = await base44.entities.User.list();
-      const userData = users.find(u => u.email === currentUser.email);
+      // Get user data directly instead of listing all users
+      const userId = localStorage.getItem('essence_user_id');
+      let userData = null;
+      
+      if (userId) {
+        try {
+          userData = await base44.entities.User.get(userId);
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        }
+      }
       
       if (userData) {
         setUser(userData);
@@ -415,8 +424,7 @@ export default function HomePage() {
               await checkNewDay(userData);
               
               // Reload user data after checkNewDay update
-              const updatedUsers = await base44.entities.User.list();
-              const updatedUserData = updatedUsers.find(u => u.email === currentUser.email);
+              const updatedUserData = await base44.entities.User.get(userData.id);
               if (updatedUserData) {
                 try {
                   const histUpdated = JSON.parse(updatedUserData.repetition_history || "[]");

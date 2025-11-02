@@ -198,8 +198,8 @@ export default function Layout({ children, currentPageName }) {
     // Update immediately
     updateReps();
     
-    // Poll frequently for instant updates (300ms)
-    const interval = setInterval(updateReps, 300);
+    // Poll less frequently to reduce load (1 second is enough)
+    const interval = setInterval(updateReps, 1000);
     
     // Listen for storage events from other tabs
     window.addEventListener('storage', updateReps);
@@ -272,9 +272,6 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
-      // Small delay to prevent race condition with localStorage
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
       const userId = localStorage.getItem('essence_user_id');
 
       if (!userId) {
