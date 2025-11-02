@@ -468,98 +468,29 @@ export default function Layout({ children, currentPageName }) {
       {/* Main content with margin for sidebar */}
       <div className="flex-1 flex flex-col md:ml-64">
         {/* Mobile Header */}
-        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 md:hidden sticky top-0 z-50">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-2 md:hidden sticky top-0 z-50">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="h-9 w-9"
               >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
               <Link to={createPageUrl("Home")}>
                 <img 
                   src="/logo_essece2.png?v=20251030" 
                   alt="App Logo" 
-                  className="h-8 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded"
+                  className="h-7 w-auto object-contain cursor-pointer hover:opacity-80 transition-opacity rounded"
                 />
               </Link>
             </div>
-            {user && (
-              <div className="flex items-center gap-3">
-                {/* Notifications icon */}
-                <div
-                  className="relative"
-                  onClick={() => {
-                    localStorage.setItem(`last_read_messages_${user.id}`, Date.now().toString());
-                    setUnreadMessagesCount(0);
-                  }}
-                >
-                  <Bell className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                  {unreadMessagesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                    </span>
-                  )}
-                </div>
-                {/* Left: name + theme toggle */}
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-xs font-semibold text-blue-600 leading-none">{user.username || user.email}</span>
-                  <button 
-                    onClick={cycleTheme} 
-                    className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
-                      theme === 'dark' ? 'bg-gray-700' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
-                    }`}
-                    aria-label="Cycle theme"
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform flex items-center justify-center text-[8px] font-bold ${
-                        theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
-                      } ${
-                        theme === 'auto' ? 'text-green-600' : 'text-gray-600'
-                      }`}
-                    >
-                      {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
-                    </span>
-                  </button>
-                </div>
-                {/* Right: avatar larger - clickable to Settings */}
-                {(() => {
-                  const avatarDisplay = getAvatarDisplay(user);
-                  return avatarDisplay && (
-                    <Link 
-                      to={createPageUrl("Settings")}
-                      className="cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
-                        <div className="relative">
-                          <img
-                            src={avatarDisplay}
-                            alt="Avatar"
-                            className={`w-12 h-12 rounded-full border-2 object-cover ${isHalloween ? 'border-orange-500' : 'border-blue-600'}`}
-                          />
-                          {isHalloween && <span className="absolute -bottom-1 -right-1 text-lg">🎃</span>}
-                        </div>
-                      ) : (
-                        <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-2xl ${isHalloween ? 'border-2 border-orange-500 bg-orange-50' : 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600'}`}>
-                          {avatarDisplay}
-                          {isHalloween && <span className="absolute -bottom-1 -right-1 text-lg">🎃</span>}
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })()}
-              </div>
-            )}
-            </div>
-            
-            {/* Progress bar for repetitions */}
+            {/* Progress bar for repetitions - integrated in header */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-2 px-1">
-                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div className="flex items-center gap-2 flex-1 max-w-xs">
+                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                   <div 
                     className={`h-full transition-all duration-300 ${isHalloween ? 'bg-orange-500' : 'bg-green-500'}`}
                     style={{ width: `${Math.min((todayRepetitions / 100) * 100, 100)}%` }}
@@ -568,6 +499,29 @@ export default function Layout({ children, currentPageName }) {
                 <span className={`text-xs font-bold whitespace-nowrap ${todayRepetitions >= 100 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
                   {todayRepetitions}/100
                 </span>
+              </div>
+            )}
+            
+            {user && (
+              <div className="flex items-center gap-2">
+                {/* Theme toggle */}
+                <button 
+                  onClick={cycleTheme} 
+                  className={`relative inline-flex h-5 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1 ${
+                    theme === 'dark' ? 'bg-gray-700' : theme === 'light' ? 'bg-blue-200' : 'bg-green-200'
+                  }`}
+                  aria-label="Cycle theme"
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform flex items-center justify-center text-[8px] font-bold ${
+                      theme === 'dark' ? 'translate-x-7' : theme === 'light' ? 'translate-x-1' : 'translate-x-4'
+                    } ${
+                      theme === 'auto' ? 'text-green-600' : 'text-gray-600'
+                    }`}
+                  >
+                    {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
+                  </span>
+                </button>
               </div>
             )}
           </div>

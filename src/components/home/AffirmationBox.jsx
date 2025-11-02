@@ -19,15 +19,15 @@ export default function AffirmationBox({
   
   return (
     <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
-      <CardHeader>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             {(() => {
               const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
               if (isHalloween) {
                 return (
                   <div
-                    className="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xl"
+                    className="w-8 h-8 rounded-lg bg-orange-500 text-white flex items-center justify-center text-lg"
                     title="Halloween"
                   >
                     🎃
@@ -38,12 +38,12 @@ export default function AffirmationBox({
                 <img 
                   src="/logo_essece2.png?v=20251030" 
                   alt="App Logo" 
-                  className="w-9 h-9 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" 
+                  className="w-8 h-8 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" 
                   onClick={() => navigate(createPageUrl("Home"))}
                 />
               );
             })()}
-            <CardTitle className="affirmation-title text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
+            <CardTitle className="affirmation-title text-base md:text-lg font-bold text-gray-900 dark:text-gray-100">
               Afirmația Mea
             </CardTitle>
           </div>
