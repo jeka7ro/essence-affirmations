@@ -152,61 +152,32 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, [user, location.pathname]);
 
-  // Real-time sync of repetitions from localStorage (instant updates)
+  // Real-time sync of repetitions - ALWAYS from server for accuracy
   useEffect(() => {
     if (!user) return;
     
     const updateReps = async () => {
       try {
+        // ALWAYS fetch from server to ensure accuracy
+        const userData = await base44.entities.User.get(user.id);
+        const hist = JSON.parse(userData.repetition_history || "[]");
         const today = new Date().toISOString().slice(0, 10);
-        const localQueuedKey = `unsynced_delta_${user.id}_${today}`;
+        const currentReps = hist.filter(r => r && r.date === today).length;
         
-        // First try localStorage for instant updates
-        let currentReps = 0;
-        let foundInLocalStorage = false;
-        
-        try {
-          const histRaw = localStorage.getItem(`repetition_history_${user.id}`);
-          if (histRaw) {
-            const hist = JSON.parse(histRaw);
-            currentReps = hist.filter(r => r && r.date === today).length;
-            foundInLocalStorage = true;
-          }
-        } catch {}
-        
-        // If not in localStorage, fetch from server (after refresh)
-        if (!foundInLocalStorage && user.id) {
-          try {
-            const userData = await base44.entities.User.get(user.id);
-            const hist = JSON.parse(userData.repetition_history || "[]");
-            currentReps = hist.filter(r => r && r.date === today).length;
-            // Save to localStorage for next time
-            localStorage.setItem(`repetition_history_${user.id}`, JSON.stringify(hist));
-          } catch {}
-        }
-        
-        // Add any unsynced deltas
-        let localQueued = 0;
-        try {
-          localQueued = parseInt(localStorage.getItem(localQueuedKey) || '0', 10) || 0;
-        } catch {}
-        
-        setTodayRepetitions(currentReps + localQueued);
-      } catch {}
+        setTodayRepetitions(currentReps);
+      } catch (error) {
+        console.error("Error updating reps in header:", error);
+      }
     };
     
     // Update immediately
     updateReps();
     
-    // Poll less frequently to reduce load (1 second is enough)
-    const interval = setInterval(updateReps, 1000);
-    
-    // Listen for storage events from other tabs
-    window.addEventListener('storage', updateReps);
+    // Poll every 2 seconds to stay in sync with Home
+    const interval = setInterval(updateReps, 2000);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('storage', updateReps);
     };
   }, [user]);
 
