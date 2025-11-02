@@ -519,6 +519,34 @@ export default function Layout({ children, currentPageName }) {
                     {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : 'Auto'}
                   </span>
                 </button>
+                
+                {/* Avatar - clickable to Settings */}
+                {(() => {
+                  const avatarDisplay = getAvatarDisplay(user);
+                  return avatarDisplay && (
+                    <Link 
+                      to={createPageUrl("Settings")}
+                      className="cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {avatarDisplay.startsWith('http') || avatarDisplay.startsWith('blob:') || avatarDisplay.startsWith('data:') ? (
+                        <div className="relative">
+                          <img
+                            src={avatarDisplay}
+                            alt="Avatar"
+                            className={`w-9 h-9 rounded-full border-2 object-cover ${isHalloween ? 'border-orange-500' : 'border-blue-600'}`}
+                          />
+                          {isHalloween && <span className="absolute -bottom-1 -right-1 text-sm">🎃</span>}
+                        </div>
+                      ) : (
+                        <div className={`relative w-9 h-9 rounded-full flex items-center justify-center text-xl ${isHalloween ? 'border-2 border-orange-500 bg-orange-50' : 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-600'}`}>
+                          {avatarDisplay}
+                          {isHalloween && <span className="absolute -bottom-1 -right-1 text-sm">🎃</span>}
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })()}
               </div>
             )}
           </div>
