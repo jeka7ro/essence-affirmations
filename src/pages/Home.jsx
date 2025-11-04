@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Users, TrendingUp, RotateCcw, AlertCircle } from "lucide-react";
-import { format, differenceInDays, addDays, parseISO } from "date-fns";
+import { Calendar, Users, TrendingUp, RotateCcw, AlertCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { format, differenceInDays, addDays, parseISO, subDays } from "date-fns";
 import { ro } from "date-fns/locale";
 
 import StatsCards from "../components/home/StatsCards";
@@ -44,6 +44,8 @@ export default function HomePage() {
   const [repsNeededPerHour, setRepsNeededPerHour] = useState(0);
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [historySelectedDate, setHistorySelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   // Track if we've already shown mailman congratulations dialog in this session
   const congratulationsShownRef = useRef(false);
   // Optimistic batching for repetitions
@@ -995,6 +997,8 @@ export default function HomePage() {
           onSave={handleSaveAffirmation}
           saving={saving}
           onAddRepetition={() => handleRepetition(1)}
+          onShowHistory={() => setShowHistoryDialog(true)}
+          isAdmin={user?.role === 'admin'}
         />
 
         {challengeStartDate && (
@@ -1088,9 +1092,18 @@ export default function HomePage() {
                         {challengeDaysPassed >= 30 ? "∞" : daysRemaining}
                       </p>
                     </div>
-                    <div>
+                    <div 
+                      onClick={() => user?.role === 'admin' && setShowHistoryDialog(true)}
+                      className={user?.role === 'admin' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 -m-2 transition-colors' : ''}
+                      title={user?.role === 'admin' ? 'Click pentru a vedea istoricul' : ''}
+                    >
                       <p className="text-xs text-gray-600 dark:text-gray-300">Total Repetări</p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
+                      {user?.role === 'admin' && (
+                        <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
+                          📊 Click pentru istoric
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1136,6 +1149,115 @@ export default function HomePage() {
           />
         )}
       </div>
+
+      {/* History Dialog - only for admin */}
+      {user?.role === 'admin' && (
+        <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Istoric Repetări
+                </DialogTitle>
+                <Button
+                  onClick={() => setShowHistoryDialog(false)}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Date navigation */}
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                <Button
+                  onClick={() => setHistorySelectedDate(format(subDays(parseISO(historySelectedDate), 1), 'yyyy-MM-dd'))}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Ziua anterioară
+                </Button>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {format(parseISO(historySelectedDate), 'd MMMM yyyy', { locale: ro })}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {historySelectedDate === format(new Date(), 'yyyy-MM-dd') ? 'Astăzi' : ''}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    const next = addDays(parseISO(historySelectedDate), 1);
+                    if (next <= new Date()) {
+                      setHistorySelectedDate(format(next, 'yyyy-MM-dd'));
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={historySelectedDate === format(new Date(), 'yyyy-MM-dd')}
+                >
+                  Ziua următoare
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+
+              {/* Repetitions list for selected date */}
+              <div className="space-y-2">
+                {(() => {
+                  const repsForDate = (repetitionHistory || []).filter(r => r && r.date === historySelectedDate);
+                  if (repsForDate.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        Nu există repetări în această zi
+                      </div>
+                    );
+                  }
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          Total: {repsForDate.length} repetări
+                        </h3>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto space-y-1">
+                        {repsForDate.map((rep, idx) => (
+                          <div 
+                            key={idx}
+                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Repetare #{idx + 1}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {rep.timestamp ? format(parseISO(rep.timestamp), 'HH:mm:ss', { locale: ro }) : '-'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Quick navigation to today */}
+              {historySelectedDate !== format(new Date(), 'yyyy-MM-dd') && (
+                <Button
+                  onClick={() => setHistorySelectedDate(format(new Date(), 'yyyy-MM-dd'))}
+                  className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl"
+                >
+                  Revino la astăzi
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
