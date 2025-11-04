@@ -1093,8 +1093,16 @@ export default function HomePage() {
                       </p>
                     </div>
                     <div 
-                      onClick={() => user?.role === 'admin' && setShowHistoryDialog(true)}
-                      className={user?.role === 'admin' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 -m-2 transition-colors' : ''}
+                      onClick={() => {
+                        console.log('Click on Total Repetări card, user role:', user?.role);
+                        if (user?.role === 'admin') {
+                          console.log('Opening history dialog...');
+                          setShowHistoryDialog(true);
+                        } else {
+                          console.log('User is not admin, cannot open history');
+                        }
+                      }}
+                      className={user?.role === 'admin' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 -m-2 transition-colors active:scale-95' : ''}
                       title={user?.role === 'admin' ? 'Click pentru a vedea istoricul' : ''}
                     >
                       <p className="text-xs text-gray-600 dark:text-gray-300">Total Repetări</p>
