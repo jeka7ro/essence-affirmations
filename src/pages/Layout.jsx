@@ -310,12 +310,17 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   if (user?.role === "admin") {
-    navigationItems.splice(4, 0, {
+    navigationItems.push({
+      title: "Top Membri",
+      url: createPageUrl("TopMembri"),
+      icon: Trophy,
+    });
+    navigationItems.push({
       title: "Admin",
       url: createPageUrl("Admin"),
       icon: Shield,
     });
-    navigationItems.splice(5, 0, {
+    navigationItems.push({
       title: "Events",
       url: createPageUrl("Events"),
       icon: Activity,
