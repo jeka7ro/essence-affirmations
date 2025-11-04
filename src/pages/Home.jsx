@@ -1156,11 +1156,9 @@ export default function HomePage() {
             onUpdate={() => loadData()}
           />
         )}
-      </div>
 
       {/* History Dialog - only for admin */}
-      {user?.role === 'admin' && (
-        <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <div className="flex items-center justify-between">
@@ -1265,7 +1263,7 @@ export default function HomePage() {
             </div>
           </DialogContent>
         </Dialog>
-      )}
+      </div>
     </div>
   );
 }
