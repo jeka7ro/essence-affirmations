@@ -143,7 +143,7 @@ export default function AffirmationBox({
           <div className="min-h-[160px] p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
             <div className="relative pb-12">
               {affirmation ? (
-                <p className={`${textSizeClass} md:text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
+                <p className={`${textSizeClass} md:text-lg font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
                   {affirmation}
                 </p>
               ) : (
@@ -174,8 +174,8 @@ export default function AffirmationBox({
                           className={`absolute inset-y-1 left-1 rounded-full transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
                           style={{ width: `${progressPercentage}%` }}
                         />
-                        <div className="relative z-10 flex items-center justify-between gap-4 px-4">
-                          <div className="flex flex-col items-start text-left">
+                        <div className="relative z-10 flex items-center justify-center px-4">
+                          <div className="flex flex-col items-center text-center gap-0.5">
                             <span className="text-[13px] md:text-sm font-semibold text-emerald-900 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
                               Am repetat afirmația (+1)
                             </span>
@@ -183,9 +183,9 @@ export default function AffirmationBox({
                               Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
                             </span>
                           </div>
-                          {/* Glassy pill with +, slightly floating out of the track on the right */}
-                          <span className="relative flex items-center justify-center">
-                            <span className="flex items-center justify-center h-9 px-6 rounded-full bg-white/95 shadow-[0_8px_22px_rgba(22,163,74,0.6)] border border-green-400 translate-x-2">
+                          {/* Glassy pill with +, floating on the far right, while text stays perfectly centered */}
+                          <span className="absolute right-3 md:right-4 flex items-center justify-center">
+                            <span className="flex items-center justify-center h-9 px-6 rounded-full bg-white/95 shadow-[0_8px_22px_rgba(22,163,74,0.6)] border border-green-400">
                               <span className="text-green-500 text-2xl leading-none font-semibold">+</span>
                             </span>
                           </span>
