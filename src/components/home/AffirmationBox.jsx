@@ -202,8 +202,8 @@ export default function AffirmationBox({
                           </div>
                           {/* Glassy pill with +, floating on the far right, while text stays perfectly centered */}
                           <span className="absolute right-3 md:right-4 flex items-center justify-center">
-                            <span className="flex items-center justify-center h-9 px-6 rounded-full bg-white/95 shadow-[0_8px_22px_rgba(22,163,74,0.6)] border border-green-400">
-                              <span className="text-green-500 text-2xl leading-none font-semibold">+</span>
+                            <span className="flex items-center justify-center h-9 px-6 rounded-full bg-gradient-to-r from-green-500 to-green-600 shadow-[0_8px_22px_rgba(22,163,74,0.6)] border border-green-400">
+                              <span className="text-white text-2xl leading-none font-semibold">+</span>
                             </span>
                           </span>
                         </div>
