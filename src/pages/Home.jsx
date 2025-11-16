@@ -45,6 +45,7 @@ export default function HomePage() {
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [mainButtonPulse, setMainButtonPulse] = useState(null); // 'green' | 'red' | 'blue' | null
   const [historySelectedDate, setHistorySelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   // Track if we've already shown mailman congratulations dialog in this session
   const congratulationsShownRef = useRef(false);
@@ -1048,23 +1049,47 @@ export default function HomePage() {
                   {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
                     <>
                       <Button
-                        onClick={() => handleRepetition(1)}
-                        className={`w-full md:w-80 h-14 text-xl font-bold rounded-2xl shadow-lg transform transition-transform active:scale-95 hover:scale-105 ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'}`}
+                        onClick={() => {
+                          handleRepetition(1);
+                          setMainButtonPulse('green');
+                          setTimeout(() => setMainButtonPulse(null), 300);
+                        }}
+                        className={`w-full md:w-80 h-14 text-xl font-bold rounded-2xl shadow-lg transform transition-transform active:scale-95 hover:scale-105 ${
+                          isHalloween
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white'
+                            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                        } ${mainButtonPulse === 'green' ? 'aff-pulse-green' : ''}`}
                       >
                         Am repetat (+1)
                       </Button>
 
                       <div className="flex gap-3 w-full md:w-80">
                         <Button
-                          onClick={() => handleRepetition(-10)}
-                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'}`}
+                          onClick={() => {
+                            handleRepetition(-10);
+                            setMainButtonPulse('red');
+                            setTimeout(() => setMainButtonPulse(null), 300);
+                          }}
+                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${
+                            isHalloween
+                              ? 'bg-orange-600 hover:bg-orange-700'
+                              : 'bg-red-600 hover:bg-red-700'
+                          } ${mainButtonPulse === 'red' ? 'aff-pulse-red' : ''}`}
                           disabled={todayRepetitions < 10}
                         >
                           -10
                         </Button>
                         <Button
-                          onClick={() => handleRepetition(10)}
-                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                          onClick={() => {
+                            handleRepetition(10);
+                            setMainButtonPulse('blue');
+                            setTimeout(() => setMainButtonPulse(null), 300);
+                          }}
+                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${
+                            isHalloween
+                              ? 'bg-orange-600 hover:bg-orange-700'
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          } ${mainButtonPulse === 'blue' ? 'aff-pulse-blue' : ''}`}
                         >
                           +10
                         </Button>

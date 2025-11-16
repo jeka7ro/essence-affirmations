@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Save, Text } from "lucide-react";
+import { Edit, Save, Text, RefreshCw } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 export default function AffirmationBox({ 
@@ -21,6 +21,7 @@ export default function AffirmationBox({
 }) {
   const navigate = useNavigate();
   const [textSize, setTextSize] = useState("md");
+  const [pulse, setPulse] = useState(false);
 
   // Load preferred text size from localStorage
   useEffect(() => {
@@ -94,6 +95,19 @@ export default function AffirmationBox({
             </CardTitle>
           </div>
           <div className="flex items-center gap-1">
+            {/* Page refresh icon */}
+            {!isEditing && (
+              <Button
+                onClick={() => window.location.reload()}
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
+                aria-label="Reîncarcă pagina"
+                title="Reîncarcă pagina"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            )}
             {/* Text size toggle - cycles between small/medium/large */}
             {!isEditing && (
               <Button
@@ -164,9 +178,12 @@ export default function AffirmationBox({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          // Trigger a short green pulse animation locally
+                          setPulse(false);
+                          setTimeout(() => setPulse(true), 0);
                           onAddRepetition();
                         }}
-                        className="relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md"
+                        className={`relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulse ? 'aff-pulse-green' : ''}`}
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"
                       >
@@ -201,11 +218,19 @@ export default function AffirmationBox({
                         onAddRepetition();
                       }}
                       size="icon"
-                      className={`h-10 w-10 md:h-12 md:w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                      className={`h-10 w-10 md:h-12 md:w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${
+                        isHalloween
+                          ? 'bg-orange-600 hover:bg-orange-700'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                      }`}
                       aria-label="Adaugă repetare"
                       title="Adaugă repetare"
                     >
-                      {isHalloween ? '🎃' : '+'}
+                      {isHalloween ? (
+                        '🎃'
+                      ) : (
+                        <span className="text-white text-xl leading-none font-semibold">+</span>
+                      )}
                     </Button>
                   );
                 })()}

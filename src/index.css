@@ -261,6 +261,44 @@ button:focus-visible {
   color: #b8860b !important;
 }
 
+/* Pulse ring animations for buttons (green / red / blue) */
+@keyframes aff-pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(34, 197, 94, 0);
+  }
+}
+@keyframes aff-pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+  }
+}
+@keyframes aff-pulse-blue {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+  }
+}
+
+@layer utilities {
+  .aff-pulse-green {
+    animation: aff-pulse-green 0.35s ease-out;
+  }
+  .aff-pulse-red {
+    animation: aff-pulse-red 0.35s ease-out;
+  }
+  .aff-pulse-blue {
+    animation: aff-pulse-blue 0.35s ease-out;
+  }
+}
+
 /* Fundal cu dovleci discreți (SVG pattern) */
 .halloween body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 30c-6 0-8-4-8-8s2-8 8-8 8 4 8 8-2 8-8 8z'/%3E%3Cpath d='M32 30c-6 0-8-4-8-8s2-8 8-8 8 4 8 8-2 8-8 8z'/%3E%3Cpath d='M24 14c1-3 3-4 4-5'/%3E%3C/g%3E%3C/svg%3E");
