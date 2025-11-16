@@ -45,7 +45,9 @@ export default function HomePage() {
   const [showGroupInfoDialog, setShowGroupInfoDialog] = useState(false);
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [mainButtonPulse, setMainButtonPulse] = useState(null); // 'green' | 'red' | 'blue' | null
+  const [pulseGreen, setPulseGreen] = useState(false);
+  const [pulseRed, setPulseRed] = useState(false);
+  const [pulseBlue, setPulseBlue] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false); // small celebration on daily 100 reps
   const [historySelectedDate, setHistorySelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   // Track if we've already shown mailman congratulations dialog in this session
@@ -648,9 +650,7 @@ export default function HomePage() {
   const handleRepetition = (count) => {
     if (!user) return;
     
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const historySnapshot = Array.isArray(repetitionHistoryRef.current) ? repetitionHistoryRef.current : [];
-    const currentToday = historySnapshot.filter(r => r && r.date === todayStr).length;
+    const currentToday = typeof todayRepetitions === 'number' ? todayRepetitions : 0;
     
     let effective = count;
     
@@ -1068,10 +1068,10 @@ export default function HomePage() {
                         <Button
                         onClick={() => {
                           handleRepetition(1);
-                          setMainButtonPulse('green');
-                          setTimeout(() => setMainButtonPulse(null), 300);
+                            setPulseGreen(false);
+                            setTimeout(() => setPulseGreen(true), 0);
                         }}
-                          className={`relative overflow-hidden w-full md:w-80 h-14 text-xl font-bold rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transform transition-transform active:scale-95 hover:scale-105 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${mainButtonPulse === 'green' ? 'aff-pulse-green' : ''}`}
+                          className={`relative overflow-hidden w-full md:w-80 h-14 text-xl font-bold rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transform transition-transform active:scale-95 hover:scale-105 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseGreen ? 'aff-pulse-green' : ''}`}
                         >
                           <span
                             className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-300 ease-out ${
@@ -1089,31 +1089,45 @@ export default function HomePage() {
                         <Button
                           onClick={() => {
                             handleRepetition(-10);
-                            setMainButtonPulse('red');
-                            setTimeout(() => setMainButtonPulse(null), 300);
+                            setPulseRed(false);
+                            setTimeout(() => setPulseRed(true), 0);
                           }}
-                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${
-                            isHalloween
-                              ? 'bg-orange-600 hover:bg-orange-700'
-                              : 'bg-red-600 hover:bg-red-700'
-                          } ${mainButtonPulse === 'red' ? 'aff-pulse-red' : ''}`}
+                          className={`relative overflow-hidden flex-1 h-12 text-lg font-bold rounded-full shadow-[0_8px_20px_rgba(239,68,68,0.35)] border border-red-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${
+                            pulseRed ? 'aff-pulse-red' : ''
+                          }`}
                           disabled={todayRepetitions < 10}
                         >
-                          -10
+                          <span
+                            className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-300 ease-out ${
+                              isHalloween
+                                ? 'bg-gradient-to-r from-orange-600 to-orange-700'
+                                : 'bg-gradient-to-r from-red-500 to-red-600'
+                            }`}
+                          />
+                          <span className="relative z-10 text-white">
+                            -10
+                          </span>
                         </Button>
                         <Button
                           onClick={() => {
                             handleRepetition(10);
-                            setMainButtonPulse('blue');
-                            setTimeout(() => setMainButtonPulse(null), 300);
+                            setPulseBlue(false);
+                            setTimeout(() => setPulseBlue(true), 0);
                           }}
-                          className={`flex-1 h-12 text-lg font-bold text-white rounded-2xl shadow-md ${
-                            isHalloween
-                              ? 'bg-orange-600 hover:bg-orange-700'
-                              : 'bg-blue-600 hover:bg-blue-700'
-                          } ${mainButtonPulse === 'blue' ? 'aff-pulse-blue' : ''}`}
+                          className={`relative overflow-hidden flex-1 h-12 text-lg font-bold rounded-full shadow-[0_8px_20px_rgba(59,130,246,0.35)] border border-blue-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${
+                            pulseBlue ? 'aff-pulse-blue' : ''
+                          }`}
                         >
-                          +10
+                          <span
+                            className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-300 ease-out ${
+                              isHalloween
+                                ? 'bg-gradient-to-r from-orange-600 to-orange-700'
+                                : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                            }`}
+                          />
+                          <span className="relative z-10 text-white">
+                            +10
+                          </span>
                         </Button>
                       </div>
                     </>
