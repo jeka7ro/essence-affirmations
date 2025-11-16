@@ -183,9 +183,11 @@ export default function AffirmationBox({
                               Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
                             </span>
                           </div>
-                          {/* Small round + icon on the right inside the bar to emphasize it's a button */}
-                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-[0_4px_14px_rgba(22,163,74,0.55)] border border-green-400">
-                            <span className="text-green-500 text-xl leading-none font-semibold">+</span>
+                          {/* Glassy pill with +, slightly floating out of the track on the right */}
+                          <span className="relative flex items-center justify-center">
+                            <span className="flex items-center justify-center h-8 px-4 rounded-full bg-white/95 shadow-[0_6px_18px_rgba(22,163,74,0.55)] border border-green-400 translate-x-1">
+                              <span className="text-green-500 text-xl leading-none font-semibold">+</span>
+                            </span>
                           </span>
                         </div>
                       </button>
