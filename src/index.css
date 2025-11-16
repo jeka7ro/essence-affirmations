@@ -267,7 +267,7 @@ button:focus-visible {
     box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
   }
   100% {
-    box-shadow: 0 0 0 20px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 26px rgba(34, 197, 94, 0);
   }
 }
 @keyframes aff-pulse-red {
@@ -275,7 +275,7 @@ button:focus-visible {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
   }
   100% {
-    box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 26px rgba(239, 68, 68, 0);
   }
 }
 @keyframes aff-pulse-blue {
@@ -283,19 +283,19 @@ button:focus-visible {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
   }
   100% {
-    box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 26px rgba(59, 130, 246, 0);
   }
 }
 
 @layer utilities {
   .aff-pulse-green {
-    animation: aff-pulse-green 0.35s ease-out;
+    animation: aff-pulse-green 0.55s ease-out;
   }
   .aff-pulse-red {
-    animation: aff-pulse-red 0.35s ease-out;
+    animation: aff-pulse-red 0.55s ease-out;
   }
   .aff-pulse-blue {
-    animation: aff-pulse-blue 0.35s ease-out;
+    animation: aff-pulse-blue 0.55s ease-out;
   }
 }
 
