@@ -174,11 +174,7 @@ export default function AffirmationBox({
                           className={`absolute inset-0 transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500/70 to-orange-600/80' : 'bg-gradient-to-r from-green-500/70 to-emerald-500/80'}`}
                           style={{ width: `${progressPercentage}%` }}
                         />
-                        <div className="relative z-10 flex items-center justify-center gap-3 px-4">
-                          {/* Small round + icon inside the bar to emphasize it's a button */}
-                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-green-600 shadow-sm">
-                            <span className="text-white text-lg leading-none">+</span>
-                          </span>
+                        <div className="relative z-10 flex items-center justify-between gap-3 px-4">
                           <div className="flex flex-col items-start">
                             <span className="text-[13px] md:text-sm font-semibold text-gray-800 dark:text-gray-100">
                               Am repetat afirmația (+1)
@@ -187,6 +183,10 @@ export default function AffirmationBox({
                               Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
                             </span>
                           </div>
+                          {/* Small round + icon on the right inside the bar to emphasize it's a button */}
+                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-green-600 shadow-sm">
+                            <span className="text-white text-xl leading-none">+</span>
+                          </span>
                         </div>
                       </button>
                     );

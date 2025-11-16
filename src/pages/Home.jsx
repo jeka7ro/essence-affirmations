@@ -984,8 +984,24 @@ export default function HomePage() {
             icon={Calendar}
             title="Afirmatii totale"
             value={totalRepetitions.toLocaleString('ro-RO')}
-            subtitle="ale tale"
+            subtitle="ale tale (tap pentru istoric)"
             color="blue"
+            clickable={user?.role === 'admin'}
+            onClick={() => {
+              if (user?.role === 'admin') {
+                setShowHistoryDialog(true);
+              }
+            }}
+            rightAddon={
+              user?.role === 'admin' ? (
+                <div className="flex items-center gap-1 text-[11px] md:text-xs font-semibold text-blue-600 dark:text-blue-300">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-blue-300 bg-blue-50/70 dark:bg-blue-900/40">
+                    📊
+                  </span>
+                  <span>Istoric</span>
+                </div>
+              ) : null
+            }
           />
         </div>
 
@@ -1003,28 +1019,12 @@ export default function HomePage() {
           userId={user?.id}
         />
 
-        {challengeStartDate && (
+        {challengeStartDate && user?.role === 'admin' && (
           <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg rounded-3xl">
             <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    Repetări Astăzi: {todayRepetitions}/100
-                  </h3>
-                  {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
-                  <div className="relative h-5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div 
-                      className={`absolute top-0 left-0 h-full transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
-                      style={{ width: `${progressPercentage}%` }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
-                        {Math.round(progressPercentage)}%
-                      </span>
-                    </div>
-                  </div>
-                  ); })()}
-                  <div className="space-y-3">
+                  <div className="space-y-3 mt-2">
                     <p className={`text-sm font-semibold ${
                       todayRepetitions >= 100 
                         ? "text-gray-600 dark:text-gray-300" 
