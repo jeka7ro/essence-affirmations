@@ -87,13 +87,15 @@ export default function Layout({ children, currentPageName }) {
     applySeasonal();
   }, [user]);
 
-  // Admin gold theme - applied only for admins as a visual experiment
+  // Admin gold theme - applied only for admins in LIGHT mode (never in dark)
   useEffect(() => {
     try {
       const isAdmin = user?.role === 'admin';
-      document.documentElement.classList.toggle('admin-gold', !!isAdmin);
+      const isDark = document.documentElement.classList.contains('dark');
+      const shouldApplyGold = isAdmin && !isDark;
+      document.documentElement.classList.toggle('admin-gold', shouldApplyGold);
     } catch {}
-  }, [user]);
+  }, [user, theme]);
 
   // Check for unread messages periodically
   useEffect(() => {
