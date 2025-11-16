@@ -17,7 +17,8 @@ export default function AffirmationBox({
   isAdmin,
   todayRepetitions,
   dailyTarget = 100,
-  userId
+  userId,
+  showFireworks
 }) {
   const navigate = useNavigate();
   const [textSize, setTextSize] = useState("md");
@@ -65,7 +66,20 @@ export default function AffirmationBox({
       : null;
   
   return (
-    <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
+    <div className="relative">
+      {/* Fireworks around affirmation card when reaching 100 reps (admin only) */}
+      {isAdmin && showFireworks && (
+        <div className="pointer-events-none absolute -inset-1 flex items-center justify-center">
+          <div className="relative w-full h-full">
+            <span className="aff-firework-dot bg-green-400" style={{ top: '5%', left: '10%' }} />
+            <span className="aff-firework-dot bg-emerald-400" style={{ top: '10%', right: '12%', animationDelay: '0.15s' }} />
+            <span className="aff-firework-dot bg-lime-300" style={{ bottom: '8%', left: '18%', animationDelay: '0.3s' }} />
+            <span className="aff-firework-dot bg-emerald-300" style={{ bottom: '12%', right: '20%', animationDelay: '0.45s' }} />
+          </div>
+        </div>
+      )}
+
+      <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -187,24 +201,18 @@ export default function AffirmationBox({
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"
                       >
+                        {/* Progress contour glow following the button outline */}
                         <div
-                          className={`absolute inset-y-1 left-1 rounded-full transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
-                          style={{ width: `${progressPercentage}%` }}
+                          className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
+                            isHalloween
+                              ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+                              : 'bg-gradient-to-r from-green-500 to-green-600'
+                          }`}
                         />
                         <div className="relative z-10 flex items-center justify-center px-4">
-                          <div className="flex flex-col items-center text-center gap-0.5">
-                            <span className="text-[13px] md:text-sm font-semibold text-emerald-900 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
-                              Am repetat afirmația (+1)
-                            </span>
-                            <span className="text-[11px] md:text-xs font-semibold text-emerald-800 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
-                              Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
-                            </span>
-                          </div>
-                          {/* Glassy pill with +, floating on the far right, while text stays perfectly centered */}
-                          <span className="absolute right-3 md:right-4 flex items-center justify-center">
-                            <span className="flex items-center justify-center h-9 px-6 rounded-full bg-gradient-to-r from-green-500 to-green-600 shadow-[0_8px_22px_rgba(22,163,74,0.6)] border border-green-400">
-                              <span className="text-white text-2xl leading-none font-semibold">+</span>
-                            </span>
+                          {/* Whole pill is tappable; plus in the center to suggest action */}
+                          <span className="flex items-center justify-center h-9 w-9 rounded-full bg-white/90 shadow-[0_4px_14px_rgba(22,163,74,0.55)] border border-emerald-300">
+                            <span className="text-emerald-500 text-2xl leading-none font-semibold">+</span>
                           </span>
                         </div>
                       </button>
@@ -234,11 +242,20 @@ export default function AffirmationBox({
                     </Button>
                   );
                 })()}
+                {/* Compact progress text under the button */}
+                {typeof todayRepetitions === 'number' && (
+                  <div className="mt-1 text-center">
+                    <span className="text-xs md:text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                      {todayRepetitions} / {dailyTarget}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
