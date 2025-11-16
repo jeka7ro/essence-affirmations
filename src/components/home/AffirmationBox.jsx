@@ -174,8 +174,8 @@ export default function AffirmationBox({
                           className={`absolute inset-y-1 left-1 rounded-full transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
                           style={{ width: `${progressPercentage}%` }}
                         />
-                        <div className="relative z-10 flex items-center justify-center gap-3 px-4">
-                          <div className="flex flex-col items-center text-center">
+                        <div className="relative z-10 flex items-center justify-between gap-4 px-4">
+                          <div className="flex flex-col items-start text-left">
                             <span className="text-[13px] md:text-sm font-semibold text-emerald-900 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
                               Am repetat afirmația (+1)
                             </span>
@@ -185,8 +185,8 @@ export default function AffirmationBox({
                           </div>
                           {/* Glassy pill with +, slightly floating out of the track on the right */}
                           <span className="relative flex items-center justify-center">
-                            <span className="flex items-center justify-center h-8 px-4 rounded-full bg-white/95 shadow-[0_6px_18px_rgba(22,163,74,0.55)] border border-green-400 translate-x-1">
-                              <span className="text-green-500 text-xl leading-none font-semibold">+</span>
+                            <span className="flex items-center justify-center h-9 px-6 rounded-full bg-white/95 shadow-[0_8px_22px_rgba(22,163,74,0.6)] border border-green-400 translate-x-2">
+                              <span className="text-green-500 text-2xl leading-none font-semibold">+</span>
                             </span>
                           </span>
                         </div>
