@@ -997,7 +997,6 @@ export default function HomePage() {
           onSave={handleSaveAffirmation}
           saving={saving}
           onAddRepetition={() => handleRepetition(1)}
-          onShowHistory={() => setShowHistoryDialog(true)}
           isAdmin={user?.role === 'admin'}
           todayRepetitions={todayRepetitions}
           dailyTarget={100}
