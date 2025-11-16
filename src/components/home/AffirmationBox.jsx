@@ -64,6 +64,16 @@ export default function AffirmationBox({
     typeof todayRepetitions === "number" && dailyTarget
       ? Math.min(100, Math.max(0, (todayRepetitions / dailyTarget) * 100))
       : null;
+
+  // Subtle contour glow based on progress - only for admin button
+  const progressGlowStyle =
+    progressPercentage != null
+      ? {
+          boxShadow: `0 0 0 ${4 + (progressPercentage / 100) * 10}px rgba(22,163,74,${
+            0.15 + (progressPercentage / 100) * 0.35
+          })`,
+        }
+      : undefined;
   
   return (
     <div className="relative">
@@ -197,11 +207,12 @@ export default function AffirmationBox({
                           setTimeout(() => setPulse(true), 0);
                           onAddRepetition();
                         }}
-                        className={`relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulse ? 'aff-pulse-green' : ''}`}
+                        className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulse ? 'aff-pulse-green' : ''}`}
+                        style={progressGlowStyle}
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"
                       >
-                        {/* Progress contour glow following the button outline */}
+                        {/* Inner green pill - full width, but glow outside shows progress */}
                         <div
                           className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
                             isHalloween
@@ -210,9 +221,8 @@ export default function AffirmationBox({
                           }`}
                         />
                         <div className="relative z-10 flex items-center justify-center px-4">
-                          {/* Whole pill is tappable; plus in the center to suggest action */}
-                          <span className="flex items-center justify-center h-9 w-9 rounded-full bg-white/90 shadow-[0_4px_14px_rgba(22,163,74,0.55)] border border-emerald-300">
-                            <span className="text-emerald-500 text-2xl leading-none font-semibold">+</span>
+                          <span className="text-sm md:text-base font-semibold text-white">
+                            {(todayRepetitions ?? 0)} / {dailyTarget}
                           </span>
                         </div>
                       </button>
@@ -242,14 +252,6 @@ export default function AffirmationBox({
                     </Button>
                   );
                 })()}
-                {/* Compact progress text under the button */}
-                {typeof todayRepetitions === 'number' && (
-                  <div className="mt-1 text-center">
-                    <span className="text-xs md:text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                      {todayRepetitions} / {dailyTarget}
-                    </span>
-                  </div>
-                )}
               </div>
             )}
           </div>
