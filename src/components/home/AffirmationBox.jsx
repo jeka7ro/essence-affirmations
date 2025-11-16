@@ -18,7 +18,8 @@ export default function AffirmationBox({
   todayRepetitions,
   dailyTarget = 100,
   userId,
-  showFireworks
+  showFireworks,
+  externalPulseColor
 }) {
   const navigate = useNavigate();
   const [textSize, setTextSize] = useState("md");
@@ -69,11 +70,20 @@ export default function AffirmationBox({
   const progressGlowStyle =
     progressPercentage != null
       ? {
-          boxShadow: `0 0 0 ${4 + (progressPercentage / 100) * 10}px rgba(22,163,74,${
-            0.15 + (progressPercentage / 100) * 0.35
+          boxShadow: `0 0 0 ${3 + (progressPercentage / 100) * 12}px rgba(22,163,74,${
+            0.12 + (progressPercentage / 100) * 0.4
           })`,
         }
       : undefined;
+
+  const pulseClass =
+    externalPulseColor === "red"
+      ? "aff-pulse-red"
+      : externalPulseColor === "blue"
+      ? "aff-pulse-blue"
+      : pulse
+      ? "aff-pulse-green"
+      : "";
   
   return (
     <div className="relative">
@@ -125,7 +135,7 @@ export default function AffirmationBox({
                 onClick={() => window.location.reload()}
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
+                className="h-9 w-9 text-blue-600 hover:text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-xl"
                 aria-label="Reîncarcă pagina"
                 title="Reîncarcă pagina"
               >
@@ -138,7 +148,7 @@ export default function AffirmationBox({
                 onClick={handleTextSizeChange}
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
+                className="h-9 w-9 text-blue-600 hover:text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-xl"
                 aria-label="Ajustează mărimea textului"
                 title="Ajustează mărimea textului afirmației"
               >
@@ -207,7 +217,7 @@ export default function AffirmationBox({
                           setTimeout(() => setPulse(true), 0);
                           onAddRepetition();
                         }}
-                        className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulse ? 'aff-pulse-green' : ''}`}
+                        className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
                         style={progressGlowStyle}
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"

@@ -48,6 +48,7 @@ export default function HomePage() {
   const [pulseGreen, setPulseGreen] = useState(false);
   const [pulseRed, setPulseRed] = useState(false);
   const [pulseBlue, setPulseBlue] = useState(false);
+  const [affirmationPulseColor, setAffirmationPulseColor] = useState(null); // 'green' | 'red' | 'blue' | null
   const [showFireworks, setShowFireworks] = useState(false); // small celebration on daily 100 reps
   const [historySelectedDate, setHistorySelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   // Track if we've already shown mailman congratulations dialog in this session
@@ -1025,6 +1026,7 @@ export default function HomePage() {
           dailyTarget={100}
           userId={user?.id}
           showFireworks={showFireworks}
+          externalPulseColor={affirmationPulseColor}
         />
 
         {challengeStartDate && user?.role === 'admin' && (
@@ -1066,11 +1068,13 @@ export default function HomePage() {
                           </div>
                         )}
                         <Button
-                        onClick={() => {
-                          handleRepetition(1);
+                          onClick={() => {
+                            handleRepetition(1);
                             setPulseGreen(false);
                             setTimeout(() => setPulseGreen(true), 0);
-                        }}
+                            setAffirmationPulseColor('green');
+                            setTimeout(() => setAffirmationPulseColor(null), 550);
+                          }}
                           className={`relative overflow-hidden w-full md:w-80 h-14 text-xl font-bold rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transform transition-transform active:scale-95 hover:scale-105 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseGreen ? 'aff-pulse-green' : ''}`}
                         >
                           <span
@@ -1091,6 +1095,8 @@ export default function HomePage() {
                             handleRepetition(-10);
                             setPulseRed(false);
                             setTimeout(() => setPulseRed(true), 0);
+                            setAffirmationPulseColor('red');
+                            setTimeout(() => setAffirmationPulseColor(null), 550);
                           }}
                           className={`relative overflow-hidden flex-1 h-12 text-lg font-bold rounded-full shadow-[0_8px_20px_rgba(239,68,68,0.35)] border border-red-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${
                             pulseRed ? 'aff-pulse-red' : ''
@@ -1113,6 +1119,8 @@ export default function HomePage() {
                             handleRepetition(10);
                             setPulseBlue(false);
                             setTimeout(() => setPulseBlue(true), 0);
+                            setAffirmationPulseColor('blue');
+                            setTimeout(() => setAffirmationPulseColor(null), 550);
                           }}
                           className={`relative overflow-hidden flex-1 h-12 text-lg font-bold rounded-full shadow-[0_8px_20px_rgba(59,130,246,0.35)] border border-blue-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${
                             pulseBlue ? 'aff-pulse-blue' : ''
