@@ -46,6 +46,7 @@ export default function HomePage() {
   const [showCongratulationsDialog, setShowCongratulationsDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [mainButtonPulse, setMainButtonPulse] = useState(null); // 'green' | 'red' | 'blue' | null
+  const [showFireworks, setShowFireworks] = useState(false); // small celebration on daily 100 reps
   const [historySelectedDate, setHistorySelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   // Track if we've already shown mailman congratulations dialog in this session
   const congratulationsShownRef = useRef(false);
@@ -295,6 +296,11 @@ export default function HomePage() {
     if (todayRepetitions === 100 && !hasSeenToday && !showCongratulationsDialog && !congratulationsShownRef.current) {
       // Mark as shown immediately to prevent re-trigger
       congratulationsShownRef.current = true;
+
+      // Trigger 5s subtle fireworks animation around main repetition button
+      setShowFireworks(true);
+      setTimeout(() => setShowFireworks(false), 5000);
+
       // Mark as seen IMMEDIATELY and synchronously in state BEFORE showing
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       setUser(prev => prev ? { ...prev, congratulations_seen_date: todayStr } : prev);
@@ -1018,6 +1024,7 @@ export default function HomePage() {
           todayRepetitions={todayRepetitions}
           dailyTarget={100}
           userId={user?.id}
+          showFireworks={showFireworks}
         />
 
         {challengeStartDate && user?.role === 'admin' && (
@@ -1048,21 +1055,36 @@ export default function HomePage() {
                 <div className="flex flex-col items-center gap-3">
                   {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
                     <>
-                      <Button
+                      <div className="relative w-full md:w-80 flex justify-center">
+                        {showFireworks && (
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                            <div className="relative w-40 h-40">
+                              <span className="aff-firework-dot bg-green-400" style={{ top: '10%', left: '50%' }} />
+                              <span className="aff-firework-dot bg-emerald-400" style={{ top: '70%', left: '20%', animationDelay: '0.15s' }} />
+                              <span className="aff-firework-dot bg-lime-300" style={{ top: '40%', left: '80%', animationDelay: '0.3s' }} />
+                            </div>
+                          </div>
+                        )}
+                        <Button
                         onClick={() => {
                           handleRepetition(1);
                           setMainButtonPulse('green');
                           setTimeout(() => setMainButtonPulse(null), 300);
                         }}
-                        className={`w-full md:w-80 h-14 text-xl font-bold rounded-2xl shadow-lg transform transition-transform active:scale-95 hover:scale-105 ${
-                          isHalloween
-                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white'
-                            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                        } ${mainButtonPulse === 'green' ? 'aff-pulse-green' : ''}`}
-                      >
-                        Am repetat (+1)
-                      </Button>
-
+                          className={`relative overflow-hidden w-full md:w-80 h-14 text-xl font-bold rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transform transition-transform active:scale-95 hover:scale-105 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${mainButtonPulse === 'green' ? 'aff-pulse-green' : ''}`}
+                        >
+                          <span
+                            className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-300 ease-out ${
+                              isHalloween
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+                                : 'bg-gradient-to-r from-green-500 to-green-600'
+                            }`}
+                          />
+                          <span className="relative z-10">
+                            Am repetat (+1)
+                          </span>
+                        </Button>
+                      </div>
                       <div className="flex gap-3 w-full md:w-80">
                         <Button
                           onClick={() => {
