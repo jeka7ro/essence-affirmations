@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Save } from "lucide-react";
+import { Edit, Save, History, Text } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 export default function AffirmationBox({ 
@@ -13,9 +13,54 @@ export default function AffirmationBox({
   onChange, 
   onSave, 
   saving,
-  onAddRepetition
+  onAddRepetition,
+  onShowHistory,
+  isAdmin,
+  todayRepetitions,
+  dailyTarget = 100,
+  userId
 }) {
   const navigate = useNavigate();
+  const [textSize, setTextSize] = useState("md");
+
+  // Load preferred text size from localStorage
+  useEffect(() => {
+    try {
+      if (!userId) return;
+      const stored = localStorage.getItem(`affirmation_text_size_${userId}`);
+      if (stored === "sm" || stored === "md" || stored === "lg") {
+        setTextSize(stored);
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [userId]);
+
+  const handleTextSizeChange = () => {
+    setTextSize((current) => {
+      const next = current === "sm" ? "md" : current === "md" ? "lg" : "sm";
+      try {
+        if (userId) {
+          localStorage.setItem(`affirmation_text_size_${userId}`, next);
+        }
+      } catch (e) {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const textSizeClass =
+    textSize === "sm"
+      ? "text-base leading-relaxed"
+      : textSize === "lg"
+      ? "text-xl leading-relaxed"
+      : "text-lg leading-relaxed";
+
+  const progressPercentage =
+    typeof todayRepetitions === "number" && dailyTarget
+      ? Math.min(100, Math.max(0, (todayRepetitions / dailyTarget) * 100))
+      : null;
   
   return (
     <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-3xl shadow-lg">
@@ -47,26 +92,42 @@ export default function AffirmationBox({
               Afirmația Mea
             </CardTitle>
           </div>
-          {!isEditing ? (
-            <Button
-              onClick={onEdit}
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl flex-shrink-0"
-            >
-              <Edit className="w-5 h-5" />
-            </Button>
-          ) : (
-            <Button
-              onClick={onSave}
-              disabled={saving}
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 rounded-xl h-10 px-4 flex-shrink-0"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {saving ? "Se salvează..." : "Salvează"}
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {/* Text size toggle - cycles between small/medium/large */}
+            {!isEditing && (
+              <Button
+                onClick={handleTextSizeChange}
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
+                aria-label="Ajustează mărimea textului"
+                title="Ajustează mărimea textului afirmației"
+              >
+                <Text className="w-4 h-4" />
+              </Button>
+            )}
+
+            {!isEditing ? (
+              <Button
+                onClick={onEdit}
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl flex-shrink-0"
+              >
+                <Edit className="w-5 h-5" />
+              </Button>
+            ) : (
+              <Button
+                onClick={onSave}
+                disabled={saving}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 rounded-xl h-10 px-4 flex-shrink-0"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? "Se salvează..." : "Salvează"}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -81,7 +142,7 @@ export default function AffirmationBox({
           <div className="min-h-[160px] p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
             <div className="relative pb-12">
               {affirmation ? (
-                <p className="text-base md:text-lg leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                <p className={`${textSizeClass} md:text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
                   {affirmation}
                 </p>
               ) : (
@@ -90,23 +151,72 @@ export default function AffirmationBox({
                 </p>
               )}
             </div>
-            {/* Round green + button below text to add repetition - always at bottom */}
+            {/* Repetition button / progress - always at bottom */}
             {onAddRepetition && (
-              <div className="flex justify-end mt-1.5">
-                {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
+              <div className="flex justify-end items-center gap-2 mt-1.5">
+                {/* History icon - only for admin */}
+                {isAdmin && onShowHistory && (
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onAddRepetition();
+                      onShowHistory();
                     }}
                     size="icon"
-                    className={`h-10 w-10 md:h-12 md:w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
-                    aria-label="Adaugă repetare"
-                    title="Adaugă repetare"
+                    variant="outline"
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-transform active:scale-90"
+                    aria-label="Vezi istoric"
+                    title="Vezi istoric repetări"
                   >
-                    {isHalloween ? '🎃' : '+'}
+                    <History className="w-5 h-5 md:w-6 md:h-6" />
                   </Button>
-                ); })()}
+                )}
+                
+                {(() => { 
+                  const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
+
+                  // For admins, show a larger progress-style button; for others keep the original round button
+                  if (isAdmin && progressPercentage !== null) {
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddRepetition();
+                        }}
+                        className="relative overflow-hidden h-12 md:h-14 min-w-[160px] md:min-w-[220px] rounded-full shadow-lg transition-transform active:scale-95 focus:scale-95 border border-yellow-300/60 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-gray-800 dark:to-gray-900"
+                        aria-label="Adaugă repetare"
+                        title="Am repetat afirmația"
+                      >
+                        <div
+                          className={`absolute inset-0 transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500/70 to-orange-600/80' : 'bg-gradient-to-r from-green-500/70 to-emerald-500/80'}`}
+                          style={{ width: `${progressPercentage}%` }}
+                        />
+                        <div className="relative z-10 flex flex-col items-center justify-center px-4">
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-100">
+                            Am repetat (+1)
+                          </span>
+                          <span className="text-[11px] md:text-xs font-bold text-gray-900 dark:text-white">
+                            {todayRepetitions ?? 0} / {dailyTarget} repetări azi
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddRepetition();
+                      }}
+                      size="icon"
+                      className={`h-10 w-10 md:h-12 md:w-12 rounded-full text-white shadow-lg transition-transform active:scale-90 focus:scale-95 ${isHalloween ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
+                      aria-label="Adaugă repetare"
+                      title="Adaugă repetare"
+                    >
+                      {isHalloween ? '🎃' : '+'}
+                    </Button>
+                  );
+                })()}
               </div>
             )}
           </div>

@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trophy, Medal, Award, Users } from "lucide-react";
 
 export default function TopMembriPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('today'); // 'total' or 'today'
+  const [currentUserData, setCurrentUserData] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -16,8 +20,18 @@ export default function TopMembriPage() {
   const loadData = async () => {
     try {
       const currentUser = await base44.auth.me();
+      const userId = localStorage.getItem('essence_user_id');
+      const userData = userId ? await base44.entities.User.get(userId) : null;
+      
+      // ONLY ADMIN can access this page
+      if (!userData || userData.role !== 'admin') {
+        navigate(createPageUrl("Home"));
+        return;
+      }
+      
+      setCurrentUserData(userData);
+      
       const allUsers = await base44.entities.User.list();
-      const userData = allUsers.find(u => u.email === currentUser.email);
       
       // Filter users: if user is in a group, show only group members; if not in group, show only themselves
       let filteredUsers = allUsers;

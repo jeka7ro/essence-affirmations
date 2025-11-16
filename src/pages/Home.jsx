@@ -999,6 +999,9 @@ export default function HomePage() {
           onAddRepetition={() => handleRepetition(1)}
           onShowHistory={() => setShowHistoryDialog(true)}
           isAdmin={user?.role === 'admin'}
+          todayRepetitions={todayRepetitions}
+          dailyTarget={100}
+          userId={user?.id}
         />
 
         {challengeStartDate && (
@@ -1161,19 +1164,9 @@ export default function HomePage() {
       <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  Istoric Repetări
-                </DialogTitle>
-                <Button
-                  onClick={() => setShowHistoryDialog(false)}
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
+              <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Istoric Repetări
+              </DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
