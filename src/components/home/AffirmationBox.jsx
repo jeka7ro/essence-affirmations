@@ -166,26 +166,26 @@ export default function AffirmationBox({
                           e.stopPropagation();
                           onAddRepetition();
                         }}
-                        className="relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 cursor-pointer backdrop-blur-md"
+                        className="relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md"
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"
                       >
                         <div
-                          className={`absolute inset-0 transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500/70 to-orange-600/80' : 'bg-gradient-to-r from-green-500/70 to-emerald-500/80'}`}
+                          className={`absolute inset-y-1 left-1 rounded-full transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500 to-orange-600' : 'bg-gradient-to-r from-green-500 to-green-600'}`}
                           style={{ width: `${progressPercentage}%` }}
                         />
-                        <div className="relative z-10 flex items-center justify-between gap-3 px-4">
-                          <div className="flex flex-col items-start md:items-start text-left">
-                            <span className="text-[13px] md:text-sm font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                        <div className="relative z-10 flex items-center justify-center gap-3 px-4">
+                          <div className="flex flex-col items-center text-center">
+                            <span className="text-[13px] md:text-sm font-semibold text-emerald-900 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
                               Am repetat afirmația (+1)
                             </span>
-                            <span className="text-[11px] md:text-xs font-semibold text-emerald-50/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                            <span className="text-[11px] md:text-xs font-semibold text-emerald-800 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]">
                               Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
                             </span>
                           </div>
                           {/* Small round + icon on the right inside the bar to emphasize it's a button */}
-                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white/90 shadow-[0_4px_10px_rgba(0,0,0,0.25)] border border-emerald-300">
-                            <span className="text-emerald-500 text-xl leading-none">+</span>
+                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white shadow-[0_4px_14px_rgba(22,163,74,0.55)] border border-green-400">
+                            <span className="text-green-500 text-xl leading-none font-semibold">+</span>
                           </span>
                         </div>
                       </button>
