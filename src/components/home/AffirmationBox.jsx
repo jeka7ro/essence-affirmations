@@ -49,12 +49,14 @@ export default function AffirmationBox({
     });
   };
 
+  // Text size steps carefully chosen so even "lg" is comfortably readable
+  // without needing scroll on most devices.
   const textSizeClass =
     textSize === "sm"
-      ? "text-base leading-relaxed"
+      ? "text-sm leading-relaxed"
       : textSize === "lg"
-      ? "text-xl leading-relaxed"
-      : "text-lg leading-relaxed";
+      ? "text-lg leading-relaxed"
+      : "text-base leading-relaxed";
 
   const progressPercentage =
     typeof todayRepetitions === "number" && dailyTarget
@@ -139,7 +141,7 @@ export default function AffirmationBox({
           />
         ) : (
           <div className="min-h-[160px] p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-            <div className="relative pb-12 max-h-[260px] overflow-y-auto">
+            <div className="relative pb-12">
               {affirmation ? (
                 <p className={`${textSizeClass} md:text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
                   {affirmation}
@@ -172,13 +174,19 @@ export default function AffirmationBox({
                           className={`absolute inset-0 transition-all duration-500 ease-out ${isHalloween ? 'bg-gradient-to-r from-orange-500/70 to-orange-600/80' : 'bg-gradient-to-r from-green-500/70 to-emerald-500/80'}`}
                           style={{ width: `${progressPercentage}%` }}
                         />
-                        <div className="relative z-10 flex flex-col items-center justify-center px-4">
-                          <span className="text-[13px] md:text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            Am repetat afirmația (+1)
+                        <div className="relative z-10 flex items-center justify-center gap-3 px-4">
+                          {/* Small round + icon inside the bar to emphasize it's a button */}
+                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-green-600 shadow-sm">
+                            <span className="text-white text-lg leading-none">+</span>
                           </span>
-                          <span className="text-[11px] md:text-xs font-bold text-amber-800 dark:text-amber-200">
-                            Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
-                          </span>
+                          <div className="flex flex-col items-start">
+                            <span className="text-[13px] md:text-sm font-semibold text-gray-800 dark:text-gray-100">
+                              Am repetat afirmația (+1)
+                            </span>
+                            <span className="text-[11px] md:text-xs font-bold text-amber-800 dark:text-amber-200">
+                              Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
+                            </span>
+                          </div>
                         </div>
                       </button>
                     );
