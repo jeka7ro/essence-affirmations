@@ -166,7 +166,7 @@ export default function AffirmationBox({
                           e.stopPropagation();
                           onAddRepetition();
                         }}
-                        className="relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-lg transition-transform active:scale-95 focus:scale-95 border border-yellow-300/70 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-gray-800 dark:to-gray-900 cursor-pointer"
+                        className="relative overflow-hidden h-12 md:h-14 w-full rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 cursor-pointer backdrop-blur-md"
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"
                       >
@@ -175,17 +175,17 @@ export default function AffirmationBox({
                           style={{ width: `${progressPercentage}%` }}
                         />
                         <div className="relative z-10 flex items-center justify-between gap-3 px-4">
-                          <div className="flex flex-col items-start">
-                            <span className="text-[13px] md:text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          <div className="flex flex-col items-start md:items-start text-left">
+                            <span className="text-[13px] md:text-sm font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
                               Am repetat afirmația (+1)
                             </span>
-                            <span className="text-[11px] md:text-xs font-bold text-amber-800 dark:text-amber-200">
+                            <span className="text-[11px] md:text-xs font-semibold text-emerald-50/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
                               Progres azi: {todayRepetitions ?? 0} / {dailyTarget}
                             </span>
                           </div>
                           {/* Small round + icon on the right inside the bar to emphasize it's a button */}
-                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-green-600 shadow-sm">
-                            <span className="text-white text-xl leading-none">+</span>
+                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white/90 shadow-[0_4px_10px_rgba(0,0,0,0.25)] border border-emerald-300">
+                            <span className="text-emerald-500 text-xl leading-none">+</span>
                           </span>
                         </div>
                       </button>
