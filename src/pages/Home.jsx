@@ -9,11 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Users, TrendingUp, RotateCcw, AlertCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Calendar, Users, RotateCcw, AlertCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { format, differenceInDays, addDays, parseISO, subDays } from "date-fns";
 import { ro } from "date-fns/locale";
-
-import StatsCards from "../components/home/StatsCards";
 import ChallengeCalendar from "../components/home/ChallengeCalendar";
 import AffirmationBox from "../components/home/AffirmationBox";
 
@@ -977,38 +975,6 @@ export default function HomePage() {
         
 
 
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-6">
-          <StatsCards
-            icon={TrendingUp}
-            title="Afirmatii azi"
-            value={todayRepetitions}
-            subtitle="repetări azi"
-            color="green"
-          />
-          <StatsCards
-            icon={Calendar}
-            title="Afirmatii totale"
-            value={totalRepetitions.toLocaleString('ro-RO')}
-            subtitle="ale tale (tap pentru istoric)"
-            color="blue"
-            clickable={user?.role === 'admin'}
-            onClick={() => {
-              if (user?.role === 'admin') {
-                setShowHistoryDialog(true);
-              }
-            }}
-            rightAddon={
-              user?.role === 'admin' ? (
-                <div className="flex items-center gap-1 text-[11px] md:text-xs font-semibold text-blue-600 dark:text-blue-300">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-blue-300 bg-blue-50/70 dark:bg-blue-900/40">
-                    📊
-                  </span>
-                  <span>Istoric</span>
-                </div>
-              ) : null
-            }
-          />
-        </div>
 
         <AffirmationBox
           affirmation={affirmation}

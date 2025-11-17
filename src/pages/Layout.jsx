@@ -14,10 +14,13 @@ import {
   X,
   Home,
   Trophy,
-  Bell
+  Bell,
+  TrendingUp,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import StatsCards from "@/components/home/StatsCards";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -32,6 +35,7 @@ export default function Layout({ children, currentPageName }) {
   const [seasonalActive, setSeasonalActive] = useState(false);
   const isHalloween = seasonalActive;
   const [todayRepetitions, setTodayRepetitions] = useState(0);
+  const [totalRepetitions, setTotalRepetitions] = useState(0);
 
   // Scorpio unicode sign (clean and consistent with text icons)
   const ScorpioIcon = ({ className = "w-5 h-5" }) => (
@@ -175,6 +179,7 @@ export default function Layout({ children, currentPageName }) {
         const currentReps = hist.filter(r => r && r.date === today).length;
         
         setTodayRepetitions(currentReps);
+        setTotalRepetitions(hist.length);
       } catch (error) {
         console.error("Error updating reps in header:", error);
       }
@@ -470,6 +475,26 @@ export default function Layout({ children, currentPageName }) {
                 />
               </Link>
             </div>
+            
+            {/* Repetition cards in header - only on Home page */}
+            {user && location.pathname === createPageUrl("Home") && (
+              <div className="hidden md:flex items-center gap-2 flex-1 justify-center max-w-md">
+                <StatsCards
+                  icon={TrendingUp}
+                  title="Repetări azi"
+                  value={todayRepetitions}
+                  color="green"
+                  className="flex-1"
+                />
+                <StatsCards
+                  icon={Calendar}
+                  title="Repetări totale"
+                  value={totalRepetitions.toLocaleString('ro-RO')}
+                  color="blue"
+                  className="flex-1"
+                />
+              </div>
+            )}
             
             {user && (
               <div className="flex items-center gap-2">
