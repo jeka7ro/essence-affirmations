@@ -238,26 +238,24 @@ export default function AffirmationBox({
                               zIndex: 1
                             }}
                           />
-                          {/* Green progress fill - fills from center, follows rounded pill shape */}
+                          {/* Green progress fill - fills from center, same rounded pill shape */}
                           <div
-                            className="absolute inset-0 rounded-full pointer-events-none"
+                            className="absolute inset-0 rounded-full pointer-events-none overflow-hidden"
                             style={{
-                              background: `linear-gradient(to right, 
-                                transparent 0%, 
-                                transparent ${50 - (progressPercentage / 2)}%, 
-                                rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)}) ${50 - (progressPercentage / 2)}%, 
-                                rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)}) ${50 + (progressPercentage / 2)}%, 
-                                transparent ${50 + (progressPercentage / 2)}%, 
-                                transparent 100%)`,
-                              border: `2px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
-                              clipPath: progressPercentage < 100
-                                ? `inset(0 ${50 - (progressPercentage / 2)}% 0 ${50 - (progressPercentage / 2)}%)`
-                                : 'none',
-                              zIndex: 2,
-                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
-                              transition: 'all 0.3s ease-out'
+                              zIndex: 2
                             }}
-                          />
+                          >
+                            <div
+                              className="absolute inset-0 rounded-full"
+                              style={{
+                                border: `2px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
+                                left: `${50 - (progressPercentage / 2)}%`,
+                                width: `${progressPercentage}%`,
+                                boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
+                                transition: 'all 0.3s ease-out'
+                              }}
+                            />
+                          </div>
                           {/* Inner green pill - full width */}
                           <div
                             className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
