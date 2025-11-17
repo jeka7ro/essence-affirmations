@@ -470,20 +470,6 @@ export default function Layout({ children, currentPageName }) {
                 />
               </Link>
             </div>
-            {/* Progress bar for repetitions - integrated in header */}
-            {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-2 flex-1 max-w-xs">
-                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-300 ${isHalloween ? 'bg-orange-500' : 'bg-green-500'}`}
-                    style={{ width: `${Math.min((todayRepetitions / 100) * 100, 100)}%` }}
-                  />
-                </div>
-                <span className={`text-xs font-bold whitespace-nowrap ${todayRepetitions >= 100 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                  {todayRepetitions}/100
-                </span>
-              </div>
-            )}
             
             {user && (
               <div className="flex items-center gap-2">

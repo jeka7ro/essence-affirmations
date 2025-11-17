@@ -196,7 +196,7 @@ export default function AffirmationBox({
           />
         ) : (
           <div className="min-h-[160px] p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-            <div className="relative pb-12">
+            <div className="relative pb-2">
               {affirmation ? (
                 <p className={`${textSizeClass} font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
                   {affirmation}
@@ -207,78 +207,89 @@ export default function AffirmationBox({
                 </p>
               )}
             </div>
-            {/* Repetition button / progress - always at bottom */}
+            {/* Repetition button / progress - moved up */}
             {onAddRepetition && (
-              <div className="mt-2 w-full">
+              <div className="mt-1 w-full">
                 {(() => { 
                   const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
 
                   // For admins, show a larger progress-style button; for others keep the original round button
                   if (isAdmin && progressPercentage !== null) {
                     return (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Trigger a short green pulse animation locally
-                          setPulse(false);
-                          setTimeout(() => setPulse(true), 0);
-                          onAddRepetition();
-                        }}
-                        className={`relative overflow-visible h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
-                        aria-label="Adaugă repetare"
-                        title="Am repetat afirmația"
-                      >
-                        {/* Permanent contour glow - starts from center (top/bottom), extends left-right simultaneously */}
-                        {/* At 0%: very subtle visible. At 100%: full ring unites left-right */}
-                        {/* Top contour segment - extends from center up */}
-                        <div
-                          className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
-                          style={{
-                            width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
-                            height: '4px',
-                            marginTop: '-2px',
-                            background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                            boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                            transform: 'translateX(-50%)',
-                            transition: 'all 0.3s ease-out'
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Trigger a short green pulse animation locally
+                            setPulse(false);
+                            setTimeout(() => setPulse(true), 0);
+                            onAddRepetition();
                           }}
-                        />
-                        {/* Bottom contour segment - extends from center down */}
-                        <div
-                          className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
-                          style={{
-                            width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
-                            height: '4px',
-                            marginBottom: '-2px',
-                            background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                            boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                            transform: 'translateX(-50%)',
-                            transition: 'all 0.3s ease-out'
-                          }}
-                        />
-                        {/* Full ring at 100% - unites left-right */}
-                        {progressPercentage >= 100 && (
+                          className={`relative overflow-visible h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
+                          aria-label="Adaugă repetare"
+                          title="Am repetat afirmația"
+                        >
+                          {/* Permanent contour glow - starts from center (top/bottom), extends left-right simultaneously */}
+                          {/* At 0%: very subtle visible. At 100%: full ring unites left-right */}
+                          {/* Top contour segment - extends from center up */}
                           <div
-                            className="absolute inset-0 rounded-full pointer-events-none"
+                            className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
                             style={{
-                              boxShadow: `0 0 0 24px rgba(22,163,74,0.85)`,
+                              width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
+                              height: '4px',
+                              marginTop: '-2px',
+                              background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
+                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
+                              transform: 'translateX(-50%)',
+                              transition: 'all 0.3s ease-out'
                             }}
                           />
-                        )}
-                        {/* Inner green pill - full width */}
-                        <div
-                          className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
-                            isHalloween
-                              ? 'bg-gradient-to-r from-orange-500 to-orange-600'
-                              : 'bg-gradient-to-r from-green-500 to-green-600'
-                          }`}
-                        />
-                        <div className="relative z-10 flex items-center justify-center px-4">
-                          <span className="text-sm md:text-base font-semibold text-white">
-                            {(todayRepetitions ?? 0)} / {dailyTarget}
-                          </span>
+                          {/* Bottom contour segment - extends from center down */}
+                          <div
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
+                            style={{
+                              width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
+                              height: '4px',
+                              marginBottom: '-2px',
+                              background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
+                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
+                              transform: 'translateX(-50%)',
+                              transition: 'all 0.3s ease-out'
+                            }}
+                          />
+                          {/* Full ring at 100% - unites left-right */}
+                          {progressPercentage >= 100 && (
+                            <div
+                              className="absolute inset-0 rounded-full pointer-events-none"
+                              style={{
+                                boxShadow: `0 0 0 24px rgba(22,163,74,0.85)`,
+                              }}
+                            />
+                          )}
+                          {/* Inner green pill - full width */}
+                          <div
+                            className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
+                              isHalloween
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+                                : 'bg-gradient-to-r from-green-500 to-green-600'
+                            }`}
+                          />
+                          <div className="relative z-10 flex items-center justify-center px-4">
+                            <span className="text-sm md:text-base font-semibold text-white">
+                              {(todayRepetitions ?? 0)} / {dailyTarget}
+                            </span>
+                          </div>
+                        </button>
+                        {/* Progress bar below button - moved from header */}
+                        <div className="mt-2 w-full">
+                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-300 ${isHalloween ? 'bg-orange-500' : 'bg-green-500'}`}
+                              style={{ width: `${Math.min((progressPercentage || 0), 100)}%` }}
+                            />
+                          </div>
                         </div>
-                      </button>
+                      </>
                     );
                   }
 
