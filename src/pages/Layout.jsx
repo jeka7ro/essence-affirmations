@@ -498,14 +498,14 @@ export default function Layout({ children, currentPageName }) {
             
             {/* Repetition cards in mobile header - only on Home page */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-2 flex-1 justify-center min-w-0 max-w-md">
-                <div className="flex-1 min-w-0 border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-lg bg-white dark:bg-gray-900 p-1.5">
-                  <p className="text-[9px] font-medium text-gray-600 dark:text-gray-400 mb-0.5">Repetări azi</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{todayRepetitions}</p>
+              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0 max-w-md">
+                <div className="flex-1 min-w-0 border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-lg bg-white dark:bg-gray-900 px-2 py-1">
+                  <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0 leading-none">Repetări azi</p>
+                  <p className="text-base font-bold text-gray-900 dark:text-gray-100 leading-none mt-0.5">{todayRepetitions ?? 0}</p>
                 </div>
-                <div className="flex-1 min-w-0 border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-lg bg-white dark:bg-gray-900 p-1.5">
-                  <p className="text-[9px] font-medium text-gray-600 dark:text-gray-400 mb-0.5">Totale</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalRepetitions.toLocaleString('ro-RO')}</p>
+                <div className="flex-1 min-w-0 border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-lg bg-white dark:bg-gray-900 px-2 py-1">
+                  <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0 leading-none">Totale</p>
+                  <p className="text-base font-bold text-gray-900 dark:text-gray-100 leading-none mt-0.5">{(totalRepetitions ?? 0).toLocaleString('ro-RO')}</p>
                 </div>
               </div>
             )}
