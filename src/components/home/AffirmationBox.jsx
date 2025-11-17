@@ -230,17 +230,16 @@ export default function AffirmationBox({
                           title="Am repetat afirmația"
                         >
                           {/* Permanent contour glow - follows button's rounded pill shape */}
-                          {/* Starts from center, extends left-right simultaneously, unites at 100% */}
+                          {/* Starts from center (top/bottom), extends left-right simultaneously, unites at 100% */}
                           <div
                             className="absolute inset-0 rounded-full pointer-events-none"
                             style={{
-                              left: `${50 - (progressPercentage / 2)}%`,
-                              width: `${progressPercentage}%`,
-                              height: '100%',
                               border: `${Math.max(2, 2 + (progressPercentage / 100) * 1)}px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
                               boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
-                              transition: 'all 0.3s ease-out',
-                              borderRadius: '9999px'
+                              clipPath: progressPercentage < 100
+                                ? `inset(0 ${50 - (progressPercentage / 2)}% 0 ${50 - (progressPercentage / 2)}%)`
+                                : 'none',
+                              transition: 'all 0.3s ease-out'
                             }}
                           />
                           {/* Inner green pill - full width */}
