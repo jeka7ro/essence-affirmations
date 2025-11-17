@@ -229,45 +229,27 @@ export default function AffirmationBox({
                             setTimeout(() => setPulse(true), 0);
                             onAddRepetition();
                           }}
-                          className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border-2 border-white/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
+                          className={`relative overflow-visible h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
+                          style={{
+                            border: '2px solid rgba(255, 255, 255, 0.8)'
+                          }}
                           aria-label="Adaugă repetare"
                           title="Am repetat afirmația"
                         >
-                          {/* Progress contour - fixed size, same rounded pill shape, fills progressively */}
-                          {/* Base white contour - always full, fixed size, rounded pill shape */}
+                          {/* Progress contour - exact same rounded pill shape as button, fills progressively */}
+                          {/* Green progress overlay - fills from center, same exact rounded pill shape */}
                           <div
                             className="absolute inset-0 rounded-full pointer-events-none"
                             style={{
-                              border: '2px solid rgba(255, 255, 255, 0.8)',
+                              border: `2px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
+                              clipPath: progressPercentage < 100
+                                ? `polygon(${50 - (progressPercentage / 2)}% 0%, ${50 + (progressPercentage / 2)}% 0%, ${50 + (progressPercentage / 2)}% 100%, ${50 - (progressPercentage / 2)}% 100%)`
+                                : 'none',
+                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
+                              transition: 'all 0.3s ease-out',
                               zIndex: 1
                             }}
                           />
-                          {/* Green progress - fills progressively from center, same fixed rounded pill shape */}
-                          <svg
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            style={{ overflow: 'visible' }}
-                            viewBox="0 0 200 50"
-                            preserveAspectRatio="none"
-                          >
-                            <rect
-                              x="0"
-                              y="0"
-                              width="200"
-                              height="50"
-                              rx="25"
-                              ry="25"
-                              fill="none"
-                              stroke={`rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`}
-                              strokeWidth="4"
-                              strokeDasharray={progressPercentage >= 100 ? "none" : `${(progressPercentage / 100) * 314} 314`}
-                              strokeDashoffset={progressPercentage >= 100 ? "0" : "157"}
-                              strokeLinecap="round"
-                              style={{
-                                filter: `drop-shadow(0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)}))`,
-                                transition: 'all 0.3s ease-out'
-                              }}
-                            />
-                          </svg>
                           {/* Inner green pill - full width */}
                           <div
                             className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
