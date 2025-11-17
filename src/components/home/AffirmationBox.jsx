@@ -225,27 +225,36 @@ export default function AffirmationBox({
                             setTimeout(() => setPulse(true), 0);
                             onAddRepetition();
                           }}
-                          className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border-2 border-white/60 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
+                          className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border-2 border-white/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
                           aria-label="Adaugă repetare"
                           title="Am repetat afirmația"
                         >
-                          {/* Permanent contour - white base, green progress fills from center */}
-                          {/* White base contour (always visible) */}
+                          {/* Progress contour - same rounded pill shape, fills like progress bar */}
+                          {/* Base white contour (always visible, full rounded pill shape) */}
                           <div
-                            className="absolute inset-0 rounded-full pointer-events-none border-2 border-white/80"
+                            className="absolute inset-0 rounded-full pointer-events-none"
                             style={{
+                              border: '2px solid rgba(255, 255, 255, 0.8)',
                               zIndex: 1
                             }}
                           />
-                          {/* Green progress contour - extends from center, unites at 100% */}
+                          {/* Green progress fill - fills from center, follows rounded pill shape */}
                           <div
-                            className="absolute inset-0 rounded-full pointer-events-none border-2 border-green-500"
+                            className="absolute inset-0 rounded-full pointer-events-none"
                             style={{
-                              left: `${50 - (progressPercentage / 2)}%`,
-                              width: `${progressPercentage}%`,
-                              height: '100%',
+                              background: `linear-gradient(to right, 
+                                transparent 0%, 
+                                transparent ${50 - (progressPercentage / 2)}%, 
+                                rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)}) ${50 - (progressPercentage / 2)}%, 
+                                rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)}) ${50 + (progressPercentage / 2)}%, 
+                                transparent ${50 + (progressPercentage / 2)}%, 
+                                transparent 100%)`,
+                              border: `2px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
+                              clipPath: progressPercentage < 100
+                                ? `inset(0 ${50 - (progressPercentage / 2)}% 0 ${50 - (progressPercentage / 2)}%)`
+                                : 'none',
                               zIndex: 2,
-                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.7, 0.2 + (progressPercentage / 100) * 0.5)})`,
+                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
                               transition: 'all 0.3s ease-out'
                             }}
                           />
