@@ -496,22 +496,26 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             </div>
             
-            {/* Repetition cards in mobile header - only on Home page, compact inline */}
+            {/* Repetition cards in mobile header - only on Home page, using original StatsCards style */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0">
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 min-w-0">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] text-green-700 dark:text-green-300 font-medium leading-tight">Azi</p>
-                    <p className="text-xs font-bold text-green-900 dark:text-green-100 leading-tight">{todayRepetitions}</p>
-                  </div>
+              <div className="flex items-stretch gap-2 flex-1 justify-center min-w-0 max-w-xs">
+                <div className="flex-1 min-w-0">
+                  <StatsCards
+                    icon={TrendingUp}
+                    title="Repetări azi"
+                    value={todayRepetitions}
+                    color="green"
+                    className="h-full [&>div>div]:!p-2"
+                  />
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 min-w-0">
-                  <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] text-blue-700 dark:text-blue-300 font-medium leading-tight">Total</p>
-                    <p className="text-xs font-bold text-blue-900 dark:text-blue-100 leading-tight">{totalRepetitions.toLocaleString('ro-RO')}</p>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <StatsCards
+                    icon={Calendar}
+                    title="Repetări totale"
+                    value={totalRepetitions.toLocaleString('ro-RO')}
+                    color="blue"
+                    className="h-full [&>div>div]:!p-2"
+                  />
                 </div>
               </div>
             )}
