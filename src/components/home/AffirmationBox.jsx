@@ -66,14 +66,14 @@ export default function AffirmationBox({
       ? Math.min(100, Math.max(0, (todayRepetitions / dailyTarget) * 100))
       : null;
 
-  // Contour glow: permanent, starts from center (top/bottom), extends simultaneously
-  // left and right. At 0%: almost invisible. At 100%: full green ring unites left-right.
+  // Contour glow: permanent, visible even at 0%, starts from center (top/bottom), 
+  // extends simultaneously left and right. At 0%: very subtle. At 100%: full green ring unites left-right.
   // The glow grows from center outward, creating a circular progress indicator.
   const progressGlowStyle =
     progressPercentage !== null
       ? {
-          boxShadow: `0 0 0 ${Math.max(0, (progressPercentage / 100) * 20)}px rgba(22,163,74,${
-            Math.min(0.7, 0.05 + (progressPercentage / 100) * 0.65)
+          boxShadow: `0 0 0 ${Math.max(1, 1 + (progressPercentage / 100) * 19)}px rgba(22,163,74,${
+            Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)
           })`,
         }
       : undefined;
@@ -224,12 +224,48 @@ export default function AffirmationBox({
                           setTimeout(() => setPulse(true), 0);
                           onAddRepetition();
                         }}
-                        className={`relative overflow-hidden h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
-                        style={progressGlowStyle}
+                        className={`relative overflow-visible h-12 md:h-13 w-full rounded-full transition-transform active:scale-95 focus:scale-95 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseClass}`}
                         aria-label="Adaugă repetare"
                         title="Am repetat afirmația"
                       >
-                        {/* Inner green pill - full width, but glow outside shows progress */}
+                        {/* Permanent contour glow - starts from center (top/bottom), extends left-right simultaneously */}
+                        {/* At 0%: very subtle visible. At 100%: full ring unites left-right */}
+                        {/* Top contour segment - extends from center up */}
+                        <div
+                          className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
+                          style={{
+                            width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
+                            height: '2px',
+                            marginTop: '-1px',
+                            background: `rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
+                            boxShadow: `0 0 ${Math.max(1, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
+                            transform: 'translateX(-50%)',
+                            transition: 'all 0.3s ease-out'
+                          }}
+                        />
+                        {/* Bottom contour segment - extends from center down */}
+                        <div
+                          className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
+                          style={{
+                            width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
+                            height: '2px',
+                            marginBottom: '-1px',
+                            background: `rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
+                            boxShadow: `0 0 ${Math.max(1, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
+                            transform: 'translateX(-50%)',
+                            transition: 'all 0.3s ease-out'
+                          }}
+                        />
+                        {/* Full ring at 100% - unites left-right */}
+                        {progressPercentage >= 100 && (
+                          <div
+                            className="absolute inset-0 rounded-full pointer-events-none"
+                            style={{
+                              boxShadow: `0 0 0 20px rgba(22,163,74,0.7)`,
+                            }}
+                          />
+                        )}
+                        {/* Inner green pill - full width */}
                         <div
                           className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
                             isHalloween
