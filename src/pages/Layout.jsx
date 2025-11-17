@@ -511,7 +511,7 @@ export default function Layout({ children, currentPageName }) {
                 </div>
                 {/* Progress bar below cards - only for admin */}
                 {user?.role === 'admin' && (
-                  <div className="w-full mt-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="w-[85%] mt-1.5 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div 
                       className={`h-full transition-all duration-300 ${isHalloween ? 'bg-orange-500' : 'bg-green-500'}`}
                       style={{ width: `${Math.min(((todayRepetitions ?? 0) / 100) * 100, 100)}%` }}
