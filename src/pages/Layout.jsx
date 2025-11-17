@@ -496,11 +496,23 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             </div>
             
-            {/* Repetition info in mobile header - only on Home page, simple text */}
+            {/* Repetition cards in mobile header - only on Home page */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
-                <span className="text-sm font-semibold text-green-600 dark:text-green-400">{todayRepetitions}</span>
-                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{totalRepetitions.toLocaleString('ro-RO')}</span>
+              <div className="flex items-stretch gap-2 flex-1 justify-center min-w-0 max-w-md">
+                <StatsCards
+                  icon={TrendingUp}
+                  title="Repetări azi"
+                  value={todayRepetitions}
+                  color="green"
+                  className="flex-1 min-w-0 [&>div]:!p-2"
+                />
+                <StatsCards
+                  icon={Calendar}
+                  title="Repetări totale"
+                  value={totalRepetitions.toLocaleString('ro-RO')}
+                  color="blue"
+                  className="flex-1 min-w-0 [&>div]:!p-2"
+                />
               </div>
             )}
             
