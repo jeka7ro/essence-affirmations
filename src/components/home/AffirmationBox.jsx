@@ -280,9 +280,9 @@ export default function AffirmationBox({
                             </span>
                           </div>
                         </button>
-                        {/* Progress bar below button - moved from header */}
-                        <div className="mt-2 w-full">
-                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        {/* Progress bar below button - moved from header, 70% width, centered */}
+                        <div className="mt-2 w-full flex justify-center">
+                          <div className="w-[70%] bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                             <div 
                               className={`h-full transition-all duration-300 ${isHalloween ? 'bg-orange-500' : 'bg-green-500'}`}
                               style={{ width: `${Math.min((progressPercentage || 0), 100)}%` }}
