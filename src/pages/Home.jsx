@@ -653,21 +653,18 @@ export default function HomePage() {
     
     const currentToday = typeof todayRepetitions === 'number' ? todayRepetitions : 0;
     
-    let effective = count;
+    // Always compute new value from latest visible state to avoid desincronizări
+    let newToday = currentToday + count;
+    if (newToday < 0) newToday = 0;
     
-    // For negative counts, limit to available repetitions
-    if (count < 0) {
-      const canRemove = Math.max(0, currentToday);
-      effective = -Math.min(Math.abs(count), canRemove);
-    }
-    
+    const effective = newToday - currentToday;
     if (!effective) return;
     
     if (effective > 0) {
       noDecreaseUntilRef.current = Date.now() + 15000; // 15s guard window
     }
     
-    // Apply immediately to UI
+    // Apply immediately to UI & history
     applyLocalDelta(effective);
     
     // Save to server asynchronously
@@ -1033,7 +1030,12 @@ export default function HomePage() {
           <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg rounded-3xl">
             <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-3">
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 dark:border-orange-400 rounded-r-lg p-3">
+                    <p className="text-xs md:text-sm text-orange-800 dark:text-orange-200 font-medium leading-relaxed">
+                      Vă reamintim regula de bază: dacă într-o zi nu se îndeplinesc cele 100 de repetiții, ciclul de 30 de zile se resetează și se reia de la început.
+                    </p>
+                  </div>
                   <div className="space-y-3 mt-2">
                     <p className={`text-sm font-semibold ${
                       todayRepetitions >= 100 
@@ -1057,38 +1059,6 @@ export default function HomePage() {
                 <div className="flex flex-col items-center gap-3">
                   {(() => { const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween'); return (
                     <>
-                      <div className="relative w-full md:w-80 flex justify-center">
-                        {showFireworks && (
-                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                            <div className="relative w-40 h-40">
-                              <span className="aff-firework-dot bg-green-400" style={{ top: '10%', left: '50%' }} />
-                              <span className="aff-firework-dot bg-emerald-400" style={{ top: '70%', left: '20%', animationDelay: '0.15s' }} />
-                              <span className="aff-firework-dot bg-lime-300" style={{ top: '40%', left: '80%', animationDelay: '0.3s' }} />
-                            </div>
-                          </div>
-                        )}
-                        <Button
-                          onClick={() => {
-                            handleRepetition(1);
-                            setPulseGreen(false);
-                            setTimeout(() => setPulseGreen(true), 0);
-                            setAffirmationPulseColor('green');
-                            setTimeout(() => setAffirmationPulseColor(null), 550);
-                          }}
-                          className={`relative overflow-hidden w-full md:w-80 h-14 text-xl font-bold rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.35)] transform transition-transform active:scale-95 hover:scale-105 border border-emerald-300/80 bg-white/40 cursor-pointer backdrop-blur-md ${pulseGreen ? 'aff-pulse-green' : ''}`}
-                        >
-                          <span
-                            className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-300 ease-out ${
-                              isHalloween
-                                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
-                                : 'bg-gradient-to-r from-green-500 to-green-600'
-                            }`}
-                          />
-                          <span className="relative z-10">
-                            Am repetat (+1)
-                          </span>
-                        </Button>
-                      </div>
                       <div className="flex gap-3 w-full md:w-80">
                         <Button
                           onClick={() => {

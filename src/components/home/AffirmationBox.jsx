@@ -235,10 +235,10 @@ export default function AffirmationBox({
                           className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
                           style={{
                             width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
-                            height: '2px',
-                            marginTop: '-1px',
-                            background: `rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
-                            boxShadow: `0 0 ${Math.max(1, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
+                            height: '4px',
+                            marginTop: '-2px',
+                            background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
+                            boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
                             transform: 'translateX(-50%)',
                             transition: 'all 0.3s ease-out'
                           }}
@@ -248,10 +248,10 @@ export default function AffirmationBox({
                           className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
                           style={{
                             width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
-                            height: '2px',
-                            marginBottom: '-1px',
-                            background: `rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
-                            boxShadow: `0 0 ${Math.max(1, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.7, 0.08 + (progressPercentage / 100) * 0.62)})`,
+                            height: '4px',
+                            marginBottom: '-2px',
+                            background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
+                            boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
                             transform: 'translateX(-50%)',
                             transition: 'all 0.3s ease-out'
                           }}
@@ -261,7 +261,7 @@ export default function AffirmationBox({
                           <div
                             className="absolute inset-0 rounded-full pointer-events-none"
                             style={{
-                              boxShadow: `0 0 0 20px rgba(22,163,74,0.7)`,
+                              boxShadow: `0 0 0 24px rgba(22,163,74,0.85)`,
                             }}
                           />
                         )}
