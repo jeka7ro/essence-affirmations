@@ -89,14 +89,18 @@ export default function AffirmationBox({
   
   return (
     <div className="relative">
-      {/* Fireworks around affirmation card when reaching 100 reps (admin only) */}
-      {isAdmin && showFireworks && (
-        <div className="pointer-events-none absolute -inset-1 flex items-center justify-center">
+      {/* Fireworks around affirmation card when reaching 100 reps (all users) */}
+      {showFireworks && (
+        <div className="pointer-events-none absolute -inset-1 flex items-center justify-center z-50">
           <div className="relative w-full h-full">
             <span className="aff-firework-dot bg-green-400" style={{ top: '5%', left: '10%' }} />
             <span className="aff-firework-dot bg-emerald-400" style={{ top: '10%', right: '12%', animationDelay: '0.15s' }} />
             <span className="aff-firework-dot bg-lime-300" style={{ bottom: '8%', left: '18%', animationDelay: '0.3s' }} />
             <span className="aff-firework-dot bg-emerald-300" style={{ bottom: '12%', right: '20%', animationDelay: '0.45s' }} />
+            <span className="aff-firework-dot bg-green-500" style={{ top: '50%', left: '5%', animationDelay: '0.2s' }} />
+            <span className="aff-firework-dot bg-emerald-500" style={{ top: '50%', right: '5%', animationDelay: '0.25s' }} />
+            <span className="aff-firework-dot bg-lime-400" style={{ top: '20%', left: '50%', animationDelay: '0.35s' }} />
+            <span className="aff-firework-dot bg-green-300" style={{ bottom: '20%', left: '50%', animationDelay: '0.4s' }} />
           </div>
         </div>
       )}
