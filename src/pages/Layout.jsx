@@ -498,21 +498,25 @@ export default function Layout({ children, currentPageName }) {
             
             {/* Repetition cards in mobile header - only on Home page */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-2 flex-1 justify-center min-w-0 max-w-md">
-                <StatsCards
-                  icon={TrendingUp}
-                  title="Repetări azi"
-                  value={todayRepetitions}
-                  color="green"
-                  className="flex-1 min-w-0 !h-auto [&>div]:!p-1.5 [&>div>div]:!items-center [&>div>div>div]:!text-center [&>div>div>div>p:first-child]:!text-[10px] [&>div>div>div>p:last-child]:!text-xs"
-                />
-                <StatsCards
-                  icon={Calendar}
-                  title="Repetări totale"
-                  value={totalRepetitions.toLocaleString('ro-RO')}
-                  color="blue"
-                  className="flex-1 min-w-0 !h-auto [&>div]:!p-1.5 [&>div>div]:!items-center [&>div>div>div]:!text-center [&>div>div>div>p:first-child]:!text-[10px] [&>div>div>div>p:last-child]:!text-xs"
-                />
+              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0 max-w-md overflow-hidden">
+                <div className="flex-1 min-w-0 scale-[0.65] origin-center">
+                  <StatsCards
+                    icon={TrendingUp}
+                    title="Repetări azi"
+                    value={todayRepetitions}
+                    color="green"
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex-1 min-w-0 scale-[0.65] origin-center">
+                  <StatsCards
+                    icon={Calendar}
+                    title="Repetări totale"
+                    value={totalRepetitions.toLocaleString('ro-RO')}
+                    color="blue"
+                    className="w-full"
+                  />
+                </div>
               </div>
             )}
             
