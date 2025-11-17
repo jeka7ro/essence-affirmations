@@ -229,43 +229,20 @@ export default function AffirmationBox({
                           aria-label="Adaugă repetare"
                           title="Am repetat afirmația"
                         >
-                          {/* Permanent contour glow - starts from center (top/bottom), extends left-right simultaneously */}
-                          {/* At 0%: very subtle visible. At 100%: full ring unites left-right */}
-                          {/* Top contour segment - extends from center up */}
+                          {/* Permanent contour glow - follows button's rounded pill shape */}
+                          {/* Starts from center, extends left-right simultaneously, unites at 100% */}
                           <div
-                            className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
+                            className="absolute inset-0 rounded-full pointer-events-none"
                             style={{
-                              width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
-                              height: '4px',
-                              marginTop: '-2px',
-                              background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                              transform: 'translateX(-50%)',
-                              transition: 'all 0.3s ease-out'
+                              left: `${50 - (progressPercentage / 2)}%`,
+                              width: `${progressPercentage}%`,
+                              height: '100%',
+                              border: `${Math.max(2, 2 + (progressPercentage / 100) * 1)}px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
+                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
+                              transition: 'all 0.3s ease-out',
+                              borderRadius: '9999px'
                             }}
                           />
-                          {/* Bottom contour segment - extends from center down */}
-                          <div
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none rounded-full"
-                            style={{
-                              width: `${Math.max(2, (progressPercentage / 100) * 100)}%`,
-                              height: '4px',
-                              marginBottom: '-2px',
-                              background: `rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 12)}px rgba(22,163,74,${Math.min(0.85, 0.15 + (progressPercentage / 100) * 0.7)})`,
-                              transform: 'translateX(-50%)',
-                              transition: 'all 0.3s ease-out'
-                            }}
-                          />
-                          {/* Full ring at 100% - unites left-right */}
-                          {progressPercentage >= 100 && (
-                            <div
-                              className="absolute inset-0 rounded-full pointer-events-none"
-                              style={{
-                                boxShadow: `0 0 0 24px rgba(22,163,74,0.85)`,
-                              }}
-                            />
-                          )}
                           {/* Inner green pill - full width */}
                           <div
                             className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
