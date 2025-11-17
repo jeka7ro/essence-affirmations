@@ -498,21 +498,15 @@ export default function Layout({ children, currentPageName }) {
             
             {/* Repetition cards in mobile header - only on Home page */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0 max-w-md">
-                <StatsCards
-                  icon={TrendingUp}
-                  title="Repetări azi"
-                  value={todayRepetitions}
-                  color="green"
-                  className="flex-1 min-w-0 !p-1.5 !rounded-lg [&>div]:!p-1.5 [&>div>div>div>div]:!hidden [&>div>div>div>p:first-child]:!text-[10px] [&>div>div>div>p:first-child]:!mb-0.5 [&>div>div>div>p:last-child]:!text-sm"
-                />
-                <StatsCards
-                  icon={Calendar}
-                  title="Totale"
-                  value={totalRepetitions.toLocaleString('ro-RO')}
-                  color="blue"
-                  className="flex-1 min-w-0 !p-1.5 !rounded-lg [&>div]:!p-1.5 [&>div>div>div>div]:!hidden [&>div>div>div>p:first-child]:!text-[10px] [&>div>div>div>p:first-child]:!mb-0.5 [&>div>div>div>p:last-child]:!text-sm"
-                />
+              <div className="flex items-center gap-2 flex-1 justify-center min-w-0 max-w-md">
+                <div className="flex-1 min-w-0 border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-lg bg-white dark:bg-gray-900 p-1.5">
+                  <p className="text-[9px] font-medium text-gray-600 dark:text-gray-400 mb-0.5">Repetări azi</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{todayRepetitions}</p>
+                </div>
+                <div className="flex-1 min-w-0 border-2 border-gray-200 dark:border-gray-800 shadow-lg rounded-lg bg-white dark:bg-gray-900 p-1.5">
+                  <p className="text-[9px] font-medium text-gray-600 dark:text-gray-400 mb-0.5">Totale</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalRepetitions.toLocaleString('ro-RO')}</p>
+                </div>
               </div>
             )}
             
