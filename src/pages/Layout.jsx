@@ -499,24 +499,20 @@ export default function Layout({ children, currentPageName }) {
             {/* Repetition cards in mobile header - only on Home page */}
             {user && location.pathname === createPageUrl("Home") && (
               <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0 max-w-md">
-                <div className="flex-1 min-w-0 max-w-[45%]">
-                  <StatsCards
-                    icon={TrendingUp}
-                    title="Repetări azi"
-                    value={todayRepetitions}
-                    color="green"
-                    className="w-full [&>div]:!p-1 [&>div>div>div>p:first-child]:!text-[9px] [&>div>div>div>p:last-child]:!text-xs [&>div>div>div>div]:!hidden"
-                  />
-                </div>
-                <div className="flex-1 min-w-0 max-w-[45%]">
-                  <StatsCards
-                    icon={Calendar}
-                    title="Totale"
-                    value={totalRepetitions.toLocaleString('ro-RO')}
-                    color="blue"
-                    className="w-full [&>div]:!p-1 [&>div>div>div>p:first-child]:!text-[9px] [&>div>div>div>p:last-child]:!text-xs [&>div>div>div>div]:!hidden"
-                  />
-                </div>
+                <StatsCards
+                  icon={TrendingUp}
+                  title="Repetări azi"
+                  value={todayRepetitions}
+                  color="green"
+                  className="flex-1 min-w-0 !p-1.5 !rounded-lg [&>div]:!p-1.5 [&>div>div>div>div]:!hidden [&>div>div>div>p:first-child]:!text-[10px] [&>div>div>div>p:first-child]:!mb-0.5 [&>div>div>div>p:last-child]:!text-sm"
+                />
+                <StatsCards
+                  icon={Calendar}
+                  title="Totale"
+                  value={totalRepetitions.toLocaleString('ro-RO')}
+                  color="blue"
+                  className="flex-1 min-w-0 !p-1.5 !rounded-lg [&>div]:!p-1.5 [&>div>div>div>div]:!hidden [&>div>div>div>p:first-child]:!text-[10px] [&>div>div>div>p:first-child]:!mb-0.5 [&>div>div>div>p:last-child]:!text-sm"
+                />
               </div>
             )}
             
