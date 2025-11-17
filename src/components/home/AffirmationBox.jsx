@@ -231,17 +231,39 @@ export default function AffirmationBox({
                         >
                           {/* Permanent contour glow - follows button's rounded pill shape */}
                           {/* Starts from center (top/bottom), extends left-right simultaneously, unites at 100% */}
-                          <div
-                            className="absolute inset-0 rounded-full pointer-events-none"
-                            style={{
-                              border: `${Math.max(2, 2 + (progressPercentage / 100) * 1)}px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
-                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 8)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
-                              clipPath: progressPercentage < 100
-                                ? `inset(0 ${50 - (progressPercentage / 2)}% 0 ${50 - (progressPercentage / 2)}%)`
-                                : 'none',
-                              transition: 'all 0.3s ease-out'
-                            }}
-                          />
+                          <svg
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                            style={{ overflow: 'visible' }}
+                          >
+                            <defs>
+                              <filter id={`glow-${progressPercentage}`}>
+                                <feGaussianBlur stdDeviation={`${Math.max(1, (progressPercentage / 100) * 4)}`} result="coloredBlur"/>
+                                <feMerge>
+                                  <feMergeNode in="coloredBlur"/>
+                                  <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                              </filter>
+                            </defs>
+                            {/* Rounded pill shape contour - extends from center */}
+                            <rect
+                              x="0"
+                              y="0"
+                              width="100%"
+                              height="100%"
+                              rx="9999"
+                              ry="9999"
+                              fill="none"
+                              stroke={`rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`}
+                              strokeWidth={progressPercentage >= 100 ? "3" : `${Math.max(2, 2 + (progressPercentage / 100) * 1)}`}
+                              strokeDasharray={progressPercentage >= 100 ? "none" : `${(progressPercentage / 100) * 314.16} 314.16`}
+                              strokeDashoffset="157.08"
+                              strokeLinecap="round"
+                              style={{
+                                filter: `url(#glow-${progressPercentage})`,
+                                transition: 'all 0.3s ease-out'
+                              }}
+                            />
+                          </svg>
                           {/* Inner green pill - full width */}
                           <div
                             className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
