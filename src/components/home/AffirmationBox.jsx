@@ -66,12 +66,14 @@ export default function AffirmationBox({
       ? Math.min(100, Math.max(0, (todayRepetitions / dailyTarget) * 100))
       : null;
 
-  // Subtle contour glow based on progress - only for admin button
+  // Contour glow: permanent, starts from center (top/bottom), extends simultaneously
+  // left and right. At 0%: almost invisible. At 100%: full green ring unites left-right.
+  // The glow grows from center outward, creating a circular progress indicator.
   const progressGlowStyle =
-    progressPercentage != null
+    progressPercentage !== null
       ? {
-          boxShadow: `0 0 0 ${3 + (progressPercentage / 100) * 12}px rgba(22,163,74,${
-            0.12 + (progressPercentage / 100) * 0.4
+          boxShadow: `0 0 0 ${Math.max(0, (progressPercentage / 100) * 20)}px rgba(22,163,74,${
+            Math.min(0.7, 0.05 + (progressPercentage / 100) * 0.65)
           })`,
         }
       : undefined;
@@ -145,14 +147,19 @@ export default function AffirmationBox({
             {/* Text size toggle - cycles between small/medium/large */}
             {!isEditing && (
               <Button
-                onClick={handleTextSizeChange}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleTextSizeChange();
+                }}
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-blue-600 hover:text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-xl"
+                className="h-9 w-9 text-blue-600 hover:text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-xl cursor-pointer"
                 aria-label="Ajustează mărimea textului"
                 title="Ajustează mărimea textului afirmației"
+                type="button"
               >
-                <Text className="w-4 h-4" />
+                <Text className="w-4 h-4 pointer-events-none" />
               </Button>
             )}
 
@@ -191,7 +198,7 @@ export default function AffirmationBox({
           <div className="min-h-[160px] p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
             <div className="relative pb-12">
               {affirmation ? (
-                <p className={`${textSizeClass} md:text-lg font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
+                <p className={`${textSizeClass} font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-wrap`}>
                   {affirmation}
                 </p>
               ) : (
