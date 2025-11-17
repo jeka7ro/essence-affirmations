@@ -229,12 +229,12 @@ export default function AffirmationBox({
                           aria-label="Adaugă repetare"
                           title="Am repetat afirmația"
                         >
-                          {/* Progress contour - same rounded pill shape, fills like progress bar */}
+                          {/* Progress contour - fixed size, same rounded pill shape, fills progressively */}
                           <svg
                             className="absolute inset-0 w-full h-full pointer-events-none"
                             style={{ overflow: 'visible' }}
                           >
-                            {/* Base white contour (always visible, full rounded pill shape) */}
+                            {/* Base white contour - always full, fixed size, rounded pill shape */}
                             <rect
                               x="0"
                               y="0"
@@ -246,7 +246,7 @@ export default function AffirmationBox({
                               stroke="rgba(255, 255, 255, 0.8)"
                               strokeWidth="2"
                             />
-                            {/* Green progress contour - fills from center, same rounded pill shape */}
+                            {/* Green progress - fills progressively from center, same fixed rounded pill shape */}
                             <rect
                               x="0"
                               y="0"
@@ -258,7 +258,7 @@ export default function AffirmationBox({
                               stroke={`rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`}
                               strokeWidth="2"
                               strokeDasharray={progressPercentage >= 100 ? "none" : `${(progressPercentage / 100) * 1000} 1000`}
-                              strokeDashoffset={progressPercentage >= 100 ? "0" : `${500 - (progressPercentage / 100) * 500}`}
+                              strokeDashoffset={progressPercentage >= 100 ? "0" : "500"}
                               strokeLinecap="round"
                               style={{
                                 filter: `drop-shadow(0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)}))`,
