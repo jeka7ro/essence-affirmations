@@ -992,7 +992,7 @@ export default function HomePage() {
           externalPulseColor={affirmationPulseColor}
         />
 
-        {challengeStartDate && user?.role === 'admin' && (
+        {challengeStartDate && (
           <Card className="border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg rounded-3xl">
             <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
@@ -1101,24 +1101,16 @@ export default function HomePage() {
                     </div>
                     <div 
                       onClick={() => {
-                        console.log('Click on Total Repetări card, user role:', user?.role);
-                        if (user?.role === 'admin') {
-                          console.log('Opening history dialog...');
-                          setShowHistoryDialog(true);
-                        } else {
-                          console.log('User is not admin, cannot open history');
-                        }
+                        setShowHistoryDialog(true);
                       }}
-                      className={user?.role === 'admin' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 -m-2 transition-colors active:scale-95' : ''}
-                      title={user?.role === 'admin' ? 'Click pentru a vedea istoricul' : ''}
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 -m-2 transition-colors active:scale-95"
+                      title="Click pentru a vedea istoricul"
                     >
                       <p className="text-xs text-gray-600 dark:text-gray-300">Total Repetări</p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{repetitionHistory ? repetitionHistory.length.toLocaleString('ro-RO') : 0}</p>
-                      {user?.role === 'admin' && (
-                        <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
-                          📊 Click pentru istoric
-                        </p>
-                      )}
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
+                        📊 Click pentru istoric
+                      </p>
                     </div>
                   </div>
 

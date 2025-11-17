@@ -213,8 +213,8 @@ export default function AffirmationBox({
                 {(() => { 
                   const isHalloween = typeof document !== 'undefined' && document.documentElement.classList.contains('halloween');
 
-                  // For admins, show a larger progress-style button; for others keep the original round button
-                  if (isAdmin && progressPercentage !== null) {
+                  // Show larger progress-style button for all users
+                  if (progressPercentage !== null) {
                     return (
                       <>
                         <button
