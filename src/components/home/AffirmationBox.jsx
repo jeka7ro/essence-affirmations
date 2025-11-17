@@ -230,27 +230,42 @@ export default function AffirmationBox({
                           title="Am repetat afirmația"
                         >
                           {/* Progress contour - same rounded pill shape, fills like progress bar */}
-                          {/* Base white contour (always visible, full rounded pill shape) */}
-                          <div
-                            className="absolute inset-0 rounded-full pointer-events-none"
-                            style={{
-                              border: '2px solid rgba(255, 255, 255, 0.8)',
-                              zIndex: 1
-                            }}
-                          />
-                          {/* Green progress contour - fills from center, same rounded pill shape */}
-                          <div
-                            className="absolute inset-0 rounded-full pointer-events-none"
-                            style={{
-                              border: `2px solid rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`,
-                              left: `${50 - (progressPercentage / 2)}%`,
-                              width: `${progressPercentage}%`,
-                              height: '100%',
-                              zIndex: 2,
-                              boxShadow: `0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)})`,
-                              transition: 'all 0.3s ease-out'
-                            }}
-                          />
+                          <svg
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                            style={{ overflow: 'visible' }}
+                          >
+                            {/* Base white contour (always visible, full rounded pill shape) */}
+                            <rect
+                              x="0"
+                              y="0"
+                              width="100%"
+                              height="100%"
+                              rx="9999"
+                              ry="9999"
+                              fill="none"
+                              stroke="rgba(255, 255, 255, 0.8)"
+                              strokeWidth="2"
+                            />
+                            {/* Green progress contour - fills from center, same rounded pill shape */}
+                            <rect
+                              x="0"
+                              y="0"
+                              width="100%"
+                              height="100%"
+                              rx="9999"
+                              ry="9999"
+                              fill="none"
+                              stroke={`rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`}
+                              strokeWidth="2"
+                              strokeDasharray={progressPercentage >= 100 ? "none" : `${(progressPercentage / 100) * 1000} 1000`}
+                              strokeDashoffset={progressPercentage >= 100 ? "0" : `${500 - (progressPercentage / 100) * 500}`}
+                              strokeLinecap="round"
+                              style={{
+                                filter: `drop-shadow(0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)}))`,
+                                transition: 'all 0.3s ease-out'
+                              }}
+                            />
+                          </svg>
                           {/* Inner green pill - full width */}
                           <div
                             className={`absolute inset-y-1 left-1 right-1 rounded-full transition-all duration-500 ease-out ${
