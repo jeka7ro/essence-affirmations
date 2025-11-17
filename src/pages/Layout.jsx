@@ -504,14 +504,14 @@ export default function Layout({ children, currentPageName }) {
                   title="Repetări azi"
                   value={todayRepetitions}
                   color="green"
-                  className="flex-1 min-w-0 [&>div]:!p-2"
+                  className="flex-1 min-w-0 scale-75 origin-center"
                 />
                 <StatsCards
                   icon={Calendar}
                   title="Repetări totale"
                   value={totalRepetitions.toLocaleString('ro-RO')}
                   color="blue"
-                  className="flex-1 min-w-0 [&>div]:!p-2"
+                  className="flex-1 min-w-0 scale-75 origin-center"
                 />
               </div>
             )}
