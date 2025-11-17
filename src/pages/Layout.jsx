@@ -496,26 +496,16 @@ export default function Layout({ children, currentPageName }) {
               </Link>
             </div>
             
-            {/* Repetition cards in mobile header - only on Home page, using original StatsCards style */}
+            {/* Repetition cards in mobile header - only on Home page, very compact inline */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-stretch gap-2 flex-1 justify-center min-w-0 max-w-xs">
-                <div className="flex-1 min-w-0">
-                  <StatsCards
-                    icon={TrendingUp}
-                    title="Repetări azi"
-                    value={todayRepetitions}
-                    color="green"
-                    className="h-full [&>div>div]:!p-2"
-                  />
+              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                  <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  <span className="text-xs font-bold text-green-900 dark:text-green-100">{todayRepetitions}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <StatsCards
-                    icon={Calendar}
-                    title="Repetări totale"
-                    value={totalRepetitions.toLocaleString('ro-RO')}
-                    color="blue"
-                    className="h-full [&>div>div]:!p-2"
-                  />
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                  <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <span className="text-xs font-bold text-blue-900 dark:text-blue-100">{totalRepetitions.toLocaleString('ro-RO')}</span>
                 </div>
               </div>
             )}
