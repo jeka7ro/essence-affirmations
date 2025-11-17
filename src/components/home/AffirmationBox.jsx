@@ -234,35 +234,33 @@ export default function AffirmationBox({
                           title="Am repetat afirmația"
                         >
                           {/* Progress contour - fixed size, same rounded pill shape, fills progressively */}
+                          {/* Base white contour - always full, fixed size, rounded pill shape */}
+                          <div
+                            className="absolute inset-0 rounded-full pointer-events-none"
+                            style={{
+                              border: '2px solid rgba(255, 255, 255, 0.8)',
+                              zIndex: 1
+                            }}
+                          />
+                          {/* Green progress - fills progressively from center, same fixed rounded pill shape */}
                           <svg
                             className="absolute inset-0 w-full h-full pointer-events-none"
                             style={{ overflow: 'visible' }}
+                            viewBox="0 0 200 50"
+                            preserveAspectRatio="none"
                           >
-                            {/* Base white contour - always full, fixed size, rounded pill shape */}
                             <rect
                               x="0"
                               y="0"
-                              width="100%"
-                              height="100%"
-                              rx="9999"
-                              ry="9999"
-                              fill="none"
-                              stroke="rgba(255, 255, 255, 0.8)"
-                              strokeWidth="2"
-                            />
-                            {/* Green progress - fills progressively from center, same fixed rounded pill shape */}
-                            <rect
-                              x="0"
-                              y="0"
-                              width="100%"
-                              height="100%"
-                              rx="9999"
-                              ry="9999"
+                              width="200"
+                              height="50"
+                              rx="25"
+                              ry="25"
                               fill="none"
                               stroke={`rgba(22,163,74,${Math.min(0.85, 0.1 + (progressPercentage / 100) * 0.75)})`}
-                              strokeWidth="2"
-                              strokeDasharray={progressPercentage >= 100 ? "none" : `${(progressPercentage / 100) * 1000} 1000`}
-                              strokeDashoffset={progressPercentage >= 100 ? "0" : "500"}
+                              strokeWidth="4"
+                              strokeDasharray={progressPercentage >= 100 ? "none" : `${(progressPercentage / 100) * 314} 314`}
+                              strokeDashoffset={progressPercentage >= 100 ? "0" : "157"}
                               strokeLinecap="round"
                               style={{
                                 filter: `drop-shadow(0 0 ${Math.max(2, (progressPercentage / 100) * 6)}px rgba(22,163,74,${Math.min(0.6, 0.1 + (progressPercentage / 100) * 0.5)}))`,
