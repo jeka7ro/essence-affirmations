@@ -498,8 +498,8 @@ export default function Layout({ children, currentPageName }) {
             
             {/* Repetition cards in mobile header - only on Home page */}
             {user && location.pathname === createPageUrl("Home") && (
-              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0 max-w-md overflow-hidden">
-                <div className="flex-1 min-w-0 max-w-[45%] scale-[0.55] origin-center">
+              <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0 max-w-md overflow-hidden" style={{ maxHeight: '36px' }}>
+                <div className="flex-1 min-w-0 max-w-[45%] scale-[0.5] origin-center" style={{ maxHeight: '36px', overflow: 'hidden' }}>
                   <StatsCards
                     icon={TrendingUp}
                     title="Repetări azi"
@@ -508,7 +508,7 @@ export default function Layout({ children, currentPageName }) {
                     className="w-full"
                   />
                 </div>
-                <div className="flex-1 min-w-0 max-w-[45%] scale-[0.55] origin-center">
+                <div className="flex-1 min-w-0 max-w-[45%] scale-[0.5] origin-center" style={{ maxHeight: '36px', overflow: 'hidden' }}>
                   <StatsCards
                     icon={Calendar}
                     title="Totale"
