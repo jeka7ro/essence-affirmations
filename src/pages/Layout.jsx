@@ -14,13 +14,10 @@ import {
   X,
   Home,
   Trophy,
-  Bell,
-  TrendingUp,
-  Calendar
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import StatsCards from "@/components/home/StatsCards";
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -373,26 +370,6 @@ export default function Layout({ children, currentPageName }) {
               <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">Afirmatii</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Advanced</p>
             </div>
-            {/* Repetition cards in sidebar - only on Home page */}
-            {user && location.pathname === createPageUrl("Home") && (
-              <div className="w-full space-y-2 mt-4">
-                <StatsCards
-                  icon={TrendingUp}
-                  title="Repetări azi"
-                  value={todayRepetitions}
-                  color="green"
-                  className="w-full"
-                />
-                <StatsCards
-                  icon={Calendar}
-                  title="Repetări totale"
-                  value={totalRepetitions.toLocaleString('ro-RO')}
-                  color="blue"
-                  className="w-full"
-                />
-              </div>
-            )}
-            
             {user && (
               <div className="text-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-800 w-full">
                 <div className="flex items-center justify-center gap-3 mb-2">

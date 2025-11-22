@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Users, RotateCcw, AlertCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Calendar, Users, RotateCcw, AlertCircle, ChevronLeft, ChevronRight, X, TrendingUp } from "lucide-react";
 import { format, differenceInDays, addDays, parseISO, subDays } from "date-fns";
 import { ro } from "date-fns/locale";
 import ChallengeCalendar from "../components/home/ChallengeCalendar";
 import AffirmationBox from "../components/home/AffirmationBox";
+import StatsCards from "../components/home/StatsCards";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -289,7 +290,7 @@ export default function HomePage() {
       congratulationsShownRef.current = false;
     }
     
-    // Only show if:
+    // Show congratulations dialog if:
     // 1. User reached exactly 100 repetitions today (not more, to show only once)
     // 2. Hasn't seen the popup today (checked from database - works across all devices)
     // 3. Dialog is not already shown (to prevent multiple triggers)
@@ -298,16 +299,18 @@ export default function HomePage() {
       // Mark as shown immediately to prevent re-trigger
       congratulationsShownRef.current = true;
 
-      // Trigger 5s subtle fireworks animation around main repetition button
-      setShowFireworks(true);
-      setTimeout(() => setShowFireworks(false), 5000);
-
       // Mark as seen IMMEDIATELY and synchronously in state BEFORE showing
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       setUser(prev => prev ? { ...prev, congratulations_seen_date: todayStr } : prev);
       setShowCongratulationsDialog(true);
       // Then save to DB async (but state is already updated)
       markCongratulationsSeen();
+    }
+    
+    // Trigger fireworks animation whenever user reaches 100 repetitions (works every time)
+    if (todayRepetitions === 100) {
+      setShowFireworks(true);
+      setTimeout(() => setShowFireworks(false), 5000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayRepetitions, user?.id, user?.congratulations_seen_date, loading]);
@@ -845,6 +848,23 @@ export default function HomePage() {
         );
       })()}
       <div className="max-w-6xl mx-auto space-y-8 relative" style={{ zIndex: 1 }}>
+        {/* Stats Cards - only on desktop */}
+        <div className="hidden md:grid md:grid-cols-2 gap-4">
+          <StatsCards
+            icon={TrendingUp}
+            title="Repetări azi"
+            value={todayRepetitions}
+            color="green"
+            className="w-full"
+          />
+          <StatsCards
+            icon={Calendar}
+            title="Repetări totale"
+            value={totalRepetitions.toLocaleString('ro-RO')}
+            color="blue"
+            className="w-full"
+          />
+        </div>
         
         <Dialog open={showStartDialog} onOpenChange={(open) => {
           if (!challengeStartDate) return;
